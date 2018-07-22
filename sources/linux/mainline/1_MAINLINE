@@ -1,0 +1,4 @@
+next http://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git
+master http://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+stable http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+stable-rc http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable-rc.git
