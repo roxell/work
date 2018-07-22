@@ -106,3 +106,9 @@
 [submodule "sources/tests/lkft-website"]
 	path = sources/tests/lkft-website
 	url = git@github.com:rafaeldtinoco/lkft-website.git
+[submodule "sources/tools/spectre-meltdown-checker"]
+	path = sources/tools/spectre-meltdown-checker
+	url = https://github.com/speed47/spectre-meltdown-checker.git
+[submodule "sources/boards/beaglebone/x15/u-boot"]
+	path = sources/boards/beaglebone/x15/u-boot
+	url = git://git.ti.com/ti-u-boot/ti-u-boot.git
