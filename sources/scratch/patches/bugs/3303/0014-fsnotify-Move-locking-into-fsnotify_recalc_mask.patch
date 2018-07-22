@@ -1,0 +1,207 @@
+From 639f8e2e628abcb216e2dda038c90245152bcad7 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 15 Mar 2017 09:16:27 +0100
+Subject: [PATCH 14/38] fsnotify: Move locking into fsnotify_recalc_mask()
+
+commit a242677bb1e6faa9bd82bd33afb2621071258231 upstream.
+
+Move locking of locks protecting a list of marks into
+fsnotify_recalc_mask(). This reduces code churn in the following patch
+which changes the lock protecting the list of marks.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/dnotify/dnotify.c      |  3 +--
+ fs/notify/fsnotify.h             |  3 ---
+ fs/notify/inode_mark.c           | 18 +++-----------
+ fs/notify/mark.c                 | 40 ++++++++++++++++++++++++--------
+ fs/notify/vfsmount_mark.c        | 13 +++--------
+ include/linux/fsnotify_backend.h |  2 ++
+ 6 files changed, 39 insertions(+), 40 deletions(-)
+
+diff --git a/fs/notify/dnotify/dnotify.c b/fs/notify/dnotify/dnotify.c
+index c00e026a1983..98b3a708dfcd 100644
+--- a/fs/notify/dnotify/dnotify.c
++++ b/fs/notify/dnotify/dnotify.c
+@@ -69,8 +69,7 @@ static void dnotify_recalc_inode_mask(struct fsnotify_mark *fsn_mark)
+ 	if (old_mask == new_mask)
+ 		return;
+ 
+-	if (fsn_mark->connector)
+-		fsnotify_recalc_inode_mask(fsn_mark->connector->inode);
++	fsnotify_recalc_mask(fsn_mark->connector);
+ }
+ 
+ /*
+diff --git a/fs/notify/fsnotify.h b/fs/notify/fsnotify.h
+index 0354338aad78..96051780d50e 100644
+--- a/fs/notify/fsnotify.h
++++ b/fs/notify/fsnotify.h
+@@ -14,9 +14,6 @@ extern void fsnotify_flush_notify(struct fsnotify_group *group);
+ /* protects reads of inode and vfsmount marks list */
+ extern struct srcu_struct fsnotify_mark_srcu;
+ 
+-/* Calculate mask of events for a list of marks */
+-extern u32 fsnotify_recalc_mask(struct fsnotify_mark_connector *conn);
+-
+ /* compare two groups for sorting of marks lists */
+ extern int fsnotify_compare_groups(struct fsnotify_group *a,
+ 				   struct fsnotify_group *b);
+diff --git a/fs/notify/inode_mark.c b/fs/notify/inode_mark.c
+index 87bef7d802db..9b2f4e6eb8eb 100644
+--- a/fs/notify/inode_mark.c
++++ b/fs/notify/inode_mark.c
+@@ -30,17 +30,9 @@
+ 
+ #include "../internal.h"
+ 
+-/*
+- * Recalculate the inode->i_fsnotify_mask, or the mask of all FS_* event types
+- * any notifier is interested in hearing for this inode.
+- */
+ void fsnotify_recalc_inode_mask(struct inode *inode)
+ {
+-	spin_lock(&inode->i_lock);
+-	inode->i_fsnotify_mask = fsnotify_recalc_mask(inode->i_fsnotify_marks);
+-	spin_unlock(&inode->i_lock);
+-
+-	__fsnotify_update_child_dentry_flags(inode);
++	fsnotify_recalc_mask(inode->i_fsnotify_marks);
+ }
+ 
+ struct inode *fsnotify_destroy_inode_mark(struct fsnotify_mark *mark)
+@@ -57,14 +49,10 @@ struct inode *fsnotify_destroy_inode_mark(struct fsnotify_mark *mark)
+ 	empty = hlist_empty(&mark->connector->list);
+ 	mark->connector = NULL;
+ 
+-	/*
+-	 * this mark is now off the inode->i_fsnotify_marks list and we
+-	 * hold the inode->i_lock, so this is the perfect time to update the
+-	 * inode->i_fsnotify_mask
+-	 */
+-	inode->i_fsnotify_mask = fsnotify_recalc_mask(inode->i_fsnotify_marks);
+ 	spin_unlock(&inode->i_lock);
+ 
++	fsnotify_recalc_mask(inode->i_fsnotify_marks);
++
+ 	return empty ? inode : NULL;
+ }
+ 
+diff --git a/fs/notify/mark.c b/fs/notify/mark.c
+index b3f83ed6e8be..06faf166c7ae 100644
+--- a/fs/notify/mark.c
++++ b/fs/notify/mark.c
+@@ -105,18 +105,40 @@ void fsnotify_put_mark(struct fsnotify_mark *mark)
+ 	}
+ }
+ 
+-/* Calculate mask of events for a list of marks */
+-u32 fsnotify_recalc_mask(struct fsnotify_mark_connector *conn)
++static void __fsnotify_recalc_mask(struct fsnotify_mark_connector *conn)
+ {
+ 	u32 new_mask = 0;
+ 	struct fsnotify_mark *mark;
+ 
+-	if (!conn)
+-		return 0;
+-
+ 	hlist_for_each_entry(mark, &conn->list, obj_list)
+ 		new_mask |= mark->mask;
+-	return new_mask;
++	if (conn->flags & FSNOTIFY_OBJ_TYPE_INODE)
++		conn->inode->i_fsnotify_mask = new_mask;
++	else if (conn->flags & FSNOTIFY_OBJ_TYPE_VFSMOUNT)
++		real_mount(conn->mnt)->mnt_fsnotify_mask = new_mask;
++}
++
++/*
++ * Calculate mask of events for a list of marks. The caller must make sure
++ * connector cannot disappear under us (usually by holding a mark->lock or
++ * mark->group->mark_mutex for a mark on this list).
++ */
++void fsnotify_recalc_mask(struct fsnotify_mark_connector *conn)
++{
++	if (!conn)
++		return;
++
++	if (conn->flags & FSNOTIFY_OBJ_TYPE_INODE)
++		spin_lock(&conn->inode->i_lock);
++	else
++		spin_lock(&conn->mnt->mnt_root->d_lock);
++	__fsnotify_recalc_mask(conn);
++	if (conn->flags & FSNOTIFY_OBJ_TYPE_INODE) {
++		spin_unlock(&conn->inode->i_lock);
++		__fsnotify_update_child_dentry_flags(conn->inode);
++	} else {
++		spin_unlock(&conn->mnt->mnt_root->d_lock);
++	}
+ }
+ 
+ /*
+@@ -423,10 +445,8 @@ int fsnotify_add_mark_locked(struct fsnotify_mark *mark,
+ 	if (ret)
+ 		goto err;
+ 
+-	if (inode)
+-		fsnotify_recalc_inode_mask(inode);
+-	else
+-		fsnotify_recalc_vfsmount_mask(mnt);
++	if (mark->mask)
++		fsnotify_recalc_mask(mark->connector);
+ 
+ 	return ret;
+ err:
+diff --git a/fs/notify/vfsmount_mark.c b/fs/notify/vfsmount_mark.c
+index 49ccbdb74f82..ffe0d7098cba 100644
+--- a/fs/notify/vfsmount_mark.c
++++ b/fs/notify/vfsmount_mark.c
+@@ -34,17 +34,9 @@ void fsnotify_clear_vfsmount_marks_by_group(struct fsnotify_group *group)
+ 	fsnotify_clear_marks_by_group_flags(group, FSNOTIFY_OBJ_TYPE_VFSMOUNT);
+ }
+ 
+-/*
+- * Recalculate the mnt->mnt_fsnotify_mask, or the mask of all FS_* event types
+- * any notifier is interested in hearing for this mount point
+- */
+ void fsnotify_recalc_vfsmount_mask(struct vfsmount *mnt)
+ {
+-	struct mount *m = real_mount(mnt);
+-
+-	spin_lock(&mnt->mnt_root->d_lock);
+-	m->mnt_fsnotify_mask = fsnotify_recalc_mask(m->mnt_fsnotify_marks);
+-	spin_unlock(&mnt->mnt_root->d_lock);
++	fsnotify_recalc_mask(real_mount(mnt)->mnt_fsnotify_marks);
+ }
+ 
+ void fsnotify_destroy_vfsmount_mark(struct fsnotify_mark *mark)
+@@ -60,8 +52,9 @@ void fsnotify_destroy_vfsmount_mark(struct fsnotify_mark *mark)
+ 	hlist_del_init_rcu(&mark->obj_list);
+ 	mark->connector = NULL;
+ 
+-	m->mnt_fsnotify_mask = fsnotify_recalc_mask(m->mnt_fsnotify_marks);
+ 	spin_unlock(&mnt->mnt_root->d_lock);
++
++	fsnotify_recalc_mask(m->mnt_fsnotify_marks);
+ }
+ 
+ /*
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index ecf1e628e76e..24a46d061ee1 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -326,6 +326,8 @@ extern struct fsnotify_event *fsnotify_remove_first_event(struct fsnotify_group
+ 
+ /* functions used to manipulate the marks attached to inodes */
+ 
++/* Calculate mask of events for a list of marks */
++extern void fsnotify_recalc_mask(struct fsnotify_mark_connector *conn);
+ /* run all marks associated with a vfsmount and update mnt->mnt_fsnotify_mask */
+ extern void fsnotify_recalc_vfsmount_mask(struct vfsmount *mnt);
+ /* run all marks associated with an inode and update inode->i_fsnotify_mask */
+-- 
+2.18.0
+

@@ -1,0 +1,190 @@
+From fd0dc6240c40d0a3479193cd97542ce1a94ac3c4 Mon Sep 17 00:00:00 2001
+From: Amir Goldstein <amir73il@gmail.com>
+Date: Sun, 25 Jun 2017 16:37:17 +0300
+Subject: [PATCH 1/5] ovl: no direct iteration for dir with origin xattr
+
+If a non-merge dir in an overlay mount has an overlay.origin xattr, it
+means it was once an upper merge dir, which may contain whiteouts and
+then the lower dir was removed under it.
+
+Do not iterate real dir directly in this case to avoid exposing whiteouts.
+
+[SzM] Set OVL_WHITEOUT for all merge directories as well.
+
+[amir] A directory that was just copied up does not have the OVL_WHITEOUTS
+flag. We need to set it to fix merge dir iteration.
+
+Signed-off-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+---
+ fs/overlayfs/copy_up.c   |  7 ++++++-
+ fs/overlayfs/inode.c     | 10 ++++++++++
+ fs/overlayfs/overlayfs.h |  4 ++++
+ fs/overlayfs/readdir.c   | 24 ++++++++++++++++++++----
+ fs/overlayfs/super.c     |  2 ++
+ fs/overlayfs/util.c      | 13 +++++++++++++
+ 6 files changed, 55 insertions(+), 5 deletions(-)
+
+diff --git a/fs/overlayfs/copy_up.c b/fs/overlayfs/copy_up.c
+index c441f9387a1b..d07ad7bbd041 100644
+--- a/fs/overlayfs/copy_up.c
++++ b/fs/overlayfs/copy_up.c
+@@ -486,6 +486,7 @@ static int ovl_copy_up_inode(struct ovl_copy_up_ctx *c, struct dentry *temp)
+ static int ovl_copy_up_locked(struct ovl_copy_up_ctx *c)
+ {
+ 	struct inode *udir = c->destdir->d_inode;
++	struct inode *inode;
+ 	struct dentry *newdentry = NULL;
+ 	struct dentry *temp = NULL;
+ 	int err;
+@@ -508,7 +509,11 @@ static int ovl_copy_up_locked(struct ovl_copy_up_ctx *c)
+ 	if (err)
+ 		goto out_cleanup;
+ 
+-	ovl_inode_update(d_inode(c->dentry), newdentry);
++	inode = d_inode(c->dentry);
++	ovl_inode_update(inode, newdentry);
++	if (S_ISDIR(inode->i_mode))
++		ovl_set_flag(OVL_WHITEOUTS, inode);
++
+ out:
+ 	dput(temp);
+ 	return err;
+diff --git a/fs/overlayfs/inode.c b/fs/overlayfs/inode.c
+index 321511ed8c42..0a0ef96aba7f 100644
+--- a/fs/overlayfs/inode.c
++++ b/fs/overlayfs/inode.c
+@@ -657,6 +657,16 @@ struct inode *ovl_get_inode(struct dentry *dentry, struct dentry *upperdentry,
+ 	if (upperdentry && ovl_is_impuredir(upperdentry))
+ 		ovl_set_flag(OVL_IMPURE, inode);
+ 
++	/* Check for non-merge dir that may have whiteouts */
++	if (S_ISDIR(realinode->i_mode)) {
++		struct ovl_entry *oe = dentry->d_fsdata;
++
++		if (((upperdentry && lowerdentry) || oe->numlower > 1) ||
++		    ovl_check_origin_xattr(upperdentry ?: lowerdentry)) {
++			ovl_set_flag(OVL_WHITEOUTS, inode);
++		}
++	}
++
+ 	if (inode->i_state & I_NEW)
+ 		unlock_new_inode(inode);
+ out:
+diff --git a/fs/overlayfs/overlayfs.h b/fs/overlayfs/overlayfs.h
+index d9a0edd4e57e..d53157ccf0d7 100644
+--- a/fs/overlayfs/overlayfs.h
++++ b/fs/overlayfs/overlayfs.h
+@@ -28,7 +28,10 @@ enum ovl_path_type {
+ #define OVL_XATTR_NLINK OVL_XATTR_PREFIX "nlink"
+ 
+ enum ovl_flag {
++	/* Pure upper dir that may contain non pure upper entries */
+ 	OVL_IMPURE,
++	/* Non-merge dir that may contain whiteout entries */
++	OVL_WHITEOUTS,
+ 	OVL_INDEX,
+ };
+ 
+@@ -223,6 +226,7 @@ bool ovl_is_whiteout(struct dentry *dentry);
+ struct file *ovl_path_open(struct path *path, int flags);
+ int ovl_copy_up_start(struct dentry *dentry);
+ void ovl_copy_up_end(struct dentry *dentry);
++bool ovl_check_origin_xattr(struct dentry *dentry);
+ bool ovl_check_dir_xattr(struct dentry *dentry, const char *name);
+ int ovl_check_setxattr(struct dentry *dentry, struct dentry *upperdentry,
+ 		       const char *name, const void *value, size_t size,
+diff --git a/fs/overlayfs/readdir.c b/fs/overlayfs/readdir.c
+index 7fa7d68baa6d..9e7a5de66ebd 100644
+--- a/fs/overlayfs/readdir.c
++++ b/fs/overlayfs/readdir.c
+@@ -316,21 +316,37 @@ static inline int ovl_dir_read(struct path *realpath,
+ 	return err;
+ }
+ 
++/*
++ * Can we iterate real dir directly?
++ *
++ * Non-merge dir may contain whiteouts from a time it was a merge upper, before
++ * lower dir was removed under it and possibly before it was rotated from upper
++ * to lower layer.
++ */
++static bool ovl_dir_is_real(struct dentry *dir)
++{
++	return !ovl_test_flag(OVL_WHITEOUTS, d_inode(dir));
++}
++
+ static void ovl_dir_reset(struct file *file)
+ {
+ 	struct ovl_dir_file *od = file->private_data;
+ 	struct ovl_dir_cache *cache = od->cache;
+ 	struct dentry *dentry = file->f_path.dentry;
+-	enum ovl_path_type type = ovl_path_type(dentry);
++	bool is_real;
+ 
+ 	if (cache && ovl_dentry_version_get(dentry) != cache->version) {
+ 		ovl_cache_put(od, dentry);
+ 		od->cache = NULL;
+ 		od->cursor = NULL;
+ 	}
+-	WARN_ON(!od->is_real && !OVL_TYPE_MERGE(type));
+-	if (od->is_real && OVL_TYPE_MERGE(type))
++	is_real = ovl_dir_is_real(dentry);
++	if (od->is_real != is_real) {
++		/* is_real can only become false when dir is copied up */
++		if (WARN_ON(is_real))
++			return;
+ 		od->is_real = false;
++	}
+ }
+ 
+ static int ovl_dir_read_merged(struct dentry *dentry, struct list_head *list,
+@@ -830,7 +846,7 @@ static int ovl_dir_open(struct inode *inode, struct file *file)
+ 		return PTR_ERR(realfile);
+ 	}
+ 	od->realfile = realfile;
+-	od->is_real = !OVL_TYPE_MERGE(type);
++	od->is_real = ovl_dir_is_real(file->f_path.dentry);
+ 	od->is_upper = OVL_TYPE_UPPER(type);
+ 	file->private_data = od;
+ 
+diff --git a/fs/overlayfs/super.c b/fs/overlayfs/super.c
+index f5738e96a052..8d82a1cb655f 100644
+--- a/fs/overlayfs/super.c
++++ b/fs/overlayfs/super.c
+@@ -1141,6 +1141,8 @@ static int ovl_fill_super(struct super_block *sb, void *data, int silent)
+ 
+ 	root_dentry->d_fsdata = oe;
+ 
++	/* Root is always merge -> can have whiteouts */
++	ovl_set_flag(OVL_WHITEOUTS, d_inode(root_dentry));
+ 	ovl_inode_init(d_inode(root_dentry), upperpath.dentry,
+ 		       ovl_dentry_lower(root_dentry));
+ 
+diff --git a/fs/overlayfs/util.c b/fs/overlayfs/util.c
+index b9b239fa5cfd..51ca8bd16009 100644
+--- a/fs/overlayfs/util.c
++++ b/fs/overlayfs/util.c
+@@ -329,6 +329,19 @@ void ovl_copy_up_end(struct dentry *dentry)
+ 	mutex_unlock(&OVL_I(d_inode(dentry))->lock);
+ }
+ 
++bool ovl_check_origin_xattr(struct dentry *dentry)
++{
++	int res;
++
++	res = vfs_getxattr(dentry, OVL_XATTR_ORIGIN, NULL, 0);
++
++	/* Zero size value means "copied up but origin unknown" */
++	if (res >= 0)
++		return true;
++
++	return false;
++}
++
+ bool ovl_check_dir_xattr(struct dentry *dentry, const char *name)
+ {
+ 	int res;
+-- 
+2.18.0
+

@@ -1,0 +1,55 @@
+From 98312ccfc22b151718fac25849edba21d625710d Mon Sep 17 00:00:00 2001
+From: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Date: Thu, 21 Jun 2018 23:28:48 -0300
+Subject: [PATCH 10/11] debug for getdumpstart 2
+
+---
+ drivers/base/regmap/regmap-debugfs.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/drivers/base/regmap/regmap-debugfs.c b/drivers/base/regmap/regmap-debugfs.c
+index 034b0ef83a73..e3f8e97b08b9 100644
+--- a/drivers/base/regmap/regmap-debugfs.c
++++ b/drivers/base/regmap/regmap-debugfs.c
+@@ -164,6 +164,8 @@ static unsigned int regmap_debugfs_get_dump_start(struct regmap *map,
+ 
+ 	/* Close the last entry off if we didn't scan beyond it */
+ 	if (c) {
++		printk(KERN_WARNING "TINOCO 16: last entry being closed: %u\n", i);
++
+ 		c->max = p - 1;
+ 		c->max_reg = i - map->reg_stride;
+ 		list_add_tail(&c->list,
+@@ -176,6 +178,9 @@ static unsigned int regmap_debugfs_get_dump_start(struct regmap *map,
+ 	 * no registers at all.
+ 	 */
+ 	WARN_ON(list_empty(&map->debugfs_off_cache));
++
++	printk(KERN_WARNING "TINOCO 17: base: %u\n", base);
++
+ 	ret = base;
+ 
+ 	/* Find the relevant block:offset */
+@@ -185,6 +190,10 @@ static unsigned int regmap_debugfs_get_dump_start(struct regmap *map,
+ 			reg_offset = fpos_offset / map->debugfs_tot_len;
+ 			*pos = c->min + (reg_offset * map->debugfs_tot_len);
+ 			mutex_unlock(&map->cache_lock);
++
++			printk(KERN_WARNING "TINOCO 19: returning %u in the loop\n", c->base_reg + (reg_offset * map->reg_stride));
++			printk(KERN_WARNING "TINOCO 20: fpos_offset = %u, reg_offset = %u, pos = %u\n", fpos_offset, reg_offset, *pos);
++
+ 			return c->base_reg + (reg_offset * map->reg_stride);
+ 		}
+ 
+@@ -193,6 +202,8 @@ static unsigned int regmap_debugfs_get_dump_start(struct regmap *map,
+ 	}
+ 	mutex_unlock(&map->cache_lock);
+ 
++	printk(KERN_WARNING "TINOCO 18: returning %u at the end\n", ret);
++
+ 	return ret;
+ }
+ 
+-- 
+2.17.1
+

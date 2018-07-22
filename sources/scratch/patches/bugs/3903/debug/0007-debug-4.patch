@@ -1,0 +1,102 @@
+From 163980d8838d953a4ddde20f157bc93997cebed3 Mon Sep 17 00:00:00 2001
+From: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Date: Thu, 21 Jun 2018 21:40:51 -0300
+Subject: [PATCH 07/11] debug 4
+
+---
+ drivers/base/regmap/regmap-debugfs.c | 24 ++++++++++++++++--------
+ fs/debugfs/file.c                    | 19 +++++++++++++++----
+ 2 files changed, 31 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/base/regmap/regmap-debugfs.c b/drivers/base/regmap/regmap-debugfs.c
+index 14853dcf6147..3387382a3f73 100644
+--- a/drivers/base/regmap/regmap-debugfs.c
++++ b/drivers/base/regmap/regmap-debugfs.c
+@@ -221,7 +221,7 @@ static ssize_t regmap_read_debugfs(struct regmap *map, unsigned int from,
+ 	printk(KERN_WARNING "TINOCO 0: start_reg = %u\n", start_reg);
+ 	printk(KERN_WARNING "TINOCO 1: reg_stride = %u\n", map->reg_stride);
+ 	printk(KERN_WARNING "TINOCO 2: from = %u, to = %u\n", from, to);
+-	printk(KERN_WARNING "TINOCO 3: count = %lu, ppos = llu\n", count, ppos);
++	printk(KERN_WARNING "TINOCO 3: count = %lu, ppos = %llu\n", count, ppos);
+ 
+ 	for (i = start_reg; i <= to; i += map->reg_stride) {
+ 
+@@ -241,30 +241,38 @@ static ssize_t regmap_read_debugfs(struct regmap *map, unsigned int from,
+ 		if (p >= *ppos) {
+ 
+ 			printk(KERN_WARNING "TINOCO 5: p = %llu\n", p);
+-			printk(KERN_WARNING "TINOCO 6: buf_pos = %lu\n", buf_pos);
+-			printk(KERN_WARNING "TINOCO 7: debugfs_tot_len = %u\n", map->debugfs_tot_len);
++			//printk(KERN_WARNING "TINOCO 6: buf_pos = %lu\n", buf_pos);
++			//printk(KERN_WARNING "TINOCO 7: debugfs_tot_len = %u\n", map->debugfs_tot_len);
+ 
+ 			/* ...but not beyond it */
+-			if (buf_pos + map->debugfs_tot_len > count)
++
++			/*
++			if (buf_pos + map->debugfs_tot_len > count) {
++				printk(KERN_WARNING "TINOCO: BREAK");
+ 				break;
++			}
++			*/
+ 
+ 			printk(KERN_WARNING "TINOCO 8: REG being read: %.12x\n", i - from);
+ 
+-			snprintf(buf + buf_pos, count - buf_pos, "%.*x: ", map->debugfs_reg_len, i - from);
++			//snprintf(buf + buf_pos, count - buf_pos, "%.*x: ", map->debugfs_reg_len, i - from);
+ 
+-			buf_pos += map->debugfs_reg_len + 2;
++			//buf_pos += map->debugfs_reg_len + 2;
+ 
+ 			printk(KERN_WARNING "TINOCO 9: calling regmap_read with map ptr = %p, i = %d, val ptr to place %p\n", map, i, &val);
+ 
+ 			ret = regmap_read(map, i, &val);
++
++			/*
+ 			if (ret == 0)
+ 				snprintf(buf + buf_pos, count - buf_pos, "%.*x", map->debugfs_val_len, val);
+ 			else
+ 				memset(buf + buf_pos, 'X', map->debugfs_val_len);
++			*/
+ 
+-			buf_pos += 2 * map->format.val_bytes;
++			//buf_pos += 2 * map->format.val_bytes;
+ 
+-			buf[buf_pos++] = '\n';
++			//buf[buf_pos++] = '\n';
+ 		}
+ 		p += map->debugfs_tot_len;
+ 	}
+diff --git a/fs/debugfs/file.c b/fs/debugfs/file.c
+index 4fce1da7db23..c84ba3883c4f 100644
+--- a/fs/debugfs/file.c
++++ b/fs/debugfs/file.c
+@@ -192,10 +192,21 @@ FULL_PROXY_FUNC(llseek, loff_t, filp,
+ 		PROTO(struct file *filp, loff_t offset, int whence),
+ 		ARGS(filp, offset, whence));
+ 
+-FULL_PROXY_FUNC(read, ssize_t, filp,
+-		PROTO(struct file *filp, char __user *buf, size_t size,
+-			loff_t *ppos),
+-		ARGS(filp, buf, size, ppos));
++static ssize_t  full_proxy_read(struct file *filp, char  *buf, size_t size,
++			loff_t *ppos)
++{
++	struct dentry *dentry = ((filp)->f_path.dentry);
++	const struct file_operations *real_fops;
++	ssize_t r;
++
++	r = debugfs_file_get(dentry);
++	if (__builtin_expect(!!(r), 0))
++		return r;
++	real_fops = debugfs_real_fops(filp);
++	r = real_fops->read(filp, buf, size, ppos);
++	debugfs_file_put(dentry);
++	return r;
++}
+ 
+ FULL_PROXY_FUNC(write, ssize_t, filp,
+ 		PROTO(struct file *filp, const char __user *buf, size_t size,
+-- 
+2.17.1
+

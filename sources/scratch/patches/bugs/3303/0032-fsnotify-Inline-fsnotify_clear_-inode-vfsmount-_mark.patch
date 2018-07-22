@@ -1,0 +1,87 @@
+From 75a9a1d3c4c5ffa61e7cf386aceef9fa9588a5c7 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 21 Dec 2016 16:20:32 +0100
+Subject: [PATCH 32/38] fsnotify: Inline
+ fsnotify_clear_{inode|vfsmount}_mark_group()
+
+commit 416bcdbcbbb4800f11f03e8baf570f9996219f67 upstream.
+
+Inline these helpers as they are very thin. We still keep them as we
+don't want to expose details about how list type is determined.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/inode_mark.c           |  8 --------
+ fs/notify/vfsmount_mark.c        |  5 -----
+ include/linux/fsnotify_backend.h | 14 ++++++++++----
+ 3 files changed, 10 insertions(+), 17 deletions(-)
+
+diff --git a/fs/notify/inode_mark.c b/fs/notify/inode_mark.c
+index 2188329da3c2..bdc15f736082 100644
+--- a/fs/notify/inode_mark.c
++++ b/fs/notify/inode_mark.c
+@@ -30,14 +30,6 @@
+ 
+ #include "../internal.h"
+ 
+-/*
+- * Given a group clear all of the inode marks associated with that group.
+- */
+-void fsnotify_clear_inode_marks_by_group(struct fsnotify_group *group)
+-{
+-	fsnotify_clear_marks_by_group_flags(group, FSNOTIFY_OBJ_TYPE_INODE);
+-}
+-
+ /*
+  * given a group and inode, find the mark associated with that combination.
+  * if found take a reference to that mark and return it, else return NULL
+diff --git a/fs/notify/vfsmount_mark.c b/fs/notify/vfsmount_mark.c
+index 41bff46576c2..1e692c56deec 100644
+--- a/fs/notify/vfsmount_mark.c
++++ b/fs/notify/vfsmount_mark.c
+@@ -29,11 +29,6 @@
+ #include <linux/fsnotify_backend.h>
+ #include "fsnotify.h"
+ 
+-void fsnotify_clear_vfsmount_marks_by_group(struct fsnotify_group *group)
+-{
+-	fsnotify_clear_marks_by_group_flags(group, FSNOTIFY_OBJ_TYPE_VFSMOUNT);
+-}
+-
+ /*
+  * given a group and vfsmount, find the mark associated with that combination.
+  * if found take a reference to that mark and return it, else return NULL
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index 7b2c2c13cf6d..3abadde2e367 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -354,12 +354,18 @@ extern void fsnotify_destroy_mark(struct fsnotify_mark *mark,
+ extern void fsnotify_detach_mark(struct fsnotify_mark *mark);
+ /* free mark */
+ extern void fsnotify_free_mark(struct fsnotify_mark *mark);
+-/* run all the marks in a group, and clear all of the vfsmount marks */
+-extern void fsnotify_clear_vfsmount_marks_by_group(struct fsnotify_group *group);
+-/* run all the marks in a group, and clear all of the inode marks */
+-extern void fsnotify_clear_inode_marks_by_group(struct fsnotify_group *group);
+ /* run all the marks in a group, and clear all of the marks attached to given object type */
+ extern void fsnotify_clear_marks_by_group_flags(struct fsnotify_group *group, unsigned int flags);
++/* run all the marks in a group, and clear all of the vfsmount marks */
++static inline void fsnotify_clear_vfsmount_marks_by_group(struct fsnotify_group *group)
++{
++	fsnotify_clear_marks_by_group_flags(group, FSNOTIFY_OBJ_TYPE_VFSMOUNT);
++}
++/* run all the marks in a group, and clear all of the inode marks */
++static inline void fsnotify_clear_inode_marks_by_group(struct fsnotify_group *group)
++{
++	fsnotify_clear_marks_by_group_flags(group, FSNOTIFY_OBJ_TYPE_INODE);
++}
+ extern void fsnotify_get_mark(struct fsnotify_mark *mark);
+ extern void fsnotify_put_mark(struct fsnotify_mark *mark);
+ extern void fsnotify_unmount_inodes(struct super_block *sb);
+-- 
+2.18.0
+

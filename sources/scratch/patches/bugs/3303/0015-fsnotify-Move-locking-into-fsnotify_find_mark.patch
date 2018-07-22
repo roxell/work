@@ -1,0 +1,89 @@
+From 9e3f807466de627b1bab06b6d374f30c8c925cf8 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 15 Mar 2017 09:33:58 +0100
+Subject: [PATCH 15/38] fsnotify: Move locking into fsnotify_find_mark()
+
+commit f06fd98759451876f51607f60abd74c89b141610 upstream.
+
+Move locking of a mark list into fsnotify_find_mark(). This reduces code
+churn in the following patch changing lock protecting the list.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/inode_mark.c    | 8 +-------
+ fs/notify/mark.c          | 8 ++++++++
+ fs/notify/vfsmount_mark.c | 7 +------
+ 3 files changed, 10 insertions(+), 13 deletions(-)
+
+diff --git a/fs/notify/inode_mark.c b/fs/notify/inode_mark.c
+index 9b2f4e6eb8eb..f05fc49b8242 100644
+--- a/fs/notify/inode_mark.c
++++ b/fs/notify/inode_mark.c
+@@ -71,13 +71,7 @@ void fsnotify_clear_inode_marks_by_group(struct fsnotify_group *group)
+ struct fsnotify_mark *fsnotify_find_inode_mark(struct fsnotify_group *group,
+ 					       struct inode *inode)
+ {
+-	struct fsnotify_mark *mark;
+-
+-	spin_lock(&inode->i_lock);
+-	mark = fsnotify_find_mark(inode->i_fsnotify_marks, group);
+-	spin_unlock(&inode->i_lock);
+-
+-	return mark;
++	return fsnotify_find_mark(inode->i_fsnotify_marks, group);
+ }
+ 
+ /**
+diff --git a/fs/notify/mark.c b/fs/notify/mark.c
+index 06faf166c7ae..0830e0af997a 100644
+--- a/fs/notify/mark.c
++++ b/fs/notify/mark.c
+@@ -485,16 +485,24 @@ struct fsnotify_mark *fsnotify_find_mark(struct fsnotify_mark_connector *conn,
+ 					 struct fsnotify_group *group)
+ {
+ 	struct fsnotify_mark *mark;
++	spinlock_t *lock;
+ 
+ 	if (!conn)
+ 		return NULL;
+ 
++	if (conn->flags & FSNOTIFY_OBJ_TYPE_INODE)
++		lock = &conn->inode->i_lock;
++	else
++		lock = &conn->mnt->mnt_root->d_lock;
++	spin_lock(lock);
+ 	hlist_for_each_entry(mark, &conn->list, obj_list) {
+ 		if (mark->group == group) {
+ 			fsnotify_get_mark(mark);
++			spin_unlock(lock);
+ 			return mark;
+ 		}
+ 	}
++	spin_unlock(lock);
+ 	return NULL;
+ }
+ 
+diff --git a/fs/notify/vfsmount_mark.c b/fs/notify/vfsmount_mark.c
+index ffe0d7098cba..3476ee44b2c5 100644
+--- a/fs/notify/vfsmount_mark.c
++++ b/fs/notify/vfsmount_mark.c
+@@ -65,11 +65,6 @@ struct fsnotify_mark *fsnotify_find_vfsmount_mark(struct fsnotify_group *group,
+ 						  struct vfsmount *mnt)
+ {
+ 	struct mount *m = real_mount(mnt);
+-	struct fsnotify_mark *mark;
+ 
+-	spin_lock(&mnt->mnt_root->d_lock);
+-	mark = fsnotify_find_mark(m->mnt_fsnotify_marks, group);
+-	spin_unlock(&mnt->mnt_root->d_lock);
+-
+-	return mark;
++	return fsnotify_find_mark(m->mnt_fsnotify_marks, group);
+ }
+-- 
+2.18.0
+

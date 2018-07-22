@@ -1,0 +1,90 @@
+From 8d440a00d734d8607e2f7f114fbea39630471262 Mon Sep 17 00:00:00 2001
+From: Marc Zyngier <marc.zyngier@arm.com>
+Date: Sun, 17 Jun 2018 12:40:23 -0300
+Subject: [PATCH 4/5] hrtimer: Revert CLOCK_MONOTONIC_RAW support
+
+[ Upstream commit 82e88ff1ea948d83125a8aaa7c9809f03ccc500f ]
+[ Backported to 4.4, does not revert a6e707ddbdf1 like original ]
+[ Fixes v4.4 (4/5) https://bugs.linaro.org/show_bug.cgi?id=2950 ]
+
+Revert commits:
+a6e707ddbdf1: KVM: arm/arm64: timer: Switch to CLOCK_MONOTONIC_RAW
+9006a01829a5: hrtimer: Catch illegal clockids
+9c808765e88e: hrtimer: Add support for CLOCK_MONOTONIC_RAW
+
+Marc found out, that there are fundamental issues with that patch series
+because __hrtimer_get_next_event() and hrtimer_forward() need support for
+CLOCK_MONOTONIC_RAW. Nothing which is easily fixed, so revert the whole lot.
+
+Reported-by: Marc Zyngier <marc.zyngier@arm.com>
+Link: http://lkml.kernel.org/r/56D6CEF0.8060607@arm.com
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+---
+ include/linux/hrtimer.h |  1 -
+ kernel/time/hrtimer.c   | 18 ++----------------
+ 2 files changed, 2 insertions(+), 17 deletions(-)
+
+diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
+index 2f7bf185aeb2..2ead22dd74a0 100644
+--- a/include/linux/hrtimer.h
++++ b/include/linux/hrtimer.h
+@@ -153,7 +153,6 @@ enum  hrtimer_base_type {
+ 	HRTIMER_BASE_REALTIME,
+ 	HRTIMER_BASE_BOOTTIME,
+ 	HRTIMER_BASE_TAI,
+-	HRTIMER_BASE_MONOTONIC_RAW,
+ 	HRTIMER_MAX_CLOCK_BASES,
+ };
+ 
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 1813f3c4d016..5720be6099e0 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -90,30 +90,19 @@ DEFINE_PER_CPU(struct hrtimer_cpu_base, hrtimer_bases) =
+ 			.clockid = CLOCK_TAI,
+ 			.get_time = &ktime_get_clocktai,
+ 		},
+-		{
+-			.index = HRTIMER_BASE_MONOTONIC_RAW,
+-			.clockid = CLOCK_MONOTONIC_RAW,
+-			.get_time = &ktime_get_raw,
+-		},
+ 	}
+ };
+ 
+ static const int hrtimer_clock_to_base_table[MAX_CLOCKS] = {
+-	/* Make sure we catch unsupported clockids */
+-	[0 ... MAX_CLOCKS - 1]	= HRTIMER_MAX_CLOCK_BASES,
+-
+ 	[CLOCK_REALTIME]	= HRTIMER_BASE_REALTIME,
+ 	[CLOCK_MONOTONIC]	= HRTIMER_BASE_MONOTONIC,
+-	[CLOCK_MONOTONIC_RAW]   = HRTIMER_BASE_MONOTONIC_RAW,
+ 	[CLOCK_BOOTTIME]	= HRTIMER_BASE_BOOTTIME,
+ 	[CLOCK_TAI]		= HRTIMER_BASE_TAI,
+ };
+ 
+ static inline int hrtimer_clockid_to_base(clockid_t clock_id)
+ {
+-	int base = hrtimer_clock_to_base_table[clock_id];
+-	BUG_ON(base == HRTIMER_MAX_CLOCK_BASES);
+-	return base;
++	return hrtimer_clock_to_base_table[clock_id];
+ }
+ 
+ /*
+@@ -1305,10 +1294,7 @@ static void __hrtimer_run_queues(struct hrtimer_cpu_base *cpu_base, ktime_t now)
+ 		if (!(active & 0x01))
+ 			continue;
+ 
+-		if (unlikely(base->index == HRTIMER_BASE_MONOTONIC_RAW))
+-			basenow = ktime_get_raw();
+-		else
+-			basenow = ktime_add(now, base->offset);
++		basenow = ktime_add(now, base->offset);
+ 
+ 		while ((node = timerqueue_getnext(&base->active))) {
+ 			struct hrtimer *timer;
+-- 
+2.17.1
+

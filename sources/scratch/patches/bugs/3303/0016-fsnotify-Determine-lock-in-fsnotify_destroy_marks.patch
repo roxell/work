@@ -1,0 +1,78 @@
+From 2be4bcaa81fc497e375a98b3a9ba1fec5c5ac1db Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 15 Mar 2017 09:41:15 +0100
+Subject: [PATCH 16/38] fsnotify: Determine lock in fsnotify_destroy_marks()
+
+commit a03e2e4f078365428bb4317989cb5d1d6563cfe9 upstream.
+
+Instead of passing spinlock into fsnotify_destroy_marks() determine it
+directly in that function from the connector type. This will reduce code
+churn when changing lock protecting list of marks.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/fsnotify.h | 10 ++++------
+ fs/notify/mark.c     |  9 +++++++--
+ 2 files changed, 11 insertions(+), 8 deletions(-)
+
+diff --git a/fs/notify/fsnotify.h b/fs/notify/fsnotify.h
+index 96051780d50e..225924274f8a 100644
+--- a/fs/notify/fsnotify.h
++++ b/fs/notify/fsnotify.h
+@@ -26,19 +26,17 @@ extern struct inode *fsnotify_destroy_inode_mark(struct fsnotify_mark *mark);
+ extern struct fsnotify_mark *fsnotify_find_mark(
+ 					struct fsnotify_mark_connector *conn,
+ 					struct fsnotify_group *group);
+-/* Destroy all marks connected via given connector protected by 'lock' */
+-extern void fsnotify_destroy_marks(struct fsnotify_mark_connector *conn,
+-				   spinlock_t *lock);
++/* Destroy all marks connected via given connector */
++extern void fsnotify_destroy_marks(struct fsnotify_mark_connector *conn);
+ /* run the list of all marks associated with inode and destroy them */
+ static inline void fsnotify_clear_marks_by_inode(struct inode *inode)
+ {
+-	fsnotify_destroy_marks(inode->i_fsnotify_marks, &inode->i_lock);
++	fsnotify_destroy_marks(inode->i_fsnotify_marks);
+ }
+ /* run the list of all marks associated with vfsmount and destroy them */
+ static inline void fsnotify_clear_marks_by_mount(struct vfsmount *mnt)
+ {
+-	fsnotify_destroy_marks(real_mount(mnt)->mnt_fsnotify_marks,
+-			       &mnt->mnt_root->d_lock);
++	fsnotify_destroy_marks(real_mount(mnt)->mnt_fsnotify_marks);
+ }
+ /* prepare for freeing all marks associated with given group */
+ extern void fsnotify_detach_group_marks(struct fsnotify_group *group);
+diff --git a/fs/notify/mark.c b/fs/notify/mark.c
+index 0830e0af997a..f32ca924c44e 100644
+--- a/fs/notify/mark.c
++++ b/fs/notify/mark.c
+@@ -572,14 +572,19 @@ void fsnotify_detach_group_marks(struct fsnotify_group *group)
+ 	}
+ }
+ 
+-void fsnotify_destroy_marks(struct fsnotify_mark_connector *conn,
+-			    spinlock_t *lock)
++void fsnotify_destroy_marks(struct fsnotify_mark_connector *conn)
+ {
+ 	struct fsnotify_mark *mark;
++	spinlock_t *lock;
+ 
+ 	if (!conn)
+ 		return;
+ 
++	if (conn->flags & FSNOTIFY_OBJ_TYPE_INODE)
++		lock = &conn->inode->i_lock;
++	else
++		lock = &conn->mnt->mnt_root->d_lock;
++
+ 	while (1) {
+ 		/*
+ 		 * We have to be careful since we can race with e.g.
+-- 
+2.18.0
+

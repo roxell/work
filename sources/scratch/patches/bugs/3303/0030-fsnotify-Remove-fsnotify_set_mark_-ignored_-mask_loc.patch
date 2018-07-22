@@ -1,0 +1,154 @@
+From b5c638a366df844d4c8f1381688f81690954bb32 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 21 Dec 2016 16:03:59 +0100
+Subject: [PATCH 30/38] fsnotify: Remove
+ fsnotify_set_mark_{,ignored_}mask_locked()
+
+commit 66d2b81bcb92c14b22a56a9ff936f2b40accc83c upstream.
+
+These helpers are now only a simple assignment and just obfuscate
+what is going on. Remove them.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/dnotify/dnotify.c        |  9 +++------
+ fs/notify/fanotify/fanotify_user.c |  9 ++++-----
+ fs/notify/inotify/inotify_user.c   |  6 ++----
+ fs/notify/mark.c                   | 14 --------------
+ include/linux/fsnotify_backend.h   |  4 ----
+ 5 files changed, 9 insertions(+), 33 deletions(-)
+
+diff --git a/fs/notify/dnotify/dnotify.c b/fs/notify/dnotify/dnotify.c
+index aba165ae3397..5940c75541a7 100644
+--- a/fs/notify/dnotify/dnotify.c
++++ b/fs/notify/dnotify/dnotify.c
+@@ -52,7 +52,7 @@ struct dnotify_mark {
+  */
+ static void dnotify_recalc_inode_mask(struct fsnotify_mark *fsn_mark)
+ {
+-	__u32 new_mask, old_mask;
++	__u32 new_mask = 0;
+ 	struct dnotify_struct *dn;
+ 	struct dnotify_mark *dn_mark  = container_of(fsn_mark,
+ 						     struct dnotify_mark,
+@@ -60,14 +60,11 @@ static void dnotify_recalc_inode_mask(struct fsnotify_mark *fsn_mark)
+ 
+ 	assert_spin_locked(&fsn_mark->lock);
+ 
+-	old_mask = fsn_mark->mask;
+-	new_mask = 0;
+ 	for (dn = dn_mark->dn; dn != NULL; dn = dn->dn_next)
+ 		new_mask |= (dn->dn_mask & ~FS_DN_MULTISHOT);
+-	fsnotify_set_mark_mask_locked(fsn_mark, new_mask);
+-
+-	if (old_mask == new_mask)
++	if (fsn_mark->mask == new_mask)
+ 		return;
++	fsn_mark->mask = new_mask;
+ 
+ 	fsnotify_recalc_mask(fsn_mark->connector);
+ }
+diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
+index af67109bd345..510aa7ba71ef 100644
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -520,13 +520,12 @@ static __u32 fanotify_mark_remove_from_mask(struct fsnotify_mark *fsn_mark,
+ 			tmask &= ~FAN_ONDIR;
+ 
+ 		oldmask = fsn_mark->mask;
+-		fsnotify_set_mark_mask_locked(fsn_mark, tmask);
++		fsn_mark->mask = tmask;
+ 	} else {
+ 		__u32 tmask = fsn_mark->ignored_mask & ~mask;
+ 		if (flags & FAN_MARK_ONDIR)
+ 			tmask &= ~FAN_ONDIR;
+-
+-		fsnotify_set_mark_ignored_mask_locked(fsn_mark, tmask);
++		fsn_mark->ignored_mask = tmask;
+ 	}
+ 	*destroy = !(fsn_mark->mask | fsn_mark->ignored_mask);
+ 	spin_unlock(&fsn_mark->lock);
+@@ -608,13 +607,13 @@ static __u32 fanotify_mark_add_to_mask(struct fsnotify_mark *fsn_mark,
+ 			tmask |= FAN_ONDIR;
+ 
+ 		oldmask = fsn_mark->mask;
+-		fsnotify_set_mark_mask_locked(fsn_mark, tmask);
++		fsn_mark->mask = tmask;
+ 	} else {
+ 		__u32 tmask = fsn_mark->ignored_mask | mask;
+ 		if (flags & FAN_MARK_ONDIR)
+ 			tmask |= FAN_ONDIR;
+ 
+-		fsnotify_set_mark_ignored_mask_locked(fsn_mark, tmask);
++		fsn_mark->ignored_mask = tmask;
+ 		if (flags & FAN_MARK_IGNORED_SURV_MODIFY)
+ 			fsn_mark->flags |= FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY;
+ 	}
+diff --git a/fs/notify/inotify/inotify_user.c b/fs/notify/inotify/inotify_user.c
+index 458a2f056f75..5c1caac899ff 100644
+--- a/fs/notify/inotify/inotify_user.c
++++ b/fs/notify/inotify/inotify_user.c
+@@ -515,14 +515,12 @@ static int inotify_update_existing_watch(struct fsnotify_group *group,
+ 	i_mark = container_of(fsn_mark, struct inotify_inode_mark, fsn_mark);
+ 
+ 	spin_lock(&fsn_mark->lock);
+-
+ 	old_mask = fsn_mark->mask;
+ 	if (add)
+-		fsnotify_set_mark_mask_locked(fsn_mark, (fsn_mark->mask | mask));
++		fsn_mark->mask |= mask;
+ 	else
+-		fsnotify_set_mark_mask_locked(fsn_mark, mask);
++		fsn_mark->mask = mask;
+ 	new_mask = fsn_mark->mask;
+-
+ 	spin_unlock(&fsn_mark->lock);
+ 
+ 	if (old_mask != new_mask) {
+diff --git a/fs/notify/mark.c b/fs/notify/mark.c
+index c4f43a6acd9a..ae33e9f91849 100644
+--- a/fs/notify/mark.c
++++ b/fs/notify/mark.c
+@@ -393,20 +393,6 @@ void fsnotify_destroy_mark(struct fsnotify_mark *mark,
+ 	fsnotify_free_mark(mark);
+ }
+ 
+-void fsnotify_set_mark_mask_locked(struct fsnotify_mark *mark, __u32 mask)
+-{
+-	assert_spin_locked(&mark->lock);
+-
+-	mark->mask = mask;
+-}
+-
+-void fsnotify_set_mark_ignored_mask_locked(struct fsnotify_mark *mark, __u32 mask)
+-{
+-	assert_spin_locked(&mark->lock);
+-
+-	mark->ignored_mask = mask;
+-}
+-
+ /*
+  * Sorting function for lists of fsnotify marks.
+  *
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index 56755f2727f2..c34226603aae 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -346,10 +346,6 @@ extern void fsnotify_init_mark(struct fsnotify_mark *mark, void (*free_mark)(str
+ extern struct fsnotify_mark *fsnotify_find_inode_mark(struct fsnotify_group *group, struct inode *inode);
+ /* find (and take a reference) to a mark associated with group and vfsmount */
+ extern struct fsnotify_mark *fsnotify_find_vfsmount_mark(struct fsnotify_group *group, struct vfsmount *mnt);
+-/* set the ignored_mask of a mark */
+-extern void fsnotify_set_mark_ignored_mask_locked(struct fsnotify_mark *mark, __u32 mask);
+-/* set the mask of a mark (might pin the object into memory */
+-extern void fsnotify_set_mark_mask_locked(struct fsnotify_mark *mark, __u32 mask);
+ /* attach the mark to both the group and the inode */
+ extern int fsnotify_add_mark(struct fsnotify_mark *mark, struct fsnotify_group *group,
+ 			     struct inode *inode, struct vfsmount *mnt, int allow_dups);
+-- 
+2.18.0
+

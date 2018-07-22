@@ -1,0 +1,97 @@
+From 53fe3e05104eb87f9413426434f5c14abce44e2a Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 21 Dec 2016 14:48:18 +0100
+Subject: [PATCH 25/38] fsnotify: Remove special handling of mark destruction
+ on group shutdown
+
+commit f09b04a03e0239f65bd964a1de758e53cf6349e8 upstream.
+
+Currently we queue all marks for destruction on group shutdown and then
+destroy them from fsnotify_destroy_group() instead from a worker thread
+which is the usual path. However worker can already be processing some
+list of marks to destroy so this does not make 100% all marks are really
+destroyed by the time group is shut down. This isn't a big problem as
+each mark holds group reference and thus group stays partially alive
+until all marks are really freed but there's no point in complicating
+our lives - just wait for the delayed work to be finished instead.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/fsnotify.h |  6 ++----
+ fs/notify/group.c    | 10 ++++++----
+ fs/notify/mark.c     |  7 ++++---
+ 3 files changed, 12 insertions(+), 11 deletions(-)
+
+diff --git a/fs/notify/fsnotify.h b/fs/notify/fsnotify.h
+index 72050b75ca8c..2a92dc06198c 100644
+--- a/fs/notify/fsnotify.h
++++ b/fs/notify/fsnotify.h
+@@ -36,10 +36,8 @@ static inline void fsnotify_clear_marks_by_mount(struct vfsmount *mnt)
+ }
+ /* prepare for freeing all marks associated with given group */
+ extern void fsnotify_detach_group_marks(struct fsnotify_group *group);
+-/*
+- * wait for fsnotify_mark_srcu period to end and free all marks in destroy_list
+- */
+-extern void fsnotify_mark_destroy_list(void);
++/* Wait until all marks queued for destruction are destroyed */
++extern void fsnotify_wait_marks_destroyed(void);
+ 
+ /*
+  * update the dentry->d_flags of all of inode's children to indicate if inode cares
+diff --git a/fs/notify/group.c b/fs/notify/group.c
+index fbe3cbebec16..0fb4aadcc19f 100644
+--- a/fs/notify/group.c
++++ b/fs/notify/group.c
+@@ -66,14 +66,16 @@ void fsnotify_destroy_group(struct fsnotify_group *group)
+ 	 */
+ 	fsnotify_group_stop_queueing(group);
+ 
+-	/* clear all inode marks for this group, attach them to destroy_list */
++	/* Clear all marks for this group and queue them for destruction */
+ 	fsnotify_detach_group_marks(group);
+ 
+ 	/*
+-	 * Wait for fsnotify_mark_srcu period to end and free all marks in
+-	 * destroy_list
++	 * Wait until all marks get really destroyed. We could actually destroy
++	 * them ourselves instead of waiting for worker to do it, however that
++	 * would be racy as worker can already be processing some marks before
++	 * we even entered fsnotify_destroy_group().
+ 	 */
+-	fsnotify_mark_destroy_list();
++	fsnotify_wait_marks_destroyed();
+ 
+ 	/*
+ 	 * Since we have waited for fsnotify_mark_srcu in
+diff --git a/fs/notify/mark.c b/fs/notify/mark.c
+index 21c7791362c8..f916b71c9139 100644
+--- a/fs/notify/mark.c
++++ b/fs/notify/mark.c
+@@ -703,7 +703,7 @@ void fsnotify_init_mark(struct fsnotify_mark *mark,
+  * Destroy all marks in destroy_list, waits for SRCU period to finish before
+  * actually freeing marks.
+  */
+-void fsnotify_mark_destroy_list(void)
++static void fsnotify_mark_destroy_workfn(struct work_struct *work)
+ {
+ 	struct fsnotify_mark *mark, *next;
+ 	struct list_head private_destroy_list;
+@@ -721,7 +721,8 @@ void fsnotify_mark_destroy_list(void)
+ 	}
+ }
+ 
+-static void fsnotify_mark_destroy_workfn(struct work_struct *work)
++/* Wait for all marks queued for destruction to be actually destroyed */
++void fsnotify_wait_marks_destroyed(void)
+ {
+-	fsnotify_mark_destroy_list();
++	flush_delayed_work(&reaper_work);
+ }
+-- 
+2.18.0
+

@@ -1,0 +1,259 @@
+From db0bb1f5f7a1a99d0c1f5797a1368aa6094eba02 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 21 Dec 2016 16:28:45 +0100
+Subject: [PATCH 35/38] fsnotify: Remove fsnotify_find_{inode|vfsmount}_mark()
+
+commit b1362edfe15b20edd3d116cec521aa420b7afb98 upstream.
+
+These are very thin wrappers, just remove them. Drop
+fs/notify/vfsmount_mark.c as it is empty now.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/Makefile                 |  2 +-
+ fs/notify/dnotify/dnotify.c        |  4 +--
+ fs/notify/fanotify/fanotify_user.c | 12 +++++----
+ fs/notify/fsnotify.h               |  4 ---
+ fs/notify/inode_mark.c             | 10 -------
+ fs/notify/inotify/inotify_user.c   |  2 +-
+ fs/notify/vfsmount_mark.c          | 42 ------------------------------
+ include/linux/fsnotify_backend.h   |  8 +++---
+ kernel/audit_tree.c                |  3 ++-
+ kernel/audit_watch.c               |  2 +-
+ 10 files changed, 18 insertions(+), 71 deletions(-)
+ delete mode 100644 fs/notify/vfsmount_mark.c
+
+diff --git a/fs/notify/Makefile b/fs/notify/Makefile
+index 96d3420d0242..ebb64a0282d1 100644
+--- a/fs/notify/Makefile
++++ b/fs/notify/Makefile
+@@ -1,5 +1,5 @@
+ obj-$(CONFIG_FSNOTIFY)		+= fsnotify.o notification.o group.o inode_mark.o \
+-				   mark.o vfsmount_mark.o fdinfo.o
++				   mark.o fdinfo.o
+ 
+ obj-y			+= dnotify/
+ obj-y			+= inotify/
+diff --git a/fs/notify/dnotify/dnotify.c b/fs/notify/dnotify/dnotify.c
+index 5940c75541a7..b77d8d049e4d 100644
+--- a/fs/notify/dnotify/dnotify.c
++++ b/fs/notify/dnotify/dnotify.c
+@@ -157,7 +157,7 @@ void dnotify_flush(struct file *filp, fl_owner_t id)
+ 	if (!S_ISDIR(inode->i_mode))
+ 		return;
+ 
+-	fsn_mark = fsnotify_find_inode_mark(dnotify_group, inode);
++	fsn_mark = fsnotify_find_mark(&inode->i_fsnotify_marks, dnotify_group);
+ 	if (!fsn_mark)
+ 		return;
+ 	dn_mark = container_of(fsn_mark, struct dnotify_mark, fsn_mark);
+@@ -313,7 +313,7 @@ int fcntl_dirnotify(int fd, struct file *filp, unsigned long arg)
+ 	mutex_lock(&dnotify_group->mark_mutex);
+ 
+ 	/* add the new_fsn_mark or find an old one. */
+-	fsn_mark = fsnotify_find_inode_mark(dnotify_group, inode);
++	fsn_mark = fsnotify_find_mark(&inode->i_fsnotify_marks, dnotify_group);
+ 	if (fsn_mark) {
+ 		dn_mark = container_of(fsn_mark, struct dnotify_mark, fsn_mark);
+ 		spin_lock(&fsn_mark->lock);
+diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
+index a37722b7838e..3e3f1e7888ea 100644
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -542,7 +542,8 @@ static int fanotify_remove_vfsmount_mark(struct fsnotify_group *group,
+ 	int destroy_mark;
+ 
+ 	mutex_lock(&group->mark_mutex);
+-	fsn_mark = fsnotify_find_vfsmount_mark(group, mnt);
++	fsn_mark = fsnotify_find_mark(&real_mount(mnt)->mnt_fsnotify_marks,
++				      group);
+ 	if (!fsn_mark) {
+ 		mutex_unlock(&group->mark_mutex);
+ 		return -ENOENT;
+@@ -571,7 +572,7 @@ static int fanotify_remove_inode_mark(struct fsnotify_group *group,
+ 	int destroy_mark;
+ 
+ 	mutex_lock(&group->mark_mutex);
+-	fsn_mark = fsnotify_find_inode_mark(group, inode);
++	fsn_mark = fsnotify_find_mark(&inode->i_fsnotify_marks, group);
+ 	if (!fsn_mark) {
+ 		mutex_unlock(&group->mark_mutex);
+ 		return -ENOENT;
+@@ -587,7 +588,7 @@ static int fanotify_remove_inode_mark(struct fsnotify_group *group,
+ 	if (destroy_mark)
+ 		fsnotify_free_mark(fsn_mark);
+ 
+-	/* matches the fsnotify_find_inode_mark() */
++	/* matches the fsnotify_find_mark() */
+ 	fsnotify_put_mark(fsn_mark);
+ 
+ 	return 0;
+@@ -655,7 +656,8 @@ static int fanotify_add_vfsmount_mark(struct fsnotify_group *group,
+ 	__u32 added;
+ 
+ 	mutex_lock(&group->mark_mutex);
+-	fsn_mark = fsnotify_find_vfsmount_mark(group, mnt);
++	fsn_mark = fsnotify_find_mark(&real_mount(mnt)->mnt_fsnotify_marks,
++				      group);
+ 	if (!fsn_mark) {
+ 		fsn_mark = fanotify_add_new_mark(group, NULL, mnt);
+ 		if (IS_ERR(fsn_mark)) {
+@@ -692,7 +694,7 @@ static int fanotify_add_inode_mark(struct fsnotify_group *group,
+ 		return 0;
+ 
+ 	mutex_lock(&group->mark_mutex);
+-	fsn_mark = fsnotify_find_inode_mark(group, inode);
++	fsn_mark = fsnotify_find_mark(&inode->i_fsnotify_marks, group);
+ 	if (!fsn_mark) {
+ 		fsn_mark = fanotify_add_new_mark(group, inode, NULL);
+ 		if (IS_ERR(fsn_mark)) {
+diff --git a/fs/notify/fsnotify.h b/fs/notify/fsnotify.h
+index 3ec593c32684..bf012e8ecd14 100644
+--- a/fs/notify/fsnotify.h
++++ b/fs/notify/fsnotify.h
+@@ -24,10 +24,6 @@ extern struct srcu_struct fsnotify_mark_srcu;
+ extern int fsnotify_compare_groups(struct fsnotify_group *a,
+ 				   struct fsnotify_group *b);
+ 
+-/* Find mark belonging to given group in the list of marks */
+-extern struct fsnotify_mark *fsnotify_find_mark(
+-				struct fsnotify_mark_connector __rcu **connp,
+-				struct fsnotify_group *group);
+ /* Destroy all marks connected via given connector */
+ extern void fsnotify_destroy_marks(struct fsnotify_mark_connector __rcu **connp);
+ /* run the list of all marks associated with inode and destroy them */
+diff --git a/fs/notify/inode_mark.c b/fs/notify/inode_mark.c
+index bdc15f736082..5cc317bad082 100644
+--- a/fs/notify/inode_mark.c
++++ b/fs/notify/inode_mark.c
+@@ -30,16 +30,6 @@
+ 
+ #include "../internal.h"
+ 
+-/*
+- * given a group and inode, find the mark associated with that combination.
+- * if found take a reference to that mark and return it, else return NULL
+- */
+-struct fsnotify_mark *fsnotify_find_inode_mark(struct fsnotify_group *group,
+-					       struct inode *inode)
+-{
+-	return fsnotify_find_mark(&inode->i_fsnotify_marks, group);
+-}
+-
+ /**
+  * fsnotify_unmount_inodes - an sb is unmounting.  handle any watched inodes.
+  * @sb: superblock being unmounted.
+diff --git a/fs/notify/inotify/inotify_user.c b/fs/notify/inotify/inotify_user.c
+index de12f016ea94..80459118308d 100644
+--- a/fs/notify/inotify/inotify_user.c
++++ b/fs/notify/inotify/inotify_user.c
+@@ -508,7 +508,7 @@ static int inotify_update_existing_watch(struct fsnotify_group *group,
+ 
+ 	mask = inotify_arg_to_mask(arg);
+ 
+-	fsn_mark = fsnotify_find_inode_mark(group, inode);
++	fsn_mark = fsnotify_find_mark(&inode->i_fsnotify_marks, group);
+ 	if (!fsn_mark)
+ 		return -ENOENT;
+ 
+diff --git a/fs/notify/vfsmount_mark.c b/fs/notify/vfsmount_mark.c
+deleted file mode 100644
+index 1e692c56deec..000000000000
+--- a/fs/notify/vfsmount_mark.c
++++ /dev/null
+@@ -1,42 +0,0 @@
+-/*
+- *  Copyright (C) 2008 Red Hat, Inc., Eric Paris <eparis@redhat.com>
+- *
+- *  This program is free software; you can redistribute it and/or modify
+- *  it under the terms of the GNU General Public License as published by
+- *  the Free Software Foundation; either version 2, or (at your option)
+- *  any later version.
+- *
+- *  This program is distributed in the hope that it will be useful,
+- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- *  GNU General Public License for more details.
+- *
+- *  You should have received a copy of the GNU General Public License
+- *  along with this program; see the file COPYING.  If not, write to
+- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+- */
+-
+-#include <linux/fs.h>
+-#include <linux/init.h>
+-#include <linux/kernel.h>
+-#include <linux/module.h>
+-#include <linux/mount.h>
+-#include <linux/mutex.h>
+-#include <linux/spinlock.h>
+-
+-#include <linux/atomic.h>
+-
+-#include <linux/fsnotify_backend.h>
+-#include "fsnotify.h"
+-
+-/*
+- * given a group and vfsmount, find the mark associated with that combination.
+- * if found take a reference to that mark and return it, else return NULL
+- */
+-struct fsnotify_mark *fsnotify_find_vfsmount_mark(struct fsnotify_group *group,
+-						  struct vfsmount *mnt)
+-{
+-	struct mount *m = real_mount(mnt);
+-
+-	return fsnotify_find_mark(&m->mnt_fsnotify_marks, group);
+-}
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index 150ea0a2ded4..88aa42d321a9 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -340,10 +340,10 @@ extern struct fsnotify_event *fsnotify_remove_first_event(struct fsnotify_group
+ /* Calculate mask of events for a list of marks */
+ extern void fsnotify_recalc_mask(struct fsnotify_mark_connector *conn);
+ extern void fsnotify_init_mark(struct fsnotify_mark *mark, void (*free_mark)(struct fsnotify_mark *mark));
+-/* find (and take a reference) to a mark associated with group and inode */
+-extern struct fsnotify_mark *fsnotify_find_inode_mark(struct fsnotify_group *group, struct inode *inode);
+-/* find (and take a reference) to a mark associated with group and vfsmount */
+-extern struct fsnotify_mark *fsnotify_find_vfsmount_mark(struct fsnotify_group *group, struct vfsmount *mnt);
++/* Find mark belonging to given group in the list of marks */
++extern struct fsnotify_mark *fsnotify_find_mark(
++				struct fsnotify_mark_connector __rcu **connp,
++				struct fsnotify_group *group);
+ /* attach the mark to both the group and the inode */
+ extern int fsnotify_add_mark(struct fsnotify_mark *mark, struct fsnotify_group *group,
+ 			     struct inode *inode, struct vfsmount *mnt, int allow_dups);
+diff --git a/kernel/audit_tree.c b/kernel/audit_tree.c
+index a4131c18d516..7e3f0b57fc31 100644
+--- a/kernel/audit_tree.c
++++ b/kernel/audit_tree.c
+@@ -391,7 +391,8 @@ static int tag_chunk(struct inode *inode, struct audit_tree *tree)
+ 	struct node *p;
+ 	int n;
+ 
+-	old_entry = fsnotify_find_inode_mark(audit_tree_group, inode);
++	old_entry = fsnotify_find_mark(&inode->i_fsnotify_marks,
++				       audit_tree_group);
+ 	if (!old_entry)
+ 		return create_chunk(inode, tree);
+ 
+diff --git a/kernel/audit_watch.c b/kernel/audit_watch.c
+index 3d70d074dfb2..ac054130d88d 100644
+--- a/kernel/audit_watch.c
++++ b/kernel/audit_watch.c
+@@ -102,7 +102,7 @@ static inline struct audit_parent *audit_find_parent(struct inode *inode)
+ 	struct audit_parent *parent = NULL;
+ 	struct fsnotify_mark *entry;
+ 
+-	entry = fsnotify_find_inode_mark(audit_watch_group, inode);
++	entry = fsnotify_find_mark(&inode->i_fsnotify_marks, audit_watch_group);
+ 	if (entry)
+ 		parent = container_of(entry, struct audit_parent, mark);
+ 
+-- 
+2.18.0
+

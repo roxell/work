@@ -1,0 +1,54 @@
+From a3f54c886ff3adadd920fa937422cc5ea4306437 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Mon, 3 Apr 2017 16:47:58 +0200
+Subject: [PATCH 05/38] audit_tree: Use mark flags to check whether mark is
+ alive
+
+commit 43471d15df0e7c40ca4df1513fc1dcf5765396ac upstream.
+
+Currently audit code uses checking of mark->inode to verify whether mark
+is still alive. Switch that to checking mark flags as that is more
+logical and current way will become unreliable in future.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ kernel/audit_tree.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/kernel/audit_tree.c b/kernel/audit_tree.c
+index cef1a3684be8..6ede0d61b3c0 100644
+--- a/kernel/audit_tree.c
++++ b/kernel/audit_tree.c
+@@ -190,7 +190,7 @@ static void insert_hash(struct audit_chunk *chunk)
+ 	unsigned long key = chunk_to_key(chunk);
+ 	struct list_head *list;
+ 
+-	if (!key)
++	if (!(chunk->mark.flags & FSNOTIFY_MARK_FLAG_ATTACHED))
+ 		return;
+ 	list = chunk_hash(key);
+ 	list_add_rcu(&chunk->hash, list);
+@@ -247,7 +247,7 @@ static void untag_chunk(struct node *p)
+ 		new = alloc_chunk(size);
+ 
+ 	spin_lock(&entry->lock);
+-	if (chunk->dead || !entry->inode) {
++	if (chunk->dead || !(entry->flags & FSNOTIFY_MARK_FLAG_ATTACHED)) {
+ 		spin_unlock(&entry->lock);
+ 		if (new)
+ 			free_chunk(new);
+@@ -402,7 +402,7 @@ static int tag_chunk(struct inode *inode, struct audit_tree *tree)
+ 	chunk_entry = &chunk->mark;
+ 
+ 	spin_lock(&old_entry->lock);
+-	if (!old_entry->inode) {
++	if (!(old_entry->flags & FSNOTIFY_MARK_FLAG_ATTACHED)) {
+ 		/* old_entry is being shot, lets just lie */
+ 		spin_unlock(&old_entry->lock);
+ 		fsnotify_put_mark(old_entry);
+-- 
+2.18.0
+

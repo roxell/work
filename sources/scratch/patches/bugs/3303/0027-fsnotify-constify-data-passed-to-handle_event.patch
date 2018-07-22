@@ -1,0 +1,220 @@
+From c44c4bb6e398db8d1304e3227e92bb791bd29c0a Mon Sep 17 00:00:00 2001
+From: Al Viro <viro@zeniv.linux.org.uk>
+Date: Sun, 20 Nov 2016 20:19:09 -0500
+Subject: [PATCH 27/38] fsnotify: constify 'data' passed to ->handle_event()
+
+commit 3cd5eca8d7a2fe43098df4c33a1272fe6945cac9 upstream.
+
+ [backport note]
+
+ - minor adjustment in fs/notify/fanotify/fanotify.c
+   because patch "fanotify: fix logic of events on child"
+   was already applied to it.
+
+Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/dnotify/dnotify.c          |  2 +-
+ fs/notify/fanotify/fanotify.c        |  8 ++++----
+ fs/notify/fanotify/fanotify.h        |  2 +-
+ fs/notify/inotify/inotify.h          |  2 +-
+ fs/notify/inotify/inotify_fsnotify.c |  4 ++--
+ include/linux/fsnotify_backend.h     |  2 +-
+ kernel/audit_fsnotify.c              | 10 +++++-----
+ kernel/audit_tree.c                  |  2 +-
+ kernel/audit_watch.c                 |  8 ++++----
+ 9 files changed, 20 insertions(+), 20 deletions(-)
+
+diff --git a/fs/notify/dnotify/dnotify.c b/fs/notify/dnotify/dnotify.c
+index 98b3a708dfcd..41b2a070761c 100644
+--- a/fs/notify/dnotify/dnotify.c
++++ b/fs/notify/dnotify/dnotify.c
+@@ -84,7 +84,7 @@ static int dnotify_handle_event(struct fsnotify_group *group,
+ 				struct inode *inode,
+ 				struct fsnotify_mark *inode_mark,
+ 				struct fsnotify_mark *vfsmount_mark,
+-				u32 mask, void *data, int data_type,
++				u32 mask, const void *data, int data_type,
+ 				const unsigned char *file_name, u32 cookie)
+ {
+ 	struct dnotify_mark *dn_mark;
+diff --git a/fs/notify/fanotify/fanotify.c b/fs/notify/fanotify/fanotify.c
+index 8a459b179183..3d1738c06ed4 100644
+--- a/fs/notify/fanotify/fanotify.c
++++ b/fs/notify/fanotify/fanotify.c
+@@ -90,10 +90,10 @@ static int fanotify_get_response(struct fsnotify_group *group,
+ static bool fanotify_should_send_event(struct fsnotify_mark *inode_mark,
+ 				       struct fsnotify_mark *vfsmnt_mark,
+ 				       u32 event_mask,
+-				       void *data, int data_type)
++				       const void *data, int data_type)
+ {
+ 	__u32 marks_mask = 0, marks_ignored_mask = 0;
+-	struct path *path = data;
++	const struct path *path = data;
+ 
+ 	pr_debug("%s: inode_mark=%p vfsmnt_mark=%p mask=%x data=%p"
+ 		 " data_type=%d\n", __func__, inode_mark, vfsmnt_mark,
+@@ -136,7 +136,7 @@ static bool fanotify_should_send_event(struct fsnotify_mark *inode_mark,
+ }
+ 
+ struct fanotify_event_info *fanotify_alloc_event(struct inode *inode, u32 mask,
+-						 struct path *path)
++						 const struct path *path)
+ {
+ 	struct fanotify_event_info *event;
+ 
+@@ -173,7 +173,7 @@ static int fanotify_handle_event(struct fsnotify_group *group,
+ 				 struct inode *inode,
+ 				 struct fsnotify_mark *inode_mark,
+ 				 struct fsnotify_mark *fanotify_mark,
+-				 u32 mask, void *data, int data_type,
++				 u32 mask, const void *data, int data_type,
+ 				 const unsigned char *file_name, u32 cookie)
+ {
+ 	int ret = 0;
+diff --git a/fs/notify/fanotify/fanotify.h b/fs/notify/fanotify/fanotify.h
+index 2a5fb14115df..4500a74f8d38 100644
+--- a/fs/notify/fanotify/fanotify.h
++++ b/fs/notify/fanotify/fanotify.h
+@@ -47,4 +47,4 @@ static inline struct fanotify_event_info *FANOTIFY_E(struct fsnotify_event *fse)
+ }
+ 
+ struct fanotify_event_info *fanotify_alloc_event(struct inode *inode, u32 mask,
+-						 struct path *path);
++						 const struct path *path);
+diff --git a/fs/notify/inotify/inotify.h b/fs/notify/inotify/inotify.h
+index ed855ef6f077..a6f5907a3fee 100644
+--- a/fs/notify/inotify/inotify.h
++++ b/fs/notify/inotify/inotify.h
+@@ -26,7 +26,7 @@ extern int inotify_handle_event(struct fsnotify_group *group,
+ 				struct inode *inode,
+ 				struct fsnotify_mark *inode_mark,
+ 				struct fsnotify_mark *vfsmount_mark,
+-				u32 mask, void *data, int data_type,
++				u32 mask, const void *data, int data_type,
+ 				const unsigned char *file_name, u32 cookie);
+ 
+ extern const struct fsnotify_ops inotify_fsnotify_ops;
+diff --git a/fs/notify/inotify/inotify_fsnotify.c b/fs/notify/inotify/inotify_fsnotify.c
+index fd3f4c795958..8421f44b3cb3 100644
+--- a/fs/notify/inotify/inotify_fsnotify.c
++++ b/fs/notify/inotify/inotify_fsnotify.c
+@@ -66,7 +66,7 @@ int inotify_handle_event(struct fsnotify_group *group,
+ 			 struct inode *inode,
+ 			 struct fsnotify_mark *inode_mark,
+ 			 struct fsnotify_mark *vfsmount_mark,
+-			 u32 mask, void *data, int data_type,
++			 u32 mask, const void *data, int data_type,
+ 			 const unsigned char *file_name, u32 cookie)
+ {
+ 	struct inotify_inode_mark *i_mark;
+@@ -80,7 +80,7 @@ int inotify_handle_event(struct fsnotify_group *group,
+ 
+ 	if ((inode_mark->mask & FS_EXCL_UNLINK) &&
+ 	    (data_type == FSNOTIFY_EVENT_PATH)) {
+-		struct path *path = data;
++		const struct path *path = data;
+ 
+ 		if (d_unlinked(path->dentry))
+ 			return 0;
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index 30962caad326..9ee9d018c2f3 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -97,7 +97,7 @@ struct fsnotify_ops {
+ 			    struct inode *inode,
+ 			    struct fsnotify_mark *inode_mark,
+ 			    struct fsnotify_mark *vfsmount_mark,
+-			    u32 mask, void *data, int data_type,
++			    u32 mask, const void *data, int data_type,
+ 			    const unsigned char *file_name, u32 cookie);
+ 	void (*free_group_priv)(struct fsnotify_group *group);
+ 	void (*freeing_mark)(struct fsnotify_mark *mark, struct fsnotify_group *group);
+diff --git a/kernel/audit_fsnotify.c b/kernel/audit_fsnotify.c
+index f84f8d06e1f6..1173f7cc7ba3 100644
+--- a/kernel/audit_fsnotify.c
++++ b/kernel/audit_fsnotify.c
+@@ -74,7 +74,7 @@ int audit_mark_compare(struct audit_fsnotify_mark *mark, unsigned long ino, dev_
+ }
+ 
+ static void audit_update_mark(struct audit_fsnotify_mark *audit_mark,
+-			     struct inode *inode)
++			     const struct inode *inode)
+ {
+ 	audit_mark->dev = inode ? inode->i_sb->s_dev : AUDIT_DEV_UNSET;
+ 	audit_mark->ino = inode ? inode->i_ino : AUDIT_INO_UNSET;
+@@ -168,11 +168,11 @@ static int audit_mark_handle_event(struct fsnotify_group *group,
+ 				    struct inode *to_tell,
+ 				    struct fsnotify_mark *inode_mark,
+ 				    struct fsnotify_mark *vfsmount_mark,
+-				    u32 mask, void *data, int data_type,
++				    u32 mask, const void *data, int data_type,
+ 				    const unsigned char *dname, u32 cookie)
+ {
+ 	struct audit_fsnotify_mark *audit_mark;
+-	struct inode *inode = NULL;
++	const struct inode *inode = NULL;
+ 
+ 	audit_mark = container_of(inode_mark, struct audit_fsnotify_mark, mark);
+ 
+@@ -180,10 +180,10 @@ static int audit_mark_handle_event(struct fsnotify_group *group,
+ 
+ 	switch (data_type) {
+ 	case (FSNOTIFY_EVENT_PATH):
+-		inode = ((struct path *)data)->dentry->d_inode;
++		inode = ((const struct path *)data)->dentry->d_inode;
+ 		break;
+ 	case (FSNOTIFY_EVENT_INODE):
+-		inode = (struct inode *)data;
++		inode = (const struct inode *)data;
+ 		break;
+ 	default:
+ 		BUG();
+diff --git a/kernel/audit_tree.c b/kernel/audit_tree.c
+index 8ee5ba9b9d6b..f88cde866f47 100644
+--- a/kernel/audit_tree.c
++++ b/kernel/audit_tree.c
+@@ -989,7 +989,7 @@ static int audit_tree_handle_event(struct fsnotify_group *group,
+ 				   struct inode *to_tell,
+ 				   struct fsnotify_mark *inode_mark,
+ 				   struct fsnotify_mark *vfsmount_mark,
+-				   u32 mask, void *data, int data_type,
++				   u32 mask, const void *data, int data_type,
+ 				   const unsigned char *file_name, u32 cookie)
+ {
+ 	return 0;
+diff --git a/kernel/audit_watch.c b/kernel/audit_watch.c
+index 690e1e3c59f7..c836cfd3b88b 100644
+--- a/kernel/audit_watch.c
++++ b/kernel/audit_watch.c
+@@ -474,10 +474,10 @@ static int audit_watch_handle_event(struct fsnotify_group *group,
+ 				    struct inode *to_tell,
+ 				    struct fsnotify_mark *inode_mark,
+ 				    struct fsnotify_mark *vfsmount_mark,
+-				    u32 mask, void *data, int data_type,
++				    u32 mask, const void *data, int data_type,
+ 				    const unsigned char *dname, u32 cookie)
+ {
+-	struct inode *inode;
++	const struct inode *inode;
+ 	struct audit_parent *parent;
+ 
+ 	parent = container_of(inode_mark, struct audit_parent, mark);
+@@ -486,10 +486,10 @@ static int audit_watch_handle_event(struct fsnotify_group *group,
+ 
+ 	switch (data_type) {
+ 	case (FSNOTIFY_EVENT_PATH):
+-		inode = d_backing_inode(((struct path *)data)->dentry);
++		inode = d_backing_inode(((const struct path *)data)->dentry);
+ 		break;
+ 	case (FSNOTIFY_EVENT_INODE):
+-		inode = (struct inode *)data;
++		inode = (const struct inode *)data;
+ 		break;
+ 	default:
+ 		BUG();
+-- 
+2.18.0
+

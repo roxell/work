@@ -1,0 +1,86 @@
+From 8ad3e8bd684c449c66d964341684c88e5733b214 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 4 Jan 2017 10:33:18 +0100
+Subject: [PATCH 33/38] fsnotify: Rename fsnotify_clear_marks_by_group_flags()
+
+commit 18f2e0d3a43641889ac2ba9d7508d47359eec063 upstream.
+
+The _flags() suffix in the function name was more confusing than
+explaining so just remove it. Also rename the argument from 'flags' to
+'type' to better explain what the function expects.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Suggested-by: Amir Goldstein <amir73il@gmail.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/mark.c                 | 12 +++++-------
+ include/linux/fsnotify_backend.h |  6 +++---
+ 2 files changed, 8 insertions(+), 10 deletions(-)
+
+diff --git a/fs/notify/mark.c b/fs/notify/mark.c
+index ae33e9f91849..89656abbf4f8 100644
+--- a/fs/notify/mark.c
++++ b/fs/notify/mark.c
+@@ -67,7 +67,7 @@
+  * - The fs the inode is on is unmounted.  (fsnotify_inode_delete/fsnotify_unmount_inodes)
+  * - Something explicitly requests that it be removed.  (fsnotify_destroy_mark)
+  * - The fsnotify_group associated with the mark is going away and all such marks
+- *   need to be cleaned up. (fsnotify_clear_marks_by_group)
++ *   need to be cleaned up. (fsnotify_detach_group_marks)
+  *
+  * This has the very interesting property of being able to run concurrently with
+  * any (or all) other directions.
+@@ -645,11 +645,9 @@ struct fsnotify_mark *fsnotify_find_mark(
+ 	return NULL;
+ }
+ 
+-/*
+- * clear any marks in a group in which mark->flags & flags is true
+- */
+-void fsnotify_clear_marks_by_group_flags(struct fsnotify_group *group,
+-					 unsigned int flags)
++/* Clear any marks in a group with given type */
++void fsnotify_clear_marks_by_group(struct fsnotify_group *group,
++				   unsigned int type)
+ {
+ 	struct fsnotify_mark *lmark, *mark;
+ 	LIST_HEAD(to_free);
+@@ -665,7 +663,7 @@ void fsnotify_clear_marks_by_group_flags(struct fsnotify_group *group,
+ 	 */
+ 	mutex_lock_nested(&group->mark_mutex, SINGLE_DEPTH_NESTING);
+ 	list_for_each_entry_safe(mark, lmark, &group->marks_list, g_list) {
+-		if (mark->connector->flags & flags)
++		if (mark->connector->flags & type)
+ 			list_move(&mark->g_list, &to_free);
+ 	}
+ 	mutex_unlock(&group->mark_mutex);
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index 3abadde2e367..27345859bd1a 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -355,16 +355,16 @@ extern void fsnotify_detach_mark(struct fsnotify_mark *mark);
+ /* free mark */
+ extern void fsnotify_free_mark(struct fsnotify_mark *mark);
+ /* run all the marks in a group, and clear all of the marks attached to given object type */
+-extern void fsnotify_clear_marks_by_group_flags(struct fsnotify_group *group, unsigned int flags);
++extern void fsnotify_clear_marks_by_group(struct fsnotify_group *group, unsigned int type);
+ /* run all the marks in a group, and clear all of the vfsmount marks */
+ static inline void fsnotify_clear_vfsmount_marks_by_group(struct fsnotify_group *group)
+ {
+-	fsnotify_clear_marks_by_group_flags(group, FSNOTIFY_OBJ_TYPE_VFSMOUNT);
++	fsnotify_clear_marks_by_group(group, FSNOTIFY_OBJ_TYPE_VFSMOUNT);
+ }
+ /* run all the marks in a group, and clear all of the inode marks */
+ static inline void fsnotify_clear_inode_marks_by_group(struct fsnotify_group *group)
+ {
+-	fsnotify_clear_marks_by_group_flags(group, FSNOTIFY_OBJ_TYPE_INODE);
++	fsnotify_clear_marks_by_group(group, FSNOTIFY_OBJ_TYPE_INODE);
+ }
+ extern void fsnotify_get_mark(struct fsnotify_mark *mark);
+ extern void fsnotify_put_mark(struct fsnotify_mark *mark);
+-- 
+2.18.0
+

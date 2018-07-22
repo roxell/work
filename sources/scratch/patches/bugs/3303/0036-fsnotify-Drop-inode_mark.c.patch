@@ -1,0 +1,199 @@
+From b919044d44c0fda143fa5362461d995f5ca5478f Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 21 Dec 2016 16:40:48 +0100
+Subject: [PATCH 36/38] fsnotify: Drop inode_mark.c
+
+commit ebb3b47e37a4ccef33e6388589a21a5c23d6b40b upstream.
+
+inode_mark.c now contains only a single function. Move it to
+fs/notify/fsnotify.c and remove inode_mark.c.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/Makefile     |  4 +-
+ fs/notify/fsnotify.c   | 57 +++++++++++++++++++++++++++
+ fs/notify/inode_mark.c | 88 ------------------------------------------
+ 3 files changed, 59 insertions(+), 90 deletions(-)
+ delete mode 100644 fs/notify/inode_mark.c
+
+diff --git a/fs/notify/Makefile b/fs/notify/Makefile
+index ebb64a0282d1..3e969ae91b60 100644
+--- a/fs/notify/Makefile
++++ b/fs/notify/Makefile
+@@ -1,5 +1,5 @@
+-obj-$(CONFIG_FSNOTIFY)		+= fsnotify.o notification.o group.o inode_mark.o \
+-				   mark.o fdinfo.o
++obj-$(CONFIG_FSNOTIFY)		+= fsnotify.o notification.o group.o mark.o \
++				   fdinfo.o
+ 
+ obj-y			+= dnotify/
+ obj-y			+= inotify/
+diff --git a/fs/notify/fsnotify.c b/fs/notify/fsnotify.c
+index aa7c7a38ea9b..1348878047d3 100644
+--- a/fs/notify/fsnotify.c
++++ b/fs/notify/fsnotify.c
+@@ -41,6 +41,63 @@ void __fsnotify_vfsmount_delete(struct vfsmount *mnt)
+ 	fsnotify_clear_marks_by_mount(mnt);
+ }
+ 
++/**
++ * fsnotify_unmount_inodes - an sb is unmounting.  handle any watched inodes.
++ * @sb: superblock being unmounted.
++ *
++ * Called during unmount with no locks held, so needs to be safe against
++ * concurrent modifiers. We temporarily drop sb->s_inode_list_lock and CAN block.
++ */
++void fsnotify_unmount_inodes(struct super_block *sb)
++{
++	struct inode *inode, *iput_inode = NULL;
++
++	spin_lock(&sb->s_inode_list_lock);
++	list_for_each_entry(inode, &sb->s_inodes, i_sb_list) {
++		/*
++		 * We cannot __iget() an inode in state I_FREEING,
++		 * I_WILL_FREE, or I_NEW which is fine because by that point
++		 * the inode cannot have any associated watches.
++		 */
++		spin_lock(&inode->i_lock);
++		if (inode->i_state & (I_FREEING|I_WILL_FREE|I_NEW)) {
++			spin_unlock(&inode->i_lock);
++			continue;
++		}
++
++		/*
++		 * If i_count is zero, the inode cannot have any watches and
++		 * doing an __iget/iput with MS_ACTIVE clear would actually
++		 * evict all inodes with zero i_count from icache which is
++		 * unnecessarily violent and may in fact be illegal to do.
++		 */
++		if (!atomic_read(&inode->i_count)) {
++			spin_unlock(&inode->i_lock);
++			continue;
++		}
++
++		__iget(inode);
++		spin_unlock(&inode->i_lock);
++		spin_unlock(&sb->s_inode_list_lock);
++
++		if (iput_inode)
++			iput(iput_inode);
++
++		/* for each watch, send FS_UNMOUNT and then remove it */
++		fsnotify(inode, FS_UNMOUNT, inode, FSNOTIFY_EVENT_INODE, NULL, 0);
++
++		fsnotify_inode_delete(inode);
++
++		iput_inode = inode;
++
++		spin_lock(&sb->s_inode_list_lock);
++	}
++	spin_unlock(&sb->s_inode_list_lock);
++
++	if (iput_inode)
++		iput(iput_inode);
++}
++
+ /*
+  * Given an inode, first check if we care what happens to our children.  Inotify
+  * and dnotify both tell their parents about events.  If we care about any event
+diff --git a/fs/notify/inode_mark.c b/fs/notify/inode_mark.c
+deleted file mode 100644
+index 5cc317bad082..000000000000
+--- a/fs/notify/inode_mark.c
++++ /dev/null
+@@ -1,88 +0,0 @@
+-/*
+- *  Copyright (C) 2008 Red Hat, Inc., Eric Paris <eparis@redhat.com>
+- *
+- *  This program is free software; you can redistribute it and/or modify
+- *  it under the terms of the GNU General Public License as published by
+- *  the Free Software Foundation; either version 2, or (at your option)
+- *  any later version.
+- *
+- *  This program is distributed in the hope that it will be useful,
+- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- *  GNU General Public License for more details.
+- *
+- *  You should have received a copy of the GNU General Public License
+- *  along with this program; see the file COPYING.  If not, write to
+- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+- */
+-
+-#include <linux/fs.h>
+-#include <linux/init.h>
+-#include <linux/kernel.h>
+-#include <linux/module.h>
+-#include <linux/mutex.h>
+-#include <linux/spinlock.h>
+-
+-#include <linux/atomic.h>
+-
+-#include <linux/fsnotify_backend.h>
+-#include "fsnotify.h"
+-
+-#include "../internal.h"
+-
+-/**
+- * fsnotify_unmount_inodes - an sb is unmounting.  handle any watched inodes.
+- * @sb: superblock being unmounted.
+- *
+- * Called during unmount with no locks held, so needs to be safe against
+- * concurrent modifiers. We temporarily drop sb->s_inode_list_lock and CAN block.
+- */
+-void fsnotify_unmount_inodes(struct super_block *sb)
+-{
+-	struct inode *inode, *iput_inode = NULL;
+-
+-	spin_lock(&sb->s_inode_list_lock);
+-	list_for_each_entry(inode, &sb->s_inodes, i_sb_list) {
+-		/*
+-		 * We cannot __iget() an inode in state I_FREEING,
+-		 * I_WILL_FREE, or I_NEW which is fine because by that point
+-		 * the inode cannot have any associated watches.
+-		 */
+-		spin_lock(&inode->i_lock);
+-		if (inode->i_state & (I_FREEING|I_WILL_FREE|I_NEW)) {
+-			spin_unlock(&inode->i_lock);
+-			continue;
+-		}
+-
+-		/*
+-		 * If i_count is zero, the inode cannot have any watches and
+-		 * doing an __iget/iput with MS_ACTIVE clear would actually
+-		 * evict all inodes with zero i_count from icache which is
+-		 * unnecessarily violent and may in fact be illegal to do.
+-		 */
+-		if (!atomic_read(&inode->i_count)) {
+-			spin_unlock(&inode->i_lock);
+-			continue;
+-		}
+-
+-		__iget(inode);
+-		spin_unlock(&inode->i_lock);
+-		spin_unlock(&sb->s_inode_list_lock);
+-
+-		if (iput_inode)
+-			iput(iput_inode);
+-
+-		/* for each watch, send FS_UNMOUNT and then remove it */
+-		fsnotify(inode, FS_UNMOUNT, inode, FSNOTIFY_EVENT_INODE, NULL, 0);
+-
+-		fsnotify_inode_delete(inode);
+-
+-		iput_inode = inode;
+-
+-		spin_lock(&sb->s_inode_list_lock);
+-	}
+-	spin_unlock(&sb->s_inode_list_lock);
+-
+-	if (iput_inode)
+-		iput(iput_inode);
+-}
+-- 
+2.18.0
+

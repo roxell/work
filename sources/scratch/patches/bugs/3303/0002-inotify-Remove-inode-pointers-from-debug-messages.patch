@@ -1,0 +1,96 @@
+From d1c8dd2f06cda5b2d028afb8fd2cf588244730d2 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Fri, 9 Dec 2016 09:38:55 +0100
+Subject: [PATCH 02/38] inotify: Remove inode pointers from debug messages
+
+commit 25c829afbd74fb9594d2351d9e41be05bacb9903 upstream.
+
+Printing inode pointers in warnings has dubious value and with future
+changes we won't be able to easily get them without either locking or
+chances we oops along the way. So just remove inode pointers from the
+warning messages.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/inotify/inotify_fsnotify.c |  4 ++--
+ fs/notify/inotify/inotify_user.c     | 25 ++++++++++---------------
+ 2 files changed, 12 insertions(+), 17 deletions(-)
+
+diff --git a/fs/notify/inotify/inotify_fsnotify.c b/fs/notify/inotify/inotify_fsnotify.c
+index 2cd900c2c737..fd3f4c795958 100644
+--- a/fs/notify/inotify/inotify_fsnotify.c
++++ b/fs/notify/inotify/inotify_fsnotify.c
+@@ -155,8 +155,8 @@ static int idr_callback(int id, void *p, void *data)
+ 	 * BUG() that was here.
+ 	 */
+ 	if (fsn_mark)
+-		printk(KERN_WARNING "fsn_mark->group=%p inode=%p wd=%d\n",
+-			fsn_mark->group, fsn_mark->inode, i_mark->wd);
++		printk(KERN_WARNING "fsn_mark->group=%p wd=%d\n",
++			fsn_mark->group, i_mark->wd);
+ 	return 0;
+ }
+ 
+diff --git a/fs/notify/inotify/inotify_user.c b/fs/notify/inotify/inotify_user.c
+index 69d1ea3d292a..3697567c7897 100644
+--- a/fs/notify/inotify/inotify_user.c
++++ b/fs/notify/inotify/inotify_user.c
+@@ -431,18 +431,16 @@ static void inotify_remove_from_idr(struct fsnotify_group *group,
+ 	 * if it wasn't....
+ 	 */
+ 	if (wd == -1) {
+-		WARN_ONCE(1, "%s: i_mark=%p i_mark->wd=%d i_mark->group=%p"
+-			" i_mark->inode=%p\n", __func__, i_mark, i_mark->wd,
+-			i_mark->fsn_mark.group, i_mark->fsn_mark.inode);
++		WARN_ONCE(1, "%s: i_mark=%p i_mark->wd=%d i_mark->group=%p\n",
++			__func__, i_mark, i_mark->wd, i_mark->fsn_mark.group);
+ 		goto out;
+ 	}
+ 
+ 	/* Lets look in the idr to see if we find it */
+ 	found_i_mark = inotify_idr_find_locked(group, wd);
+ 	if (unlikely(!found_i_mark)) {
+-		WARN_ONCE(1, "%s: i_mark=%p i_mark->wd=%d i_mark->group=%p"
+-			" i_mark->inode=%p\n", __func__, i_mark, i_mark->wd,
+-			i_mark->fsn_mark.group, i_mark->fsn_mark.inode);
++		WARN_ONCE(1, "%s: i_mark=%p i_mark->wd=%d i_mark->group=%p\n",
++			__func__, i_mark, i_mark->wd, i_mark->fsn_mark.group);
+ 		goto out;
+ 	}
+ 
+@@ -453,12 +451,10 @@ static void inotify_remove_from_idr(struct fsnotify_group *group,
+ 	 */
+ 	if (unlikely(found_i_mark != i_mark)) {
+ 		WARN_ONCE(1, "%s: i_mark=%p i_mark->wd=%d i_mark->group=%p "
+-			"mark->inode=%p found_i_mark=%p found_i_mark->wd=%d "
+-			"found_i_mark->group=%p found_i_mark->inode=%p\n",
+-			__func__, i_mark, i_mark->wd, i_mark->fsn_mark.group,
+-			i_mark->fsn_mark.inode, found_i_mark, found_i_mark->wd,
+-			found_i_mark->fsn_mark.group,
+-			found_i_mark->fsn_mark.inode);
++			"found_i_mark=%p found_i_mark->wd=%d "
++			"found_i_mark->group=%p\n", __func__, i_mark,
++			i_mark->wd, i_mark->fsn_mark.group, found_i_mark,
++			found_i_mark->wd, found_i_mark->fsn_mark.group);
+ 		goto out;
+ 	}
+ 
+@@ -468,9 +464,8 @@ static void inotify_remove_from_idr(struct fsnotify_group *group,
+ 	 * one ref grabbed by inotify_idr_find
+ 	 */
+ 	if (unlikely(atomic_read(&i_mark->fsn_mark.refcnt) < 3)) {
+-		printk(KERN_ERR "%s: i_mark=%p i_mark->wd=%d i_mark->group=%p"
+-			" i_mark->inode=%p\n", __func__, i_mark, i_mark->wd,
+-			i_mark->fsn_mark.group, i_mark->fsn_mark.inode);
++		printk(KERN_ERR "%s: i_mark=%p i_mark->wd=%d i_mark->group=%p\n",
++			 __func__, i_mark, i_mark->wd, i_mark->fsn_mark.group);
+ 		/* we can't really recover with bad ref cnting.. */
+ 		BUG();
+ 	}
+-- 
+2.18.0
+

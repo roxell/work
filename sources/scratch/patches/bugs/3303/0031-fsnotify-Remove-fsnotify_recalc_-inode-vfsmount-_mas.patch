@@ -1,0 +1,126 @@
+From a494706f2a96cee0cf8b62224cce4ff1412f70de Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 21 Dec 2016 16:13:54 +0100
+Subject: [PATCH 31/38] fsnotify: Remove
+ fsnotify_recalc_{inode|vfsmount}_mask()
+
+commit 8920d2734d9a1b68e1b53d8c12b289773cdbd971 upstream.
+
+These helpers are just very thin wrappers now. Remove them.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/fanotify/fanotify_user.c | 8 ++++----
+ fs/notify/inode_mark.c             | 5 -----
+ fs/notify/inotify/inotify_user.c   | 2 +-
+ fs/notify/vfsmount_mark.c          | 5 -----
+ include/linux/fsnotify_backend.h   | 4 ----
+ 5 files changed, 5 insertions(+), 19 deletions(-)
+
+diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
+index 510aa7ba71ef..a37722b7838e 100644
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -551,7 +551,7 @@ static int fanotify_remove_vfsmount_mark(struct fsnotify_group *group,
+ 	removed = fanotify_mark_remove_from_mask(fsn_mark, mask, flags,
+ 						 &destroy_mark);
+ 	if (removed & real_mount(mnt)->mnt_fsnotify_mask)
+-		fsnotify_recalc_vfsmount_mask(mnt);
++		fsnotify_recalc_mask(real_mount(mnt)->mnt_fsnotify_marks);
+ 	if (destroy_mark)
+ 		fsnotify_detach_mark(fsn_mark);
+ 	mutex_unlock(&group->mark_mutex);
+@@ -580,7 +580,7 @@ static int fanotify_remove_inode_mark(struct fsnotify_group *group,
+ 	removed = fanotify_mark_remove_from_mask(fsn_mark, mask, flags,
+ 						 &destroy_mark);
+ 	if (removed & inode->i_fsnotify_mask)
+-		fsnotify_recalc_inode_mask(inode);
++		fsnotify_recalc_mask(inode->i_fsnotify_marks);
+ 	if (destroy_mark)
+ 		fsnotify_detach_mark(fsn_mark);
+ 	mutex_unlock(&group->mark_mutex);
+@@ -665,7 +665,7 @@ static int fanotify_add_vfsmount_mark(struct fsnotify_group *group,
+ 	}
+ 	added = fanotify_mark_add_to_mask(fsn_mark, mask, flags);
+ 	if (added & ~real_mount(mnt)->mnt_fsnotify_mask)
+-		fsnotify_recalc_vfsmount_mask(mnt);
++		fsnotify_recalc_mask(real_mount(mnt)->mnt_fsnotify_marks);
+ 	mutex_unlock(&group->mark_mutex);
+ 
+ 	fsnotify_put_mark(fsn_mark);
+@@ -702,7 +702,7 @@ static int fanotify_add_inode_mark(struct fsnotify_group *group,
+ 	}
+ 	added = fanotify_mark_add_to_mask(fsn_mark, mask, flags);
+ 	if (added & ~inode->i_fsnotify_mask)
+-		fsnotify_recalc_inode_mask(inode);
++		fsnotify_recalc_mask(inode->i_fsnotify_marks);
+ 	mutex_unlock(&group->mark_mutex);
+ 
+ 	fsnotify_put_mark(fsn_mark);
+diff --git a/fs/notify/inode_mark.c b/fs/notify/inode_mark.c
+index b9370316727e..2188329da3c2 100644
+--- a/fs/notify/inode_mark.c
++++ b/fs/notify/inode_mark.c
+@@ -30,11 +30,6 @@
+ 
+ #include "../internal.h"
+ 
+-void fsnotify_recalc_inode_mask(struct inode *inode)
+-{
+-	fsnotify_recalc_mask(inode->i_fsnotify_marks);
+-}
+-
+ /*
+  * Given a group clear all of the inode marks associated with that group.
+  */
+diff --git a/fs/notify/inotify/inotify_user.c b/fs/notify/inotify/inotify_user.c
+index 5c1caac899ff..de12f016ea94 100644
+--- a/fs/notify/inotify/inotify_user.c
++++ b/fs/notify/inotify/inotify_user.c
+@@ -531,7 +531,7 @@ static int inotify_update_existing_watch(struct fsnotify_group *group,
+ 
+ 		/* update the inode with this new fsn_mark */
+ 		if (dropped || do_inode)
+-			fsnotify_recalc_inode_mask(inode);
++			fsnotify_recalc_mask(inode->i_fsnotify_marks);
+ 
+ 	}
+ 
+diff --git a/fs/notify/vfsmount_mark.c b/fs/notify/vfsmount_mark.c
+index dd5f3fcbccfb..41bff46576c2 100644
+--- a/fs/notify/vfsmount_mark.c
++++ b/fs/notify/vfsmount_mark.c
+@@ -34,11 +34,6 @@ void fsnotify_clear_vfsmount_marks_by_group(struct fsnotify_group *group)
+ 	fsnotify_clear_marks_by_group_flags(group, FSNOTIFY_OBJ_TYPE_VFSMOUNT);
+ }
+ 
+-void fsnotify_recalc_vfsmount_mask(struct vfsmount *mnt)
+-{
+-	fsnotify_recalc_mask(real_mount(mnt)->mnt_fsnotify_marks);
+-}
+-
+ /*
+  * given a group and vfsmount, find the mark associated with that combination.
+  * if found take a reference to that mark and return it, else return NULL
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index c34226603aae..7b2c2c13cf6d 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -337,10 +337,6 @@ extern struct fsnotify_event *fsnotify_remove_first_event(struct fsnotify_group
+ 
+ /* Calculate mask of events for a list of marks */
+ extern void fsnotify_recalc_mask(struct fsnotify_mark_connector *conn);
+-/* run all marks associated with a vfsmount and update mnt->mnt_fsnotify_mask */
+-extern void fsnotify_recalc_vfsmount_mask(struct vfsmount *mnt);
+-/* run all marks associated with an inode and update inode->i_fsnotify_mask */
+-extern void fsnotify_recalc_inode_mask(struct inode *inode);
+ extern void fsnotify_init_mark(struct fsnotify_mark *mark, void (*free_mark)(struct fsnotify_mark *mark));
+ /* find (and take a reference) to a mark associated with group and inode */
+ extern struct fsnotify_mark *fsnotify_find_inode_mark(struct fsnotify_group *group, struct inode *inode);
+-- 
+2.18.0
+

@@ -1,0 +1,279 @@
+From 830b784994b3f4ac97c5ee540ee209ae6387e359 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 21 Dec 2016 18:32:48 +0100
+Subject: [PATCH 37/38] fsnotify: Add group pointer in fsnotify_init_mark()
+
+commit 7b1293234084ddb6469c4e9a5ef818f399b5786b upstream.
+
+Currently we initialize mark->group only in fsnotify_add_mark_lock().
+However we will need to access fsnotify_ops of corresponding group from
+fsnotify_put_mark() so we need mark->group initialized earlier. Do that
+in fsnotify_init_mark() which has a consequence that once
+fsnotify_init_mark() is called on a mark, the mark has to be destroyed
+by fsnotify_put_mark().
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/dnotify/dnotify.c        |  5 ++---
+ fs/notify/fanotify/fanotify_user.c |  4 ++--
+ fs/notify/inotify/inotify_user.c   |  5 ++---
+ fs/notify/mark.c                   | 17 ++++++++++-------
+ include/linux/fsnotify_backend.h   | 12 +++++++-----
+ kernel/audit_fsnotify.c            |  7 ++++---
+ kernel/audit_tree.c                | 15 ++++++++-------
+ kernel/audit_watch.c               |  5 +++--
+ 8 files changed, 38 insertions(+), 32 deletions(-)
+
+diff --git a/fs/notify/dnotify/dnotify.c b/fs/notify/dnotify/dnotify.c
+index b77d8d049e4d..f9d500fd7b9a 100644
+--- a/fs/notify/dnotify/dnotify.c
++++ b/fs/notify/dnotify/dnotify.c
+@@ -305,7 +305,7 @@ int fcntl_dirnotify(int fd, struct file *filp, unsigned long arg)
+ 
+ 	/* set up the new_fsn_mark and new_dn_mark */
+ 	new_fsn_mark = &new_dn_mark->fsn_mark;
+-	fsnotify_init_mark(new_fsn_mark, dnotify_free_mark);
++	fsnotify_init_mark(new_fsn_mark, dnotify_group, dnotify_free_mark);
+ 	new_fsn_mark->mask = mask;
+ 	new_dn_mark->dn = NULL;
+ 
+@@ -318,8 +318,7 @@ int fcntl_dirnotify(int fd, struct file *filp, unsigned long arg)
+ 		dn_mark = container_of(fsn_mark, struct dnotify_mark, fsn_mark);
+ 		spin_lock(&fsn_mark->lock);
+ 	} else {
+-		fsnotify_add_mark_locked(new_fsn_mark, dnotify_group, inode,
+-					 NULL, 0);
++		fsnotify_add_mark_locked(new_fsn_mark, inode, NULL, 0);
+ 		spin_lock(&new_fsn_mark->lock);
+ 		fsn_mark = new_fsn_mark;
+ 		dn_mark = new_dn_mark;
+diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
+index 3e3f1e7888ea..0d5107839f28 100644
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -637,8 +637,8 @@ static struct fsnotify_mark *fanotify_add_new_mark(struct fsnotify_group *group,
+ 	if (!mark)
+ 		return ERR_PTR(-ENOMEM);
+ 
+-	fsnotify_init_mark(mark, fanotify_free_mark);
+-	ret = fsnotify_add_mark_locked(mark, group, inode, mnt, 0);
++	fsnotify_init_mark(mark, group, fanotify_free_mark);
++	ret = fsnotify_add_mark_locked(mark, inode, mnt, 0);
+ 	if (ret) {
+ 		fsnotify_put_mark(mark);
+ 		return ERR_PTR(ret);
+diff --git a/fs/notify/inotify/inotify_user.c b/fs/notify/inotify/inotify_user.c
+index 80459118308d..1e91369015fa 100644
+--- a/fs/notify/inotify/inotify_user.c
++++ b/fs/notify/inotify/inotify_user.c
+@@ -560,7 +560,7 @@ static int inotify_new_watch(struct fsnotify_group *group,
+ 	if (unlikely(!tmp_i_mark))
+ 		return -ENOMEM;
+ 
+-	fsnotify_init_mark(&tmp_i_mark->fsn_mark, inotify_free_mark);
++	fsnotify_init_mark(&tmp_i_mark->fsn_mark, group, inotify_free_mark);
+ 	tmp_i_mark->fsn_mark.mask = mask;
+ 	tmp_i_mark->wd = -1;
+ 
+@@ -573,8 +573,7 @@ static int inotify_new_watch(struct fsnotify_group *group,
+ 		goto out_err;
+ 
+ 	/* we are on the idr, now get on the inode */
+-	ret = fsnotify_add_mark_locked(&tmp_i_mark->fsn_mark, group, inode,
+-				       NULL, 0);
++	ret = fsnotify_add_mark_locked(&tmp_i_mark->fsn_mark, inode, NULL, 0);
+ 	if (ret) {
+ 		/* we failed to get on the inode, get off the idr */
+ 		inotify_remove_from_idr(group, tmp_i_mark);
+diff --git a/fs/notify/mark.c b/fs/notify/mark.c
+index 9f3364ef19d3..2f743e2035e4 100644
+--- a/fs/notify/mark.c
++++ b/fs/notify/mark.c
+@@ -563,10 +563,10 @@ static int fsnotify_add_mark_list(struct fsnotify_mark *mark,
+  * These marks may be used for the fsnotify backend to determine which
+  * event types should be delivered to which group.
+  */
+-int fsnotify_add_mark_locked(struct fsnotify_mark *mark,
+-			     struct fsnotify_group *group, struct inode *inode,
++int fsnotify_add_mark_locked(struct fsnotify_mark *mark, struct inode *inode,
+ 			     struct vfsmount *mnt, int allow_dups)
+ {
++	struct fsnotify_group *group = mark->group;
+ 	int ret = 0;
+ 
+ 	BUG_ON(inode && mnt);
+@@ -582,8 +582,6 @@ int fsnotify_add_mark_locked(struct fsnotify_mark *mark,
+ 	spin_lock(&mark->lock);
+ 	mark->flags |= FSNOTIFY_MARK_FLAG_ALIVE | FSNOTIFY_MARK_FLAG_ATTACHED;
+ 
+-	fsnotify_get_group(group);
+-	mark->group = group;
+ 	list_add(&mark->g_list, &group->marks_list);
+ 	atomic_inc(&group->num_marks);
+ 	fsnotify_get_mark(mark); /* for g_list */
+@@ -608,12 +606,14 @@ int fsnotify_add_mark_locked(struct fsnotify_mark *mark,
+ 	return ret;
+ }
+ 
+-int fsnotify_add_mark(struct fsnotify_mark *mark, struct fsnotify_group *group,
+-		      struct inode *inode, struct vfsmount *mnt, int allow_dups)
++int fsnotify_add_mark(struct fsnotify_mark *mark, struct inode *inode,
++		      struct vfsmount *mnt, int allow_dups)
+ {
+ 	int ret;
++	struct fsnotify_group *group = mark->group;
++
+ 	mutex_lock(&group->mark_mutex);
+-	ret = fsnotify_add_mark_locked(mark, group, inode, mnt, allow_dups);
++	ret = fsnotify_add_mark_locked(mark, inode, mnt, allow_dups);
+ 	mutex_unlock(&group->mark_mutex);
+ 	return ret;
+ }
+@@ -732,12 +732,15 @@ void fsnotify_destroy_marks(struct fsnotify_mark_connector __rcu **connp)
+  * Nothing fancy, just initialize lists and locks and counters.
+  */
+ void fsnotify_init_mark(struct fsnotify_mark *mark,
++			struct fsnotify_group *group,
+ 			void (*free_mark)(struct fsnotify_mark *mark))
+ {
+ 	memset(mark, 0, sizeof(*mark));
+ 	spin_lock_init(&mark->lock);
+ 	atomic_set(&mark->refcnt, 1);
+ 	mark->free_mark = free_mark;
++	fsnotify_get_group(group);
++	mark->group = group;
+ }
+ 
+ /*
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index 88aa42d321a9..400f04a446dc 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -339,15 +339,17 @@ extern struct fsnotify_event *fsnotify_remove_first_event(struct fsnotify_group
+ 
+ /* Calculate mask of events for a list of marks */
+ extern void fsnotify_recalc_mask(struct fsnotify_mark_connector *conn);
+-extern void fsnotify_init_mark(struct fsnotify_mark *mark, void (*free_mark)(struct fsnotify_mark *mark));
++extern void fsnotify_init_mark(struct fsnotify_mark *mark,
++			       struct fsnotify_group *group,
++			       void (*free_mark)(struct fsnotify_mark *mark));
+ /* Find mark belonging to given group in the list of marks */
+ extern struct fsnotify_mark *fsnotify_find_mark(
+ 				struct fsnotify_mark_connector __rcu **connp,
+ 				struct fsnotify_group *group);
+-/* attach the mark to both the group and the inode */
+-extern int fsnotify_add_mark(struct fsnotify_mark *mark, struct fsnotify_group *group,
+-			     struct inode *inode, struct vfsmount *mnt, int allow_dups);
+-extern int fsnotify_add_mark_locked(struct fsnotify_mark *mark, struct fsnotify_group *group,
++/* attach the mark to the inode or vfsmount */
++extern int fsnotify_add_mark(struct fsnotify_mark *mark, struct inode *inode,
++			     struct vfsmount *mnt, int allow_dups);
++extern int fsnotify_add_mark_locked(struct fsnotify_mark *mark,
+ 				    struct inode *inode, struct vfsmount *mnt, int allow_dups);
+ /* given a group and a mark, flag mark to be freed when all references are dropped */
+ extern void fsnotify_destroy_mark(struct fsnotify_mark *mark,
+diff --git a/kernel/audit_fsnotify.c b/kernel/audit_fsnotify.c
+index 37d372274956..684cea743b24 100644
+--- a/kernel/audit_fsnotify.c
++++ b/kernel/audit_fsnotify.c
+@@ -103,15 +103,16 @@ struct audit_fsnotify_mark *audit_alloc_mark(struct audit_krule *krule, char *pa
+ 		goto out;
+ 	}
+ 
+-	fsnotify_init_mark(&audit_mark->mark, audit_fsnotify_free_mark);
++	fsnotify_init_mark(&audit_mark->mark, audit_fsnotify_group,
++			   audit_fsnotify_free_mark);
+ 	audit_mark->mark.mask = AUDIT_FS_EVENTS;
+ 	audit_mark->path = pathname;
+ 	audit_update_mark(audit_mark, dentry->d_inode);
+ 	audit_mark->rule = krule;
+ 
+-	ret = fsnotify_add_mark(&audit_mark->mark, audit_fsnotify_group, inode, NULL, true);
++	ret = fsnotify_add_mark(&audit_mark->mark, inode, NULL, true);
+ 	if (ret < 0) {
+-		audit_fsnotify_mark_free(audit_mark);
++		fsnotify_put_mark(&audit_mark->mark);
+ 		audit_mark = ERR_PTR(ret);
+ 	}
+ out:
+diff --git a/kernel/audit_tree.c b/kernel/audit_tree.c
+index 7e3f0b57fc31..e4b4b83c24cf 100644
+--- a/kernel/audit_tree.c
++++ b/kernel/audit_tree.c
+@@ -154,7 +154,8 @@ static struct audit_chunk *alloc_chunk(int count)
+ 		INIT_LIST_HEAD(&chunk->owners[i].list);
+ 		chunk->owners[i].index = i;
+ 	}
+-	fsnotify_init_mark(&chunk->mark, audit_tree_destroy_watch);
++	fsnotify_init_mark(&chunk->mark, audit_tree_group,
++			   audit_tree_destroy_watch);
+ 	chunk->mark.mask = FS_IN_IGNORED;
+ 	return chunk;
+ }
+@@ -262,7 +263,7 @@ static void untag_chunk(struct node *p)
+ 		spin_unlock(&entry->lock);
+ 		mutex_unlock(&entry->group->mark_mutex);
+ 		if (new)
+-			free_chunk(new);
++			fsnotify_put_mark(&new->mark);
+ 		goto out;
+ 	}
+ 
+@@ -286,8 +287,8 @@ static void untag_chunk(struct node *p)
+ 	if (!new)
+ 		goto Fallback;
+ 
+-	if (fsnotify_add_mark_locked(&new->mark, entry->group,
+-				     entry->connector->inode, NULL, 1)) {
++	if (fsnotify_add_mark_locked(&new->mark, entry->connector->inode,
++				     NULL, 1)) {
+ 		fsnotify_put_mark(&new->mark);
+ 		goto Fallback;
+ 	}
+@@ -352,7 +353,7 @@ static int create_chunk(struct inode *inode, struct audit_tree *tree)
+ 		return -ENOMEM;
+ 
+ 	entry = &chunk->mark;
+-	if (fsnotify_add_mark(entry, audit_tree_group, inode, NULL, 0)) {
++	if (fsnotify_add_mark(entry, inode, NULL, 0)) {
+ 		fsnotify_put_mark(entry);
+ 		return -ENOSPC;
+ 	}
+@@ -428,11 +429,11 @@ static int tag_chunk(struct inode *inode, struct audit_tree *tree)
+ 		spin_unlock(&old_entry->lock);
+ 		mutex_unlock(&old_entry->group->mark_mutex);
+ 		fsnotify_put_mark(old_entry);
+-		free_chunk(chunk);
++		fsnotify_put_mark(&chunk->mark);
+ 		return -ENOENT;
+ 	}
+ 
+-	if (fsnotify_add_mark_locked(chunk_entry, old_entry->group,
++	if (fsnotify_add_mark_locked(chunk_entry,
+ 			     old_entry->connector->inode, NULL, 1)) {
+ 		spin_unlock(&old_entry->lock);
+ 		mutex_unlock(&old_entry->group->mark_mutex);
+diff --git a/kernel/audit_watch.c b/kernel/audit_watch.c
+index ac054130d88d..20deb6721bdb 100644
+--- a/kernel/audit_watch.c
++++ b/kernel/audit_watch.c
+@@ -157,9 +157,10 @@ static struct audit_parent *audit_init_parent(struct path *path)
+ 
+ 	INIT_LIST_HEAD(&parent->watches);
+ 
+-	fsnotify_init_mark(&parent->mark, audit_watch_free_mark);
++	fsnotify_init_mark(&parent->mark, audit_watch_group,
++			   audit_watch_free_mark);
+ 	parent->mark.mask = AUDIT_FS_WATCH;
+-	ret = fsnotify_add_mark(&parent->mark, audit_watch_group, inode, NULL, 0);
++	ret = fsnotify_add_mark(&parent->mark, inode, NULL, 0);
+ 	if (ret < 0) {
+ 		audit_free_parent(parent);
+ 		return ERR_PTR(ret);
+-- 
+2.18.0
+

@@ -132,3 +132,19 @@
 	path = sources/linux/stable/stable-linux-4.9.y
 	url = http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
 	branch = linux-4.9.y
+[submodule "sources/linux/stable/stable-linux-4.14.y"]
+	path = sources/linux/stable/stable-linux-4.14.y
+	url = http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+	branch = linux-4.14.y
+[submodule "sources/linux/stable-rc/stable-rc-linux-4.4.y"]
+	path = sources/linux/stable-rc/stable-rc-linux-4.4.y
+	url = http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable-rc.git
+	branch = linux-4.4.y
+[submodule "sources/linux/stable/stable-linux-4.16.y"]
+	path = sources/linux/stable/stable-linux-4.16.y
+	url = http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+	branch = linux-4.16.y
+[submodule "sources/linux/stable-rc/stable-rc-linux-4.9.y"]
+	path = sources/linux/stable-rc/stable-rc-linux-4.9.y
+	url = http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable-rc.git
+	branch = linux-4.9.y

@@ -1,0 +1,65 @@
+From 2c26ca31f63ddf82216dfe052c1b4e9522bdaf3f Mon Sep 17 00:00:00 2001
+From: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Date: Thu, 21 Jun 2018 23:07:19 -0300
+Subject: [PATCH 09/11] debug for getdumpstart
+
+---
+ drivers/base/regmap/regmap-debugfs.c | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/base/regmap/regmap-debugfs.c b/drivers/base/regmap/regmap-debugfs.c
+index 3387382a3f73..034b0ef83a73 100644
+--- a/drivers/base/regmap/regmap-debugfs.c
++++ b/drivers/base/regmap/regmap-debugfs.c
+@@ -109,9 +109,10 @@ static unsigned int regmap_debugfs_get_dump_start(struct regmap *map,
+ 	unsigned int reg_offset;
+ 
+ 	/* Suppress the cache if we're using a subrange */
+-	if (base)
++	if (base) {
++		printk(KERN_WARNING "TINOCO 10: base return\n");
+ 		return base;
+-
++	}
+ 	/*
+ 	 * If we don't have a cache build one so we don't have to do a
+ 	 * linear scan each time.
+@@ -119,10 +120,17 @@ static unsigned int regmap_debugfs_get_dump_start(struct regmap *map,
+ 	mutex_lock(&map->cache_lock);
+ 	i = base;
+ 	if (list_empty(&map->debugfs_off_cache)) {
++
++		printk(KERN_WARNING "TINOCO 11: list empty\n");
++
+ 		for (; i <= map->max_register; i += map->reg_stride) {
++
++			printk(KERN_WARNING "TINOCO 12: i = %u towards max_register %u\n", i, map->max_register);
++
+ 			/* Skip unprinted registers, closing off cache entry */
+ 			if (!regmap_printable(map, i)) {
+ 				if (c) {
++					printk(KERN_WARNING "TINOCO 13: not printable, fixing\n");
+ 					c->max = p - 1;
+ 					c->max_reg = i - map->reg_stride;
+ 					list_add_tail(&c->list,
+@@ -135,12 +143,17 @@ static unsigned int regmap_debugfs_get_dump_start(struct regmap *map,
+ 
+ 			/* No cache entry?  Start a new one */
+ 			if (!c) {
++				printk(KERN_WARNING "TINOCO 14: creating cache\n");
++
+ 				c = kzalloc(sizeof(*c), GFP_KERNEL);
+ 				if (!c) {
+ 					regmap_debugfs_free_dump_cache(map);
+ 					mutex_unlock(&map->cache_lock);
+ 					return base;
+ 				}
++
++				printk(KERN_WARNING "TINOCO 15: c->min=%llu, c->base_reg=%u\n", p, i);
++
+ 				c->min = p;
+ 				c->base_reg = i;
+ 			}
+-- 
+2.17.1
+

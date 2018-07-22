@@ -1,0 +1,47 @@
+From dfa19165c4f303749254dad1b9fab0a6af9e680a Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Fri, 9 Dec 2016 09:18:21 +0100
+Subject: [PATCH 01/38] fsnotify: Remove unnecessary tests when showing fdinfo
+
+commit 5198adf649a0b7b0f9ddb98b264e57b41516116b upstream.
+
+show_fdinfo() iterates group's list of marks. All marks found there are
+guaranteed to be alive and they stay so until we release
+group->mark_mutex. So remove uncecessary tests whether mark is alive.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/fdinfo.c | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/fs/notify/fdinfo.c b/fs/notify/fdinfo.c
+index fd98e5100cab..601a59c8d87e 100644
+--- a/fs/notify/fdinfo.c
++++ b/fs/notify/fdinfo.c
+@@ -76,8 +76,7 @@ static void inotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark)
+ 	struct inotify_inode_mark *inode_mark;
+ 	struct inode *inode;
+ 
+-	if (!(mark->flags & FSNOTIFY_MARK_FLAG_ALIVE) ||
+-	    !(mark->flags & FSNOTIFY_MARK_FLAG_INODE))
++	if (!(mark->flags & FSNOTIFY_MARK_FLAG_INODE))
+ 		return;
+ 
+ 	inode_mark = container_of(mark, struct inotify_inode_mark, fsn_mark);
+@@ -113,9 +112,6 @@ static void fanotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark)
+ 	unsigned int mflags = 0;
+ 	struct inode *inode;
+ 
+-	if (!(mark->flags & FSNOTIFY_MARK_FLAG_ALIVE))
+-		return;
+-
+ 	if (mark->flags & FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY)
+ 		mflags |= FAN_MARK_IGNORED_SURV_MODIFY;
+ 
+-- 
+2.18.0
+

@@ -1,0 +1,24 @@
+From 4d35ff8d9ed7fcd268b4da126b26edfa01811d02 Mon Sep 17 00:00:00 2001
+From: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Date: Thu, 21 Jun 2018 22:14:52 -0300
+Subject: [PATCH 08/11] no cache for hi655x
+
+---
+ drivers/mfd/hi655x-pmic.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/mfd/hi655x-pmic.c b/drivers/mfd/hi655x-pmic.c
+index c37ccbfd52f2..1a9db30028c7 100644
+--- a/drivers/mfd/hi655x-pmic.c
++++ b/drivers/mfd/hi655x-pmic.c
+@@ -50,6 +50,7 @@ static struct regmap_config hi655x_regmap_config = {
+ 	.reg_stride = HI655X_STRIDE,
+ 	.val_bits = 8,
+ 	.max_register = HI655X_BUS_ADDR(0xFFF),
++	.cache_type = REGCACHE_NONE,
+ };
+ 
+ static struct resource pwrkey_resources[] = {
+-- 
+2.17.1
+

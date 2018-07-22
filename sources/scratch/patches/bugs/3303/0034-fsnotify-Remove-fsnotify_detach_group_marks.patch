@@ -1,0 +1,156 @@
+From 64088ef0e35c6e95db0272801ed1796654a0e97f Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 4 Jan 2017 10:51:58 +0100
+Subject: [PATCH 34/38] fsnotify: Remove fsnotify_detach_group_marks()
+
+commit 2e37c6ca8d76c362e844c0cf3ebe8ba2e27940cb upstream.
+
+The function is already mostly contained in what
+fsnotify_clear_marks_by_group() does. Just update that function to not
+select marks when all of them should be destroyed and remove
+fsnotify_detach_group_marks().
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/fsnotify.h             |  2 --
+ fs/notify/group.c                |  9 ++++++-
+ fs/notify/mark.c                 | 45 +++++++-------------------------
+ include/linux/fsnotify_backend.h |  2 ++
+ 4 files changed, 20 insertions(+), 38 deletions(-)
+
+diff --git a/fs/notify/fsnotify.h b/fs/notify/fsnotify.h
+index 86383c7865c0..3ec593c32684 100644
+--- a/fs/notify/fsnotify.h
++++ b/fs/notify/fsnotify.h
+@@ -40,8 +40,6 @@ static inline void fsnotify_clear_marks_by_mount(struct vfsmount *mnt)
+ {
+ 	fsnotify_destroy_marks(&real_mount(mnt)->mnt_fsnotify_marks);
+ }
+-/* prepare for freeing all marks associated with given group */
+-extern void fsnotify_detach_group_marks(struct fsnotify_group *group);
+ /* Wait until all marks queued for destruction are destroyed */
+ extern void fsnotify_wait_marks_destroyed(void);
+ 
+diff --git a/fs/notify/group.c b/fs/notify/group.c
+index 79439cdf16e0..32357534de18 100644
+--- a/fs/notify/group.c
++++ b/fs/notify/group.c
+@@ -67,7 +67,14 @@ void fsnotify_destroy_group(struct fsnotify_group *group)
+ 	fsnotify_group_stop_queueing(group);
+ 
+ 	/* Clear all marks for this group and queue them for destruction */
+-	fsnotify_detach_group_marks(group);
++	fsnotify_clear_marks_by_group(group, FSNOTIFY_OBJ_ALL_TYPES);
++
++	/*
++	 * Some marks can still be pinned when waiting for response from
++	 * userspace. Wait for those now. fsnotify_prepare_user_wait() will
++	 * not succeed now so this wait is race-free.
++	 */
++	wait_event(group->notification_waitq, !atomic_read(&group->user_waits));
+ 
+ 	/*
+ 	 * Wait until all marks get really destroyed. We could actually destroy
+diff --git a/fs/notify/mark.c b/fs/notify/mark.c
+index 89656abbf4f8..9f3364ef19d3 100644
+--- a/fs/notify/mark.c
++++ b/fs/notify/mark.c
+@@ -67,7 +67,7 @@
+  * - The fs the inode is on is unmounted.  (fsnotify_inode_delete/fsnotify_unmount_inodes)
+  * - Something explicitly requests that it be removed.  (fsnotify_destroy_mark)
+  * - The fsnotify_group associated with the mark is going away and all such marks
+- *   need to be cleaned up. (fsnotify_detach_group_marks)
++ *   need to be cleaned up. (fsnotify_clear_marks_by_group)
+  *
+  * This has the very interesting property of being able to run concurrently with
+  * any (or all) other directions.
+@@ -651,7 +651,13 @@ void fsnotify_clear_marks_by_group(struct fsnotify_group *group,
+ {
+ 	struct fsnotify_mark *lmark, *mark;
+ 	LIST_HEAD(to_free);
++	struct list_head *head = &to_free;
+ 
++	/* Skip selection step if we want to clear all marks. */
++	if (type == FSNOTIFY_OBJ_ALL_TYPES) {
++		head = &group->marks_list;
++		goto clear;
++	}
+ 	/*
+ 	 * We have to be really careful here. Anytime we drop mark_mutex, e.g.
+ 	 * fsnotify_clear_marks_by_inode() can come and free marks. Even in our
+@@ -668,13 +674,14 @@ void fsnotify_clear_marks_by_group(struct fsnotify_group *group,
+ 	}
+ 	mutex_unlock(&group->mark_mutex);
+ 
++clear:
+ 	while (1) {
+ 		mutex_lock_nested(&group->mark_mutex, SINGLE_DEPTH_NESTING);
+-		if (list_empty(&to_free)) {
++		if (list_empty(head)) {
+ 			mutex_unlock(&group->mark_mutex);
+ 			break;
+ 		}
+-		mark = list_first_entry(&to_free, struct fsnotify_mark, g_list);
++		mark = list_first_entry(head, struct fsnotify_mark, g_list);
+ 		fsnotify_get_mark(mark);
+ 		fsnotify_detach_mark(mark);
+ 		mutex_unlock(&group->mark_mutex);
+@@ -683,38 +690,6 @@ void fsnotify_clear_marks_by_group(struct fsnotify_group *group,
+ 	}
+ }
+ 
+-/*
+- * Given a group, prepare for freeing all the marks associated with that group.
+- * The marks are attached to the list of marks prepared for destruction, the
+- * caller is responsible for freeing marks in that list after SRCU period has
+- * ended.
+- */
+-void fsnotify_detach_group_marks(struct fsnotify_group *group)
+-{
+-	struct fsnotify_mark *mark;
+-
+-	while (1) {
+-		mutex_lock_nested(&group->mark_mutex, SINGLE_DEPTH_NESTING);
+-		if (list_empty(&group->marks_list)) {
+-			mutex_unlock(&group->mark_mutex);
+-			break;
+-		}
+-		mark = list_first_entry(&group->marks_list,
+-					struct fsnotify_mark, g_list);
+-		fsnotify_get_mark(mark);
+-		fsnotify_detach_mark(mark);
+-		mutex_unlock(&group->mark_mutex);
+-		fsnotify_free_mark(mark);
+-		fsnotify_put_mark(mark);
+-	}
+-	/*
+-	 * Some marks can still be pinned when waiting for response from
+-	 * userspace. Wait for those now. fsnotify_prepare_user_wait() will
+-	 * not succeed now so this wait is race-free.
+-	 */
+-	wait_event(group->notification_waitq, !atomic_read(&group->user_waits));
+-}
+-
+ /* Destroy all marks attached to inode / vfsmount */
+ void fsnotify_destroy_marks(struct fsnotify_mark_connector __rcu **connp)
+ {
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index 27345859bd1a..150ea0a2ded4 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -207,6 +207,8 @@ struct fsnotify_mark_connector {
+ 	spinlock_t lock;
+ #define FSNOTIFY_OBJ_TYPE_INODE		0x01
+ #define FSNOTIFY_OBJ_TYPE_VFSMOUNT	0x02
++#define FSNOTIFY_OBJ_ALL_TYPES		(FSNOTIFY_OBJ_TYPE_INODE | \
++					 FSNOTIFY_OBJ_TYPE_VFSMOUNT)
+ 	unsigned int flags;	/* Type of object [lock] */
+ 	union {	/* Object pointer [lock] */
+ 		struct inode *inode;
+-- 
+2.18.0
+

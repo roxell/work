@@ -1,0 +1,78 @@
+From 0a73b3226b71ab31ad7634a23719f13532c4bb56 Mon Sep 17 00:00:00 2001
+From: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Date: Wed, 13 Jun 2018 12:04:02 -0300
+Subject: [PATCH] rafael
+
+---
+ drivers/block/zram/zram_drv.c | 15 ++++++++++++++-
+ mm/zsmalloc.c                 |  5 +++--
+ 2 files changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
+index da51293e7c03..ab9e6482d99b 100644
+--- a/drivers/block/zram/zram_drv.c
++++ b/drivers/block/zram/zram_drv.c
+@@ -1124,12 +1124,24 @@ static int __zram_bvec_write(struct zram *zram, struct bio_vec *bvec,
+ 	 * if we have a 'non-null' handle here then we are coming
+ 	 * from the slow path and handle has already been allocated.
+ 	 */
+-	if (!handle)
++	if (!handle) {
++		/*
+ 		handle = zs_malloc(zram->mem_pool, comp_len,
+ 				__GFP_KSWAPD_RECLAIM |
+ 				__GFP_NOWARN |
+ 				__GFP_HIGHMEM |
+ 				__GFP_MOVABLE);
++		*/
++
++		// handle = zs_malloc(zram->mem_pool, comp_len, GFP_ATOMIC);
++
++		handle = zs_malloc(zram->mem_pool, comp_len, __GFP_HIGHMEM);
++
++		if(!handle) {
++			return -ENOMEM;
++		}
++	}
++	/*
+ 	if (!handle) {
+ 		zcomp_stream_put(zram->comp);
+ 		atomic64_inc(&zram->stats.writestall);
+@@ -1140,6 +1152,7 @@ static int __zram_bvec_write(struct zram *zram, struct bio_vec *bvec,
+ 			goto compress_again;
+ 		return -ENOMEM;
+ 	}
++	*/
+ 
+ 	alloced_pages = zs_get_total_pages(zram->mem_pool);
+ 	update_used_max(zram, alloced_pages);
+diff --git a/mm/zsmalloc.c b/mm/zsmalloc.c
+index 61cb05dc950c..3595bbe7f2ce 100644
+--- a/mm/zsmalloc.c
++++ b/mm/zsmalloc.c
+@@ -321,12 +321,12 @@ static void SetZsPageMovable(struct zs_pool *pool, struct zspage *zspage) {}
+ static int create_cache(struct zs_pool *pool)
+ {
+ 	pool->handle_cachep = kmem_cache_create("zs_handle", ZS_HANDLE_SIZE,
+-					0, 0, NULL);
++					0, SLAB_POISON, NULL);
+ 	if (!pool->handle_cachep)
+ 		return 1;
+ 
+ 	pool->zspage_cachep = kmem_cache_create("zspage", sizeof(struct zspage),
+-					0, 0, NULL);
++					0, SLAB_POISON, NULL);
+ 	if (!pool->zspage_cachep) {
+ 		kmem_cache_destroy(pool->handle_cachep);
+ 		pool->handle_cachep = NULL;
+@@ -1103,6 +1103,7 @@ static struct zspage *alloc_zspage(struct zs_pool *pool,
+ 	for (i = 0; i < class->pages_per_zspage; i++) {
+ 		struct page *page;
+ 
++		/* ARM32: HIGHMEM is problematic here */
+ 		page = alloc_page(gfp);
+ 		if (!page) {
+ 			while (--i >= 0) {
+-- 
+2.17.1
+

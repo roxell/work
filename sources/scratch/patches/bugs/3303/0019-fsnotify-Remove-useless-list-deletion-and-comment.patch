@@ -1,0 +1,49 @@
+From 52109bc161f184a38c137f76df90e64e5f13aaa1 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 15 Mar 2017 10:08:28 +0100
+Subject: [PATCH 19/38] fsnotify: Remove useless list deletion and comment
+
+commit 2629718dd26f89e064dcdec6c8e5b9713502e1f8 upstream.
+
+After removing all the indirection it is clear that
+
+hlist_del_init_rcu(&mark->obj_list);
+
+in fsnotify_destroy_marks() is not needed as the mark gets removed from
+the list shortly afterwards in fsnotify_destroy_mark() ->
+fsnotify_detach_mark() -> fsnotify_detach_from_object(). Also there is
+no problem with mark being visible on object list while we call
+fsnotify_destroy_mark() as parallel destruction of marks from several
+places is properly handled (as mentioned in the comment in
+fsnotify_destroy_marks(). So just remove the list removal and also the
+stale comment.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/mark.c | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/fs/notify/mark.c b/fs/notify/mark.c
+index 416ba91750a9..b5b641a2b557 100644
+--- a/fs/notify/mark.c
++++ b/fs/notify/mark.c
+@@ -620,12 +620,6 @@ void fsnotify_destroy_marks(struct fsnotify_mark_connector *conn)
+ 		}
+ 		mark = hlist_entry(conn->list.first, struct fsnotify_mark,
+ 				   obj_list);
+-		/*
+-		 * We don't update i_fsnotify_mask / mnt_fsnotify_mask here
+-		 * since inode / mount is going away anyway. So just remove
+-		 * mark from the list.
+-		 */
+-		hlist_del_init_rcu(&mark->obj_list);
+ 		fsnotify_get_mark(mark);
+ 		spin_unlock(lock);
+ 		fsnotify_destroy_mark(mark, mark->group);
+-- 
+2.18.0
+

@@ -1,0 +1,46 @@
+From 6da7a7bd7b1af233109b05142efa8db6d7b9df38 Mon Sep 17 00:00:00 2001
+From: Amir Goldstein <amir73il@gmail.com>
+Date: Mon, 10 Jul 2017 15:55:55 +0300
+Subject: [PATCH 4/5] ovl: hash non-indexed dir by upper inode for NFS export
+
+Non-indexed upper dirs are encoded as upper file handles. When NFS export
+is enabled, hash non-indexed directory inodes by upper inode, so we can
+find them in inode cache using the decoded upper inode.
+
+When NFS export is disabled, directories are not indexed on copy up, so
+hash non-indexed directory inodes by origin inode, the same hash key
+that is used before copy up.
+
+Signed-off-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+---
+ fs/overlayfs/inode.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/fs/overlayfs/inode.c b/fs/overlayfs/inode.c
+index 16ca3f54efc8..40d4d24f644d 100644
+--- a/fs/overlayfs/inode.c
++++ b/fs/overlayfs/inode.c
+@@ -612,6 +612,7 @@ struct inode *ovl_get_inode(struct super_block *sb, struct dentry *upperdentry,
+ 			    struct dentry *lowerdentry, struct dentry *index,
+ 			    unsigned int numlower)
+ {
++	struct ovl_fs *ofs = sb->s_fs_info;
+ 	struct inode *realinode = upperdentry ? d_inode(upperdentry) : NULL;
+ 	struct inode *inode;
+ 	/* Already indexed or could be indexed on copy up? */
+@@ -631,9 +632,10 @@ struct inode *ovl_get_inode(struct super_block *sb, struct dentry *upperdentry,
+ 	 * Hash non-dir that is or could be indexed by origin inode.
+ 	 * Hash dir that is or could be merged by origin inode.
+ 	 * Hash pure upper and non-indexed non-dir by upper inode.
++	 * Hash non-indexed dir by upper inode for NFS export.
+ 	 */
+ 	is_dir = S_ISDIR(realinode->i_mode);
+-	if (is_dir)
++	if (is_dir && (indexed || !sb->s_export_op || !ofs->upper_mnt))
+ 		origin = lowerdentry;
+ 
+ 	if (upperdentry || origin) {
+-- 
+2.18.0
+

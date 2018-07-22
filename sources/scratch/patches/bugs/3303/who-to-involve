@@ -1,0 +1,66 @@
+# maintainers:
+
+Alexander Viro <viro@zeniv.linux.org.uk>
+Eric Paris <eparis@parisplace.org>
+John McCutchan <john@johnmccutchan.com>
+Robert Love <rlove@rlove.org>
+Jeff Layton <jlayton@poochiereds.net>
+"J. Bruce Fields" <bfields@fieldses.org>
+Paul Moore <paul@paul-moore.com>
+
+# signers:
+
+Jan Kara <jack@suse.cz>
+Amir Goldstein <amir73il@gmail.com>
+Miklos Szeredi <mszeredi@redhat.com>
+Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Rafael David Tinoco <rafael.tinoco@linaro.org> (commit_signer:2/19=11%)
+
+# lists:
+
+linux-kernel@vger.kernel.org
+linux-fsdevel@vger.kernel.org
+linux-audit@redhat.com
+
+# auto-merge works:
+
+$ git am /home/inaddy/work/patches/bug-3303/*.patch
+Applying: fsnotify: Remove unnecessary tests when showing fdinfo
+Applying: inotify: Remove inode pointers from debug messages
+Applying: fanotify: Move recalculation of inode / vfsmount mask under mark_mutex
+Applying: audit: Abstract hash key handling
+Applying: audit_tree: Use mark flags to check whether mark is alive
+Applying: fsnotify: Update comments
+Applying: fsnotify: Move mark list head from object into dedicated structure
+Applying: fsnotify: Remove fsnotify_duplicate_mark()
+Applying: audit: Fix sleep in atomic
+Applying: fsnotify: Move object pointer to fsnotify_mark_connector
+Applying: fsnotify: Make fsnotify_mark_connector hold inode reference
+Applying: fsnotify: Remove indirection from mark list addition
+Applying: fsnotify: Move fsnotify_destroy_marks()
+Applying: fsnotify: Move locking into fsnotify_recalc_mask()
+Applying: fsnotify: Move locking into fsnotify_find_mark()
+Applying: fsnotify: Determine lock in fsnotify_destroy_marks()
+Applying: fsnotify: Remove indirection from fsnotify_detach_mark()
+Applying: fsnotify: Avoid double locking in fsnotify_detach_from_object()
+Applying: fsnotify: Remove useless list deletion and comment
+Applying: fsnotify: Lock object list with connector lock
+Applying: fsnotify: Free fsnotify_mark_connector when there is no mark attached
+Applying: inotify: Do not drop mark reference under idr_lock
+Applying: fsnotify: Move queueing of mark for destruction into fsnotify_put_mark()
+Applying: fsnotify: Detach mark from object list when last reference is dropped
+Applying: fsnotify: Remove special handling of mark destruction on group shutdown
+Applying: fsnotify: Provide framework for dropping SRCU lock in ->handle_event
+Applying: fsnotify: constify 'data' passed to ->handle_event()
+Applying: fsnotify: Pass fsnotify_iter_info into handle_event handler
+Applying: fanotify: Release SRCU lock when waiting for userspace response
+Applying: fsnotify: Remove fsnotify_set_mark_{,ignored_}mask_locked()
+Applying: fsnotify: Remove fsnotify_recalc_{inode|vfsmount}_mask()
+Applying: fsnotify: Inline fsnotify_clear_{inode|vfsmount}_mark_group()
+Applying: fsnotify: Rename fsnotify_clear_marks_by_group_flags()
+Applying: fsnotify: Remove fsnotify_detach_group_marks()
+Applying: fsnotify: Remove fsnotify_find_{inode|vfsmount}_mark()
+Applying: fsnotify: Drop inode_mark.c
+Applying: fsnotify: Add group pointer in fsnotify_init_mark()
+Applying: fsnotify: Move ->free_mark callback to fsnotify_ops
+

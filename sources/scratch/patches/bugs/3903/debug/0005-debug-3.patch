@@ -1,0 +1,50 @@
+From 3ac7752567cee386305030fb1647f2b04ca7f2f6 Mon Sep 17 00:00:00 2001
+From: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Date: Thu, 21 Jun 2018 15:38:46 -0300
+Subject: [PATCH 05/11] debug 3
+
+---
+ drivers/base/regmap/regmap-debugfs.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/base/regmap/regmap-debugfs.c b/drivers/base/regmap/regmap-debugfs.c
+index cd28f39998c2..949b9a4f7be3 100644
+--- a/drivers/base/regmap/regmap-debugfs.c
++++ b/drivers/base/regmap/regmap-debugfs.c
+@@ -219,19 +219,20 @@ static ssize_t regmap_read_debugfs(struct regmap *map, unsigned int from,
+ 	start_reg = regmap_debugfs_get_dump_start(map, from, *ppos, &p);
+ 
+ 	printk(KERN_WARNING "TINOCO 0: start_reg = %u\n", start_reg);
+-	printk(KERN_WARNING "TINOCO 1: reg_stride = %u\n", start_reg);
++	printk(KERN_WARNING "TINOCO 1: reg_stride = %u\n", map->reg_stride);
++	printk(KERN_WARNING "TINOCO 2: from = %u to = %u\n", from, to);
+ 
+ 	for (i = start_reg; i <= to; i += map->reg_stride) {
+ 
+-		printk(KERN_WARNING "TINOCO 2: i = reg =  %u\n", i);
++		printk(KERN_WARNING "TINOCO 3: i = reg =  %u\n", i);
+ 
+ 		if (!regmap_readable(map, i) && !regmap_cached(map, i)) {
+-			printk(KERN_WARNING "TINOCO 3: reg %u not readable and not cached\n", i);
++			printk(KERN_WARNING "TINOCO 4: reg %u not readable and not cached\n", i);
+ 			continue;
+ 		}
+ 
+ 		if (regmap_precious(map, i)) {
+-			printk(KERN_WARNING "TINOCO 4: reg %u precious\n", i);
++			printk(KERN_WARNING "TINOCO 5: reg %u precious\n", i);
+ 			continue;
+ 		}
+ 
+@@ -246,7 +247,7 @@ static ssize_t regmap_read_debugfs(struct regmap *map, unsigned int from,
+ 			if (buf_pos + map->debugfs_tot_len > count)
+ 				break;
+ 
+-			printk(KERN_WARNING "TINOCO: REG being read: %.*x\n", i - from);
++			printk(KERN_WARNING "TINOCO: REG being read: %.12x\n", i - from);
+ 
+ 			snprintf(buf + buf_pos, count - buf_pos, "%.*x: ", map->debugfs_reg_len, i - from);
+ 
+-- 
+2.17.1
+

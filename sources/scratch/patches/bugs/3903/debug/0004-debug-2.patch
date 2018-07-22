@@ -1,0 +1,68 @@
+From c0380253fa627d59fdfc965a8d1b0076a92d56a3 Mon Sep 17 00:00:00 2001
+From: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Date: Thu, 21 Jun 2018 14:36:22 -0300
+Subject: [PATCH 04/11] debug 2
+
+---
+ drivers/base/regmap/regmap-debugfs.c | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/base/regmap/regmap-debugfs.c b/drivers/base/regmap/regmap-debugfs.c
+index 93e259655019..cd28f39998c2 100644
+--- a/drivers/base/regmap/regmap-debugfs.c
++++ b/drivers/base/regmap/regmap-debugfs.c
+@@ -218,41 +218,41 @@ static ssize_t regmap_read_debugfs(struct regmap *map, unsigned int from,
+ 	/* Work out which register we're starting at */
+ 	start_reg = regmap_debugfs_get_dump_start(map, from, *ppos, &p);
+ 
+-	printk(KERN_INFO "TINOCO 0: start_reg = %u\n", start_reg);
+-	printk(KERN_INFO "TINOCO 1: reg_stride = %u\n", start_reg);
++	printk(KERN_WARNING "TINOCO 0: start_reg = %u\n", start_reg);
++	printk(KERN_WARNING "TINOCO 1: reg_stride = %u\n", start_reg);
+ 
+ 	for (i = start_reg; i <= to; i += map->reg_stride) {
+ 
+-		printk(KERN_INFO "TINOCO 2: i = reg =  %u\n", i);
++		printk(KERN_WARNING "TINOCO 2: i = reg =  %u\n", i);
+ 
+ 		if (!regmap_readable(map, i) && !regmap_cached(map, i)) {
+-			printk(KERN_INFO "TINOCO 3: reg %u not readable and not cached\n", i);
++			printk(KERN_WARNING "TINOCO 3: reg %u not readable and not cached\n", i);
+ 			continue;
+ 		}
+ 
+ 		if (regmap_precious(map, i)) {
+-			printk(KERN_INFO "TINOCO 4: reg %u precious\n", i);
++			printk(KERN_WARNING "TINOCO 4: reg %u precious\n", i);
+ 			continue;
+ 		}
+ 
+ 		/* If we're in the region the user is trying to read */
+ 		if (p >= *ppos) {
+ 
+-			printk(KERN_INFO "TINOCO 6: p = %llu\n", p);
+-			printk(KERN_INFO "TINOCO 7: buf_pos = %lu\n", buf_pos);
+-			printk(KERN_INFO "TINOCO 8: debugfs_tot_len = %u\n", map->debugfs_tot_len);
++			printk(KERN_WARNING "TINOCO 6: p = %llu\n", p);
++			printk(KERN_WARNING "TINOCO 7: buf_pos = %lu\n", buf_pos);
++			printk(KERN_WARNING "TINOCO 8: debugfs_tot_len = %u\n", map->debugfs_tot_len);
+ 
+ 			/* ...but not beyond it */
+ 			if (buf_pos + map->debugfs_tot_len > count)
+ 				break;
+ 
+-			printk(KERN_INFO "TINOCO: REG being read: %.*x\n", i - from);
++			printk(KERN_WARNING "TINOCO: REG being read: %.*x\n", i - from);
+ 
+ 			snprintf(buf + buf_pos, count - buf_pos, "%.*x: ", map->debugfs_reg_len, i - from);
+ 
+ 			buf_pos += map->debugfs_reg_len + 2;
+ 
+-			printk(KERN_INFO "TINOCO: calling regmap_read with map ptr = %p, i = %d, val ptr to place %p\n", map, i, &val);
++			printk(KERN_WARNING "TINOCO: calling regmap_read with map ptr = %p, i = %d, val ptr to place %p\n", map, i, &val);
+ 
+ 			ret = regmap_read(map, i, &val);
+ 			if (ret == 0)
+-- 
+2.17.1
+

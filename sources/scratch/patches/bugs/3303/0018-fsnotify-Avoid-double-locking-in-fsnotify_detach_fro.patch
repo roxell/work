@@ -1,0 +1,44 @@
+From c1378821c811f195deb15f985a2a41ac6c26038e Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Thu, 30 Mar 2017 09:14:47 +0200
+Subject: [PATCH 18/38] fsnotify: Avoid double locking in
+ fsnotify_detach_from_object()
+
+commit 73cd3c33ab793325ebaae27fa58b4f713c16f12c upstream.
+
+We lock object list lock in fsnotify_detach_from_object() twice - once
+to detach mark and second time to recalculate mask. That is unnecessary
+and later it will become problematic as we will free the connector as
+soon as there is no mark in it. So move recalculation of fsnotify mask
+into the same critical section that is detaching mark.
+
+This also removes recalculation of child dentry flags from
+fsnotify_detach_from_object(). That is however fine. Those marks will
+get recalculated once some event happens on a child.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/mark.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/notify/mark.c b/fs/notify/mark.c
+index 08ab7b252322..416ba91750a9 100644
+--- a/fs/notify/mark.c
++++ b/fs/notify/mark.c
+@@ -158,9 +158,9 @@ static struct inode *fsnotify_detach_from_object(struct fsnotify_mark *mark)
+ 		if (conn->flags & FSNOTIFY_OBJ_TYPE_INODE)
+ 			inode = conn->inode;
+ 	}
++	__fsnotify_recalc_mask(conn);
+ 	mark->connector = NULL;
+ 	spin_unlock(lock);
+-	fsnotify_recalc_mask(conn);
+ 
+ 	return inode;
+ }
+-- 
+2.18.0
+

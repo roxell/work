@@ -1,0 +1,200 @@
+From 9746b2323e672ef8ff971f796341c41366698909 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Tue, 14 Mar 2017 14:48:00 +0100
+Subject: [PATCH 11/38] fsnotify: Make fsnotify_mark_connector hold inode
+ reference
+
+commit e911d8af87dba7642138f4320ca3db80629989f2 upstream.
+
+Currently inode reference is held by fsnotify marks. Change the rules so
+that inode reference is held by fsnotify_mark_connector structure
+whenever the list is non-empty. This simplifies the code and is more
+logical.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/fsnotify.h             |  4 +---
+ fs/notify/inode_mark.c           | 30 +++++-------------------------
+ fs/notify/mark.c                 | 17 ++++++-----------
+ include/linux/fsnotify_backend.h | 12 ++++++------
+ 4 files changed, 18 insertions(+), 45 deletions(-)
+
+diff --git a/fs/notify/fsnotify.h b/fs/notify/fsnotify.h
+index dd1a6798c9cd..1a2aec65ebd8 100644
+--- a/fs/notify/fsnotify.h
++++ b/fs/notify/fsnotify.h
+@@ -21,8 +21,6 @@ extern u32 fsnotify_recalc_mask(struct fsnotify_mark_connector *conn);
+ extern int fsnotify_compare_groups(struct fsnotify_group *a,
+ 				   struct fsnotify_group *b);
+ 
+-extern void fsnotify_set_inode_mark_mask_locked(struct fsnotify_mark *fsn_mark,
+-						__u32 mask);
+ /* Add mark to a proper place in mark list */
+ extern int fsnotify_add_mark_list(struct fsnotify_mark_connector **connp,
+ 				  struct fsnotify_mark *mark,
+@@ -40,7 +38,7 @@ extern int fsnotify_add_vfsmount_mark(struct fsnotify_mark *mark,
+ /* vfsmount specific destruction of a mark */
+ extern void fsnotify_destroy_vfsmount_mark(struct fsnotify_mark *mark);
+ /* inode specific destruction of a mark */
+-extern void fsnotify_destroy_inode_mark(struct fsnotify_mark *mark);
++extern struct inode *fsnotify_destroy_inode_mark(struct fsnotify_mark *mark);
+ /* Find mark belonging to given group in the list of marks */
+ extern struct fsnotify_mark *fsnotify_find_mark(
+ 					struct fsnotify_mark_connector *conn,
+diff --git a/fs/notify/inode_mark.c b/fs/notify/inode_mark.c
+index 1644ba09efd4..c3873b6920e7 100644
+--- a/fs/notify/inode_mark.c
++++ b/fs/notify/inode_mark.c
+@@ -43,9 +43,10 @@ void fsnotify_recalc_inode_mask(struct inode *inode)
+ 	__fsnotify_update_child_dentry_flags(inode);
+ }
+ 
+-void fsnotify_destroy_inode_mark(struct fsnotify_mark *mark)
++struct inode *fsnotify_destroy_inode_mark(struct fsnotify_mark *mark)
+ {
+ 	struct inode *inode = mark->connector->inode;
++	bool empty;
+ 
+ 	BUG_ON(!mutex_is_locked(&mark->group->mark_mutex));
+ 	assert_spin_locked(&mark->lock);
+@@ -53,6 +54,7 @@ void fsnotify_destroy_inode_mark(struct fsnotify_mark *mark)
+ 	spin_lock(&inode->i_lock);
+ 
+ 	hlist_del_init_rcu(&mark->obj_list);
++	empty = hlist_empty(&mark->connector->list);
+ 	mark->connector = NULL;
+ 
+ 	/*
+@@ -62,6 +64,8 @@ void fsnotify_destroy_inode_mark(struct fsnotify_mark *mark)
+ 	 */
+ 	inode->i_fsnotify_mask = fsnotify_recalc_mask(inode->i_fsnotify_marks);
+ 	spin_unlock(&inode->i_lock);
++
++	return empty ? inode : NULL;
+ }
+ 
+ /*
+@@ -88,30 +92,6 @@ struct fsnotify_mark *fsnotify_find_inode_mark(struct fsnotify_group *group,
+ 	return mark;
+ }
+ 
+-/*
+- * If we are setting a mark mask on an inode mark we should pin the inode
+- * in memory.
+- */
+-void fsnotify_set_inode_mark_mask_locked(struct fsnotify_mark *mark,
+-					 __u32 mask)
+-{
+-	struct inode *inode;
+-
+-	assert_spin_locked(&mark->lock);
+-
+-	if (mask && mark->connector &&
+-	    !(mark->flags & FSNOTIFY_MARK_FLAG_OBJECT_PINNED)) {
+-		mark->flags |= FSNOTIFY_MARK_FLAG_OBJECT_PINNED;
+-		inode = igrab(mark->connector->inode);
+-		/*
+-		 * we shouldn't be able to get here if the inode wasn't
+-		 * already safely held in memory.  But bug in case it
+-		 * ever is wrong.
+-		 */
+-		BUG_ON(!inode);
+-	}
+-}
+-
+ /*
+  * Attach an initialized mark to a given inode.
+  * These marks may be used for the fsnotify backend to determine which
+diff --git a/fs/notify/mark.c b/fs/notify/mark.c
+index 3d6e7a8e58be..8a15c64fbe80 100644
+--- a/fs/notify/mark.c
++++ b/fs/notify/mark.c
+@@ -142,10 +142,9 @@ void fsnotify_detach_mark(struct fsnotify_mark *mark)
+ 
+ 	mark->flags &= ~FSNOTIFY_MARK_FLAG_ATTACHED;
+ 
+-	if (mark->connector->flags & FSNOTIFY_OBJ_TYPE_INODE) {
+-		inode = mark->connector->inode;
+-		fsnotify_destroy_inode_mark(mark);
+-	} else if (mark->connector->flags & FSNOTIFY_OBJ_TYPE_VFSMOUNT)
++	if (mark->connector->flags & FSNOTIFY_OBJ_TYPE_INODE)
++		inode = fsnotify_destroy_inode_mark(mark);
++	else if (mark->connector->flags & FSNOTIFY_OBJ_TYPE_VFSMOUNT)
+ 		fsnotify_destroy_vfsmount_mark(mark);
+ 	else
+ 		BUG();
+@@ -160,7 +159,7 @@ void fsnotify_detach_mark(struct fsnotify_mark *mark)
+ 
+ 	spin_unlock(&mark->lock);
+ 
+-	if (inode && (mark->flags & FSNOTIFY_MARK_FLAG_OBJECT_PINNED))
++	if (inode)
+ 		iput(inode);
+ 
+ 	atomic_dec(&group->num_marks);
+@@ -274,9 +273,6 @@ void fsnotify_set_mark_mask_locked(struct fsnotify_mark *mark, __u32 mask)
+ 	assert_spin_locked(&mark->lock);
+ 
+ 	mark->mask = mask;
+-
+-	if (mark->connector && mark->connector->flags & FSNOTIFY_OBJ_TYPE_INODE)
+-		fsnotify_set_inode_mark_mask_locked(mark, mask);
+ }
+ 
+ void fsnotify_set_mark_ignored_mask_locked(struct fsnotify_mark *mark, __u32 mask)
+@@ -375,6 +371,8 @@ int fsnotify_add_mark_list(struct fsnotify_mark_connector **connp,
+ 	/* is mark the first mark? */
+ 	if (hlist_empty(&conn->list)) {
+ 		hlist_add_head_rcu(&mark->obj_list, &conn->list);
++		if (inode)
++			__iget(inode);
+ 		goto added;
+ 	}
+ 
+@@ -441,9 +439,6 @@ int fsnotify_add_mark_locked(struct fsnotify_mark *mark,
+ 	} else {
+ 		BUG();
+ 	}
+-
+-	/* this will pin the object if appropriate */
+-	fsnotify_set_mark_mask_locked(mark, mark->mask);
+ 	spin_unlock(&mark->lock);
+ 
+ 	if (inode)
+diff --git a/include/linux/fsnotify_backend.h b/include/linux/fsnotify_backend.h
+index ddcc54a3aa6c..ecf1e628e76e 100644
+--- a/include/linux/fsnotify_backend.h
++++ b/include/linux/fsnotify_backend.h
+@@ -195,8 +195,9 @@ struct fsnotify_group {
+ 
+ /*
+  * Inode / vfsmount point to this structure which tracks all marks attached to
+- * the inode / vfsmount. The structure is freed only when inode / vfsmount gets
+- * freed.
++ * the inode / vfsmount. The reference to inode / vfsmount is held by this
++ * structure whenever the list is non-empty. The structure is freed only when
++ * inode / vfsmount gets freed.
+  */
+ struct fsnotify_mark_connector {
+ #define FSNOTIFY_OBJ_TYPE_INODE		0x01
+@@ -244,10 +245,9 @@ struct fsnotify_mark {
+ 	struct fsnotify_mark_connector *connector;
+ 	/* Events types to ignore [mark->lock, group->mark_mutex] */
+ 	__u32 ignored_mask;
+-#define FSNOTIFY_MARK_FLAG_OBJECT_PINNED	0x04
+-#define FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY	0x08
+-#define FSNOTIFY_MARK_FLAG_ALIVE		0x10
+-#define FSNOTIFY_MARK_FLAG_ATTACHED		0x20
++#define FSNOTIFY_MARK_FLAG_IGNORED_SURV_MODIFY	0x01
++#define FSNOTIFY_MARK_FLAG_ALIVE		0x02
++#define FSNOTIFY_MARK_FLAG_ATTACHED		0x04
+ 	unsigned int flags;		/* flags [mark->lock] */
+ 	void (*free_mark)(struct fsnotify_mark *mark); /* called on final put+free */
+ };
+-- 
+2.18.0
+

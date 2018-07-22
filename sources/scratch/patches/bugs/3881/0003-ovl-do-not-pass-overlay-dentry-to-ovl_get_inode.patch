@@ -1,0 +1,101 @@
+From decfdf73815611f3f6b1ef2a4962a96187042749 Mon Sep 17 00:00:00 2001
+From: Amir Goldstein <amir73il@gmail.com>
+Date: Tue, 12 Dec 2017 23:43:16 +0200
+Subject: [PATCH 3/5] ovl: do not pass overlay dentry to ovl_get_inode()
+
+This is needed for using ovl_get_inode() for decoding file handles
+for NFS export.
+
+Signed-off-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+---
+ fs/overlayfs/inode.c     | 16 +++++++---------
+ fs/overlayfs/namei.c     |  3 ++-
+ fs/overlayfs/overlayfs.h |  5 +++--
+ 3 files changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/fs/overlayfs/inode.c b/fs/overlayfs/inode.c
+index 13c8847de25f..16ca3f54efc8 100644
+--- a/fs/overlayfs/inode.c
++++ b/fs/overlayfs/inode.c
+@@ -608,14 +608,14 @@ static bool ovl_verify_inode(struct inode *inode, struct dentry *lowerdentry,
+ 	return true;
+ }
+ 
+-struct inode *ovl_get_inode(struct dentry *dentry, struct dentry *upperdentry,
+-			    struct dentry *index)
++struct inode *ovl_get_inode(struct super_block *sb, struct dentry *upperdentry,
++			    struct dentry *lowerdentry, struct dentry *index,
++			    unsigned int numlower)
+ {
+-	struct dentry *lowerdentry = ovl_dentry_lower(dentry);
+ 	struct inode *realinode = upperdentry ? d_inode(upperdentry) : NULL;
+ 	struct inode *inode;
+ 	/* Already indexed or could be indexed on copy up? */
+-	bool indexed = (index || (ovl_indexdir(dentry->d_sb) && !upperdentry));
++	bool indexed = (index || (ovl_indexdir(sb) && !upperdentry));
+ 	struct dentry *origin = indexed ? lowerdentry : NULL;
+ 	bool is_dir;
+ 
+@@ -640,7 +640,7 @@ struct inode *ovl_get_inode(struct dentry *dentry, struct dentry *upperdentry,
+ 		struct inode *key = d_inode(origin ?: upperdentry);
+ 		unsigned int nlink = is_dir ? 1 : realinode->i_nlink;
+ 
+-		inode = iget5_locked(dentry->d_sb, (unsigned long) key,
++		inode = iget5_locked(sb, (unsigned long) key,
+ 				     ovl_inode_test, ovl_inode_set, key);
+ 		if (!inode)
+ 			goto out_nomem;
+@@ -664,7 +664,7 @@ struct inode *ovl_get_inode(struct dentry *dentry, struct dentry *upperdentry,
+ 			nlink = ovl_get_nlink(lowerdentry, upperdentry, nlink);
+ 		set_nlink(inode, nlink);
+ 	} else {
+-		inode = new_inode(dentry->d_sb);
++		inode = new_inode(sb);
+ 		if (!inode)
+ 			goto out_nomem;
+ 	}
+@@ -676,9 +676,7 @@ struct inode *ovl_get_inode(struct dentry *dentry, struct dentry *upperdentry,
+ 
+ 	/* Check for non-merge dir that may have whiteouts */
+ 	if (is_dir) {
+-		struct ovl_entry *oe = dentry->d_fsdata;
+-
+-		if (((upperdentry && lowerdentry) || oe->numlower > 1) ||
++		if (((upperdentry && lowerdentry) || numlower > 1) ||
+ 		    ovl_check_origin_xattr(upperdentry ?: lowerdentry)) {
+ 			ovl_set_flag(OVL_WHITEOUTS, inode);
+ 		}
+diff --git a/fs/overlayfs/namei.c b/fs/overlayfs/namei.c
+index 8a10506db993..5c2264e56f95 100644
+--- a/fs/overlayfs/namei.c
++++ b/fs/overlayfs/namei.c
+@@ -718,7 +718,8 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
+ 		upperdentry = dget(index);
+ 
+ 	if (upperdentry || ctr) {
+-		inode = ovl_get_inode(dentry, upperdentry, index);
++		inode = ovl_get_inode(dentry->d_sb, upperdentry, origin, index,
++				      ctr);
+ 		err = PTR_ERR(inode);
+ 		if (IS_ERR(inode))
+ 			goto out_free_oe;
+diff --git a/fs/overlayfs/overlayfs.h b/fs/overlayfs/overlayfs.h
+index d53157ccf0d7..20bad5302258 100644
+--- a/fs/overlayfs/overlayfs.h
++++ b/fs/overlayfs/overlayfs.h
+@@ -290,8 +290,9 @@ int ovl_update_time(struct inode *inode, struct timespec *ts, int flags);
+ bool ovl_is_private_xattr(const char *name);
+ 
+ struct inode *ovl_new_inode(struct super_block *sb, umode_t mode, dev_t rdev);
+-struct inode *ovl_get_inode(struct dentry *dentry, struct dentry *upperdentry,
+-			    struct dentry *index);
++struct inode *ovl_get_inode(struct super_block *sb, struct dentry *upperdentry,
++			    struct dentry *lowerdentry, struct dentry *index,
++			    unsigned int numlower);
+ static inline void ovl_copyattr(struct inode *from, struct inode *to)
+ {
+ 	to->i_uid = from->i_uid;
+-- 
+2.18.0
+

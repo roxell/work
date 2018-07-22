@@ -1,0 +1,78 @@
+From 23c20231b5e68a89de77c5b43f8230f09b4960eb Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 21 Dec 2016 11:50:39 +0100
+Subject: [PATCH 22/38] inotify: Do not drop mark reference under idr_lock
+
+commit e7253760587e8523fe1e8ede092a620f1403f2e8 upstream.
+
+Dropping mark reference can result in mark being freed. Although it
+should not happen in inotify_remove_from_idr() since caller should hold
+another reference, just don't risk lock up just after WARN_ON
+unnecessarily. Also fold do_inotify_remove_from_idr() into the single
+callsite as that function really is just two lines of real code.
+
+Reviewed-by: Miklos Szeredi <mszeredi@redhat.com>
+Reviewed-by: Amir Goldstein <amir73il@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Reviewed-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ fs/notify/inotify/inotify_user.c | 24 ++++++------------------
+ 1 file changed, 6 insertions(+), 18 deletions(-)
+
+diff --git a/fs/notify/inotify/inotify_user.c b/fs/notify/inotify/inotify_user.c
+index 3697567c7897..06dae605158d 100644
+--- a/fs/notify/inotify/inotify_user.c
++++ b/fs/notify/inotify/inotify_user.c
+@@ -397,21 +397,6 @@ static struct inotify_inode_mark *inotify_idr_find(struct fsnotify_group *group,
+ 	return i_mark;
+ }
+ 
+-static void do_inotify_remove_from_idr(struct fsnotify_group *group,
+-				       struct inotify_inode_mark *i_mark)
+-{
+-	struct idr *idr = &group->inotify_data.idr;
+-	spinlock_t *idr_lock = &group->inotify_data.idr_lock;
+-	int wd = i_mark->wd;
+-
+-	assert_spin_locked(idr_lock);
+-
+-	idr_remove(idr, wd);
+-
+-	/* removed from the idr, drop that ref */
+-	fsnotify_put_mark(&i_mark->fsn_mark);
+-}
+-
+ /*
+  * Remove the mark from the idr (if present) and drop the reference
+  * on the mark because it was in the idr.
+@@ -419,6 +404,7 @@ static void do_inotify_remove_from_idr(struct fsnotify_group *group,
+ static void inotify_remove_from_idr(struct fsnotify_group *group,
+ 				    struct inotify_inode_mark *i_mark)
+ {
++	struct idr *idr = &group->inotify_data.idr;
+ 	spinlock_t *idr_lock = &group->inotify_data.idr_lock;
+ 	struct inotify_inode_mark *found_i_mark = NULL;
+ 	int wd;
+@@ -470,13 +456,15 @@ static void inotify_remove_from_idr(struct fsnotify_group *group,
+ 		BUG();
+ 	}
+ 
+-	do_inotify_remove_from_idr(group, i_mark);
++	idr_remove(idr, wd);
++	/* Removed from the idr, drop that ref. */
++	fsnotify_put_mark(&i_mark->fsn_mark);
+ out:
++	i_mark->wd = -1;
++	spin_unlock(idr_lock);
+ 	/* match the ref taken by inotify_idr_find_locked() */
+ 	if (found_i_mark)
+ 		fsnotify_put_mark(&found_i_mark->fsn_mark);
+-	i_mark->wd = -1;
+-	spin_unlock(idr_lock);
+ }
+ 
+ /*
+-- 
+2.18.0
+
