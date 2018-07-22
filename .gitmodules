@@ -112,3 +112,19 @@
 [submodule "sources/boards/beaglebone/x15/u-boot"]
 	path = sources/boards/beaglebone/x15/u-boot
 	url = git://git.ti.com/ti-u-boot/ti-u-boot.git
+[submodule "sources/linux/mainline/next"]
+	path = sources/linux/mainline/next
+	url = http://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git
+[submodule "sources/linux/mainline/master"]
+	path = sources/linux/mainline/master
+	url = http://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+[submodule "sources/linux/stable/stable-linux-4.4.y"]
+	path = sources/linux/stable/stable-linux-4.4.y
+	url = http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+	branch = linux-4.4.y
+[submodule "sources/linux/mainline/stable"]
+	path = sources/linux/mainline/stable
+	url = http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+[submodule "sources/linux/mainline/stable-rc"]
+	path = sources/linux/mainline/stable-rc
+	url = http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable-rc.git
