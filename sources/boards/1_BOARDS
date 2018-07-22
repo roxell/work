@@ -1,0 +1,6 @@
+git@github.com:96boards/meta-96boards.git
+https://github.com/96boards/dt-update
+96meta-mine git@github.com:rafaeldtinoco/meta-96boards.git
+96meta git@github.com:96boards/meta-96boards.git
+96meta-rpb https://github.com/96boards/meta-rpb
+96docs https://github.com/96boards/documentation

@@ -1,0 +1,3 @@
+[submodule "sources/trees/libfuse"]
+	path = sources/trees/libfuse
+	url = git@github.com:libfuse/libfuse.git
