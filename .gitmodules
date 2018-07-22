@@ -94,3 +94,15 @@
 [submodule "sources/mine/random"]
 	path = sources/mine/random
 	url = git@github.com:rafaeldtinoco/random.git
+[submodule "sources/tests/ltp"]
+	path = sources/tests/ltp
+	url = git@github.com:linux-test-project/ltp.git
+[submodule "sources/tests/ltp-android"]
+	path = sources/tests/ltp-android
+	url = https://android.googlesource.com/platform/external/ltp
+[submodule "sources/tests/lkft-tools"]
+	path = sources/tests/lkft-tools
+	url = https://github.com/Linaro/lkft-tools.git
+[submodule "sources/tests/lkft-website"]
+	path = sources/tests/lkft-website
+	url = git@github.com:rafaeldtinoco/lkft-website.git
