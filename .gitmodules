@@ -128,3 +128,7 @@
 [submodule "sources/linux/mainline/stable-rc"]
 	path = sources/linux/mainline/stable-rc
 	url = http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable-rc.git
+[submodule "sources/linux/stable/stable-linux-4.9.y"]
+	path = sources/linux/stable/stable-linux-4.9.y
+	url = http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+	branch = linux-4.9.y
