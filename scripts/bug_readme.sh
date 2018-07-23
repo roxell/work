@@ -19,7 +19,7 @@ cd $MAINDIR
 
 [ ! -d $FILEDIR ] && getout something went wrong
 
-DIRS=$(find . -mindepth 1 -maxdepth 1 -type d | grep -v [a-zA-Z] | xargs)
+DIRS=$(find . -mindepth 1 -maxdepth 1 -type d | grep -v [a-zA-Z] | sort | xargs)
 
 echo -n > README.md
 
