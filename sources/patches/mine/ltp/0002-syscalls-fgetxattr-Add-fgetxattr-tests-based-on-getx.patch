@@ -1,0 +1,679 @@
+From 74e9ad183c4ae1c5c2213b12f5d331089c2abcef Mon Sep 17 00:00:00 2001
+From: Rafael David Tinoco <rafael.tinoco@linaro.org>
+Date: Wed, 11 Jul 2018 16:51:39 -0300
+Subject: [PATCH 2/2] syscalls/fgetxattr: Add fgetxattr() tests based on
+ getxattr() ones
+
+Fixes: #272
+
+Following the same logic used to test getxattr() syscalls, this commit
+implements tests for fgetxattr(). It differs from getxattr() on the given
+arguments, using a file descriptor instead of filename, and it uses newer API.
+
+Kernel has different entry points for both, getxattr() and fgetxattr(), with
+slightly different execution paths, mainly related to dealing with the passed
+file descriptor.
+
+Signed-off-by: Rafael David Tinoco rafael.tinoco@linaro.org
+---
+ runtest/syscalls                              |   4 +
+ .../kernel/syscalls/fgetxattr/.gitignore      |   3 +
+ testcases/kernel/syscalls/fgetxattr/Makefile  |  23 ++
+ .../kernel/syscalls/fgetxattr/fgetxattr01.c   | 175 ++++++++++
+ .../kernel/syscalls/fgetxattr/fgetxattr02.c   | 304 ++++++++++++++++++
+ .../kernel/syscalls/fgetxattr/fgetxattr03.c   |  94 ++++++
+ 6 files changed, 603 insertions(+)
+ create mode 100644 testcases/kernel/syscalls/fgetxattr/.gitignore
+ create mode 100644 testcases/kernel/syscalls/fgetxattr/Makefile
+ create mode 100644 testcases/kernel/syscalls/fgetxattr/fgetxattr01.c
+ create mode 100644 testcases/kernel/syscalls/fgetxattr/fgetxattr02.c
+ create mode 100644 testcases/kernel/syscalls/fgetxattr/fgetxattr03.c
+
+diff --git a/runtest/syscalls b/runtest/syscalls
+index d288637bd..30cffc6fa 100644
+--- a/runtest/syscalls
++++ b/runtest/syscalls
+@@ -278,6 +278,10 @@ fcntl36_64 fcntl36_64
+ fdatasync01 fdatasync01
+ fdatasync02 fdatasync02
+ 
++fgetxattr01 fgetxattr01
++fgetxattr02 fgetxattr02
++fgetxattr03 fgetxattr03
++
+ flistxattr01 flistxattr01
+ flistxattr02 flistxattr02
+ flistxattr03 flistxattr03
+diff --git a/testcases/kernel/syscalls/fgetxattr/.gitignore b/testcases/kernel/syscalls/fgetxattr/.gitignore
+new file mode 100644
+index 000000000..f8594ddb1
+--- /dev/null
++++ b/testcases/kernel/syscalls/fgetxattr/.gitignore
+@@ -0,0 +1,3 @@
++/fgetxattr01
++/fgetxattr02
++/fgetxattr03
+diff --git a/testcases/kernel/syscalls/fgetxattr/Makefile b/testcases/kernel/syscalls/fgetxattr/Makefile
+new file mode 100644
+index 000000000..912534210
+--- /dev/null
++++ b/testcases/kernel/syscalls/fgetxattr/Makefile
+@@ -0,0 +1,23 @@
++#
++#  Copyright (c) 2018 Linaro Limited
++#
++#  This program is free software;  you can redistribute it and/or modify
++#  it under the terms of the GNU General Public License as published by
++#  the Free Software Foundation; either version 2 of the License, or
++#  (at your option) any later version.
++#
++#  This program is distributed in the hope that it will be useful,
++#  but WITHOUT ANY WARRANTY;  without even the implied warranty of
++#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
++#  the GNU General Public License for more details.
++#
++#  You should have received a copy of the GNU General Public License
++#  along with this program;  if not, write to the Free Software
++#  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++
++top_srcdir		?= ../../../..
++
++include $(top_srcdir)/include/mk/testcases.mk
++
++include $(top_srcdir)/include/mk/generic_leaf_target.mk
+\ No newline at end of file
+diff --git a/testcases/kernel/syscalls/fgetxattr/fgetxattr01.c b/testcases/kernel/syscalls/fgetxattr/fgetxattr01.c
+new file mode 100644
+index 000000000..da08c2439
+--- /dev/null
++++ b/testcases/kernel/syscalls/fgetxattr/fgetxattr01.c
+@@ -0,0 +1,175 @@
++/*
++ * Copyright (c) 2018 Linaro Limited
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of version 2 of the GNU General Public
++ * License as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it would be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
++ *
++ * Further, this software is distributed without any warranty that it
++ * is free of the rightful claim of any third person regarding
++ * infringement or the like.  Any license provided herein, whether
++ * implied or otherwise, applies only to this software file.  Patent
++ * licenses, if any, provided herein do not apply to combinations of
++ * this program with other software, or any other product whatsoever.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
++ * 02110-1301, USA.
++ */
++
++/*
++ * Basic tests for fgetxattr(2) and make sure fgetxattr(2) handles error
++ * conditions correctly.
++ *
++ * There are 3 test cases:
++ * 1. Get an non-existing attribute:
++ *     - fgetxattr(2) should return -1 and set errno to ENODATA
++ * 2. Buffer size is smaller than attribute value size:
++ *     - fgetxattr(2) should return -1 and set errno to ERANGE
++ * 3. Get attribute, fgetxattr(2) should succeed:
++ *     - verify the attribute got by fgetxattr(2) is same as the value we set
++ */
++
++#include "config.h"
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <sys/wait.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#ifdef HAVE_SYS_XATTR_H
++# include <sys/xattr.h>
++#endif
++#include "tst_test.h"
++
++#ifdef HAVE_SYS_XATTR_H
++#define XATTR_SIZE_MAX 65536
++#define XATTR_TEST_KEY "user.testkey"
++#define XATTR_TEST_VALUE "this is a test value"
++#define XATTR_TEST_VALUE_SIZE 20
++#define XATTR_TEST_INVALID_KEY "user.nosuchkey"
++#define MNTPOINT "mntpoint"
++#define FNAME MNTPOINT"/fgetxattr01testfile"
++
++#define SAFE_FREE(p) { if (p) { free(p); (p)=NULL; } }
++
++static int filed = -1;
++
++struct test_case {
++	char *key;
++	char *value;
++	size_t size;
++	int exp_ret;
++	int exp_err;
++};
++struct test_case tc[] = {
++	{			/* case 00, get non-existing attribute */
++	 .key = XATTR_TEST_INVALID_KEY,
++	 .value = NULL,
++	 .size = XATTR_SIZE_MAX,
++	 .exp_ret = -1,
++	 .exp_err = ENODATA,
++	 },
++	{			/* case 01, small value buffer */
++	 .key = XATTR_TEST_KEY,
++	 .value = NULL,
++	 .size = 1,
++	 .exp_ret = -1,
++	 .exp_err = ERANGE,
++	 },
++	{			/* case 02, get existing attribute */
++	 .key = XATTR_TEST_KEY,
++	 .value = NULL,
++	 .size = XATTR_TEST_VALUE_SIZE,
++	 .exp_ret = XATTR_TEST_VALUE_SIZE,
++	 .exp_err = 0,
++	 },
++};
++
++static void verify_fgetxattr(unsigned int i)
++{
++	TEST(fgetxattr(filed, tc[i].key, tc[i].value, tc[i].size));
++
++	if (TEST_RETURN == -1 && TEST_ERRNO == EOPNOTSUPP)
++		tst_brk(TCONF, "fgetxattr(2) not supported");
++
++	if (TEST_RETURN >= 0) {
++
++		if (TEST_RETURN == tc[i].exp_ret) {
++			tst_res(TPASS, "fgetxattr(2) passed");
++			goto check_value;
++		}
++
++		tst_res(TFAIL, "fgetxattr(2) passed unexpectedly");
++		goto check_value;
++	}
++
++	if (TEST_ERRNO == tc[i].exp_err) {
++		tst_res(TPASS | TTERRNO, "expected behaviour");
++		return;
++	}
++
++	tst_res(TFAIL | TTERRNO, "fgetxattr(2) failed");
++	return;
++
++check_value:
++
++	if (strcmp(tc[i].value, XATTR_TEST_VALUE)) {
++		tst_res(TFAIL, "wrong value, expect \"%s\" got \"%s\"",
++				 XATTR_TEST_VALUE, tc[i].value);
++	}
++
++	tst_res(TPASS, "got the right value");
++	return;
++}
++
++static void setup(void)
++{
++	int i=0;
++
++	SAFE_TOUCH(FNAME, 0644, NULL);
++	filed = SAFE_OPEN(FNAME, O_RDONLY, NULL);
++	SAFE_UNLINK(FNAME);
++
++	for (i=0; i < (int) ARRAY_SIZE(tc); i++)
++		tc[i].value = SAFE_MALLOC(tc[i].size);
++
++	SAFE_FSETXATTR(filed, XATTR_TEST_KEY, XATTR_TEST_VALUE,
++			XATTR_TEST_VALUE_SIZE, XATTR_CREATE);
++}
++
++static void cleanup(void)
++{
++	int i=0;
++
++	for (i=0; i < (int) ARRAY_SIZE(tc); i++)
++		SAFE_FREE(tc[i].value);
++
++	if (filed >0)
++		SAFE_CLOSE(filed);
++}
++
++static struct tst_test test = {
++	.setup = setup,
++	.test = verify_fgetxattr,
++	.cleanup = cleanup,
++	.tcnt = ARRAY_SIZE(tc),
++	.mntpoint = MNTPOINT,
++	.mount_device = 1,
++	.all_filesystems = 1,
++	.needs_tmpdir = 1,
++	.needs_root = 1,
++};
++
++#else /* HAVE_SYS_XATTR_H */
++TST_TEST_TCONF("<sys/xattr.h> does not exist");
++#endif
+diff --git a/testcases/kernel/syscalls/fgetxattr/fgetxattr02.c b/testcases/kernel/syscalls/fgetxattr/fgetxattr02.c
+new file mode 100644
+index 000000000..bc6af854f
+--- /dev/null
++++ b/testcases/kernel/syscalls/fgetxattr/fgetxattr02.c
+@@ -0,0 +1,304 @@
++/*
++ * Copyright (c) 2018 Linaro Limited
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of version 2 of the GNU General Public
++ * License as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it would be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
++ *
++ * Further, this software is distributed without any warranty that it
++ * is free of the rightful claim of any third person regarding
++ * infringement or the like.  Any license provided herein, whether
++ * implied or otherwise, applies only to this software file.  Patent
++ * licenses, if any, provided herein do not apply to combinations of
++ * this program with other software, or any other product whatsoever.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
++ * 02110-1301, USA.
++ */
++
++/*
++ * In the user.* namespace, only regular files and directories can
++ * have extended attributes. Otherwise fgetxattr(2) will return -1
++ * and set proper errno.
++ *
++ * There are 7 test cases:
++ *
++ * 1. Get attribute from a regular file:
++ *    - fgetxattr(2) should succeed
++ *    - checks returned value to be the same as we set
++ * 2. Get attribute from a directory:
++ *    - fgetxattr(2) should succeed
++ *    - checks returned value to be the same as we set
++ * 3. Get attribute from a symlink which points to the regular file:
++ *    - fgetxattr(2) should succeed
++ *    - checks returned value to be the same as we set
++ * 4. Get attribute from a FIFO:
++ *    - fgetxattr(2) should return -1 and set errno to ENODATA
++ * 5. Get attribute from a char special file:
++ *    - fgetxattr(2) should return -1 and set errno to ENODATA
++ * 6. Get attribute from a block special file:
++ *    - fgetxattr(2) should return -1 and set errno to ENODATA
++ * 7. Get attribute from a UNIX domain socket:
++ *    - fgetxattr(2) should return -1 and set errno to ENODATA
++ */
++
++#include "config.h"
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <sys/sysmacros.h>
++#include <sys/wait.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/socket.h>
++#include <sys/un.h>
++#ifdef HAVE_SYS_XATTR_H
++# include <sys/xattr.h>
++#endif
++#include "tst_test.h"
++
++#ifdef HAVE_SYS_XATTR_H
++#define XATTR_TEST_KEY "user.testkey"
++#define XATTR_TEST_VALUE "this is a test value"
++#define XATTR_TEST_VALUE_SIZE 20
++#define FILENAME "fgetxattr02testfile"
++#define DIRNAME  "fgetxattr02testdir"
++#define SYMLINK  "fgetxattr02symlink"
++#define SYMLINKF "fgetxattr02symlinkfile"
++#define FIFO     "fgetxattr02fifo"
++#define CHR      "fgetxattr02chr"
++#define BLK      "fgetxattr02blk"
++#define SOCK     "fgetxattr02sock"
++
++#define SAFE_FREE(p) { if (p) { free(p); (p)=NULL; } }
++
++struct test_case {
++	enum test_type {
++		TP_FILE,
++		TP_DIRECTORY,
++		TP_SYMLINK,
++		TP_FIFO,
++		TP_CHARDEV,
++		TP_BLOCKDEV,
++		TP_SOCKET
++	} type;
++	char *fname;
++	int filed;
++	int fflags;
++	char *key;
++	char *value;
++	size_t size;
++	char *ret_value;
++	int flags;
++	int exp_err;
++	int exp_ret;
++};
++static struct test_case tc[] = {
++	{			/* case 00, get attr from reg */
++	 .type = TP_FILE,
++	 .fname = FILENAME,
++	 .filed = -1,
++	 .fflags = O_RDONLY,
++	 .key = XATTR_TEST_KEY,
++	 .value = XATTR_TEST_VALUE,
++	 .size = XATTR_TEST_VALUE_SIZE,
++	 .ret_value = NULL,
++	 .flags = XATTR_CREATE,
++	 .exp_err = 0,
++	 .exp_ret = XATTR_TEST_VALUE_SIZE,
++	 },
++	{			/* case 01, get attr from dir */
++	 .type = TP_DIRECTORY,
++	 .fname = DIRNAME,
++	 .filed = -1,
++	 .fflags = O_RDONLY,
++	 .key = XATTR_TEST_KEY,
++	 .value = XATTR_TEST_VALUE,
++	 .size = XATTR_TEST_VALUE_SIZE,
++	 .ret_value = NULL,
++	 .flags = XATTR_CREATE,
++	 .exp_err = 0,
++	 .exp_ret = XATTR_TEST_VALUE_SIZE,
++	 },
++	{			/* case 02, get attr from symlink */
++	 .type = TP_SYMLINK,
++	 .fname = SYMLINK,
++	 .filed = -1,
++	 .fflags = O_RDONLY,
++	 .key = XATTR_TEST_KEY,
++	 .value = XATTR_TEST_VALUE,
++	 .size = XATTR_TEST_VALUE_SIZE,
++	 .ret_value = NULL,
++	 .flags = XATTR_CREATE,
++	 .exp_err = 0,
++	 .exp_ret = XATTR_TEST_VALUE_SIZE,
++	 },
++	{			/* case 03, get attr from fifo */
++	 .type = TP_FIFO,
++	 .fname = FIFO,
++	 .filed = -1,
++	 .fflags = (O_RDONLY | O_NONBLOCK),
++	 .key = XATTR_TEST_KEY,
++	 .value = XATTR_TEST_VALUE,
++	 .size = XATTR_TEST_VALUE_SIZE,
++	 .flags = XATTR_CREATE,
++	 .exp_err = ENODATA,
++	 .exp_ret = -1,
++	 },
++	{			/* case 04, get attr from character special */
++	 .type = TP_CHARDEV,
++	 .fname = CHR,
++	 .filed = -1,
++	 .fflags = O_RDONLY,
++	 .key = XATTR_TEST_KEY,
++	 .value = XATTR_TEST_VALUE,
++	 .size = XATTR_TEST_VALUE_SIZE,
++	 .ret_value = NULL,
++	 .flags = XATTR_CREATE,
++	 .exp_err = ENODATA,
++	 .exp_ret = -1,
++	 },
++	{			/* case 05, get attr from block special */
++	 .type = TP_BLOCKDEV,
++	 .fname = BLK,
++	 .filed = -1,
++	 .fflags = O_RDONLY,
++	 .key = XATTR_TEST_KEY,
++	 .value = XATTR_TEST_VALUE,
++	 .size = XATTR_TEST_VALUE_SIZE,
++	 .ret_value = NULL,
++	 .flags = XATTR_CREATE,
++	 .exp_err = ENODATA,
++	 .exp_ret = -1,
++	 },
++	{			/* case 06, get attr from socket */
++	 .type = TP_SOCKET,
++	 .fname = SOCK,
++	 .filed = -1,
++	 .fflags = O_RDONLY,
++	 .key = XATTR_TEST_KEY,
++	 .value = XATTR_TEST_VALUE,
++	 .size = XATTR_TEST_VALUE_SIZE,
++	 .ret_value = NULL,
++	 .flags = XATTR_CREATE,
++	 .exp_err = ENODATA,
++	 .exp_ret = -1,
++	 },
++};
++
++static void verify_fgetxattr(unsigned int i)
++{
++	if (tc[i].exp_ret >= 0)
++		SAFE_FSETXATTR(tc[i].filed, tc[i].key, tc[i].value,
++				tc[i].size, tc[i].flags);
++
++	TEST(fgetxattr(tc[i].filed, tc[i].key, tc[i].ret_value, tc[i].size));
++
++	if (TEST_RETURN == -1 && TEST_ERRNO == EOPNOTSUPP)
++		tst_brk(TCONF, "fgetxattr(2) not supported");
++
++	if (TEST_RETURN >= 0) {
++
++		if (TEST_RETURN == tc[i].exp_ret) {
++			tst_res(TPASS, "fgetxattr(2) passed");
++			goto check_value;
++		}
++
++		tst_res(TFAIL, "fgetxattr(2) passed unexpectedly %ld", TEST_RETURN);
++		goto check_value;
++	}
++
++	if (TEST_ERRNO == tc[i].exp_err) {
++		tst_res(TPASS | TTERRNO, "expected behaviour");
++		return;
++	}
++
++	tst_res(TFAIL | TTERRNO, "fgetxattr(2) failed");
++	return;
++
++check_value:
++
++	if (strcmp(tc[i].ret_value, XATTR_TEST_VALUE)) {
++		tst_res(TFAIL, "wrong value, expect \"%s\" got \"%s\"",
++				 XATTR_TEST_VALUE, tc[i].ret_value);
++	}
++
++	tst_res(TPASS, "got the right value");
++	return;
++}
++
++static void setup(void)
++{
++	int i=0;
++	struct sockaddr_un sun;
++
++	dev_t dev = makedev(1, 3);
++
++	SAFE_TOUCH(FILENAME, 0644, NULL);
++	SAFE_TOUCH(SYMLINKF, 0644, NULL);
++	SAFE_MKDIR(DIRNAME, 0644);
++	SAFE_SYMLINK(SYMLINKF, SYMLINK);
++	SAFE_MKNOD(FIFO, S_IFIFO | 0777, 0);
++	SAFE_MKNOD(CHR, S_IFCHR | 0777, dev);
++	SAFE_MKNOD(BLK, S_IFBLK | 0777, dev);
++
++	for (i=0; i < (int) ARRAY_SIZE(tc); i++) {
++
++		tc[i].ret_value = SAFE_MALLOC(tc[i].size);
++
++		if(tc[i].type != TP_SOCKET) {
++			tc[i].filed = \
++				SAFE_OPEN(tc[i].fname, tc[i].fflags, NULL);
++			continue;
++		}
++
++		/* differently than getxattr(2) calls, when dealing with
++		 * sockets, mknod(2) isn't enough to test fgetxattr(2).
++		 * we have to get a real unix socket in order for open(2)
++		 * to get a file desc.
++		 */
++		tc[i].filed = SAFE_SOCKET(AF_UNIX, SOCK_STREAM, 0);
++
++		memset(&sun, 0, sizeof(struct sockaddr_un));
++		sun.sun_family = AF_UNIX;
++		strncpy(sun.sun_path, tc[i].fname, sizeof(sun.sun_path) - 1);
++
++		SAFE_BIND(tc[i].filed, (const struct sockaddr *) &sun,
++				sizeof(struct sockaddr_un));
++	}
++}
++
++static void cleanup(void)
++{
++	int i=0;
++
++	for (i=0; i < (int) ARRAY_SIZE(tc); i++) {
++		SAFE_FREE(tc[i].ret_value);
++
++		if(tc[i].filed > 0)
++			SAFE_CLOSE(tc[i].filed);
++	}
++}
++
++static struct tst_test test = {
++	.setup = setup,
++	.test = verify_fgetxattr,
++	.cleanup = cleanup,
++	.tcnt = ARRAY_SIZE(tc),
++	.needs_tmpdir = 1,
++	.needs_root = 1,
++};
++
++#else /* HAVE_SYS_XATTR_H */
++TST_TEST_TCONF("<sys/xattr.h> does not exist");
++#endif
+diff --git a/testcases/kernel/syscalls/fgetxattr/fgetxattr03.c b/testcases/kernel/syscalls/fgetxattr/fgetxattr03.c
+new file mode 100644
+index 000000000..09a2bbaa1
+--- /dev/null
++++ b/testcases/kernel/syscalls/fgetxattr/fgetxattr03.c
+@@ -0,0 +1,94 @@
++/*
++ * Copyright (c) 2018 Linaro Limited
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of version 2 of the GNU General Public
++ * License as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it would be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
++ *
++ * Further, this software is distributed without any warranty that it
++ * is free of the rightful claim of any third person regarding
++ * infringement or the like.  Any license provided herein, whether
++ * implied or otherwise, applies only to this software file.  Patent
++ * licenses, if any, provided herein do not apply to combinations of
++ * this program with other software, or any other product whatsoever.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
++ * 02110-1301, USA.
++ */
++
++/*
++ * An empty buffer of size zero can be passed into fgetxattr(2) to return
++ * the current size of the named extended attribute.
++ */
++
++#include "config.h"
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <sys/wait.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#ifdef HAVE_SYS_XATTR_H
++# include <sys/xattr.h>
++#endif
++#include "tst_test.h"
++
++#ifdef HAVE_SYS_XATTR_H
++#define XATTR_TEST_KEY "user.testkey"
++#define XATTR_TEST_VALUE "this is a test value"
++#define XATTR_TEST_VALUE_SIZE 20
++#define FILENAME "fgetxattr03testfile"
++
++static int filed = -1;
++
++static void verify_fgetxattr(unsigned int i)
++{
++	TEST(fgetxattr(filed, XATTR_TEST_KEY, NULL, 0));
++
++	if (TEST_RETURN == XATTR_TEST_VALUE_SIZE) {
++		tst_res(TPASS, "fgetxattr(2) returned correct value");
++		return;
++	}
++
++	tst_res(TFAIL | TTERRNO, "fgetxattr(2) failed");
++}
++
++static void setup(void)
++{
++	SAFE_TOUCH(FILENAME, 0644, NULL);
++	filed = SAFE_OPEN(FILENAME, O_RDONLY, NULL);
++	SAFE_UNLINK(FILENAME);
++
++	SAFE_FSETXATTR(filed, XATTR_TEST_KEY, XATTR_TEST_VALUE,
++			XATTR_TEST_VALUE_SIZE, XATTR_CREATE);
++}
++
++static void cleanup(void)
++{
++	if (filed >0)
++		SAFE_CLOSE(filed);
++}
++
++static struct tst_test test = {
++	.setup = setup,
++	.test = verify_fgetxattr,
++	.cleanup = cleanup,
++	.tcnt = 1,
++	.needs_tmpdir = 1,
++	.needs_root = 1,
++};
++
++#else /* HAVE_SYS_XATTR_H */
++TST_TEST_TCONF("<sys/xattr.h> does not exist");
++#endif
++
+-- 
+2.18.0
+
