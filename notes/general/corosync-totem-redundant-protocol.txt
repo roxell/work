@@ -1,0 +1,260 @@
+##
+## Introduction
+##
+
+This document's intent is to provide information regarding setup for redundant
+rings in a corosync environment. It explains how the Totem RRP protocol operates
+in different replication Styles, helping the final user to take a decision how
+to configure multiple rings in a corosync cluster.
+
+#
+# General concepts
+#
+
+Ring network: Is a network topology in which each node connects to exactly two
+other nodes, forming a single continuous pathway for communication through each
+node - a ring.
+
+Messages: Any type of communication sent by a node to another nodes containing
+or requesting data.
+
+Token: Special messages advertising the receiving nodes that they are the ones
+mastering the ring communication (only when holding the token). All
+communication is generated on nodes holding the token. Those who are NOT holding
+the token must NOT broadcast anything until the token arrives.
+
+   o -- o                   o -- o
+/        \               //      \\
+o          o             o          o
+|          |            ||          ||
+o          o             o          o
+\        /              \\        //
+   o -- o                   o -- o
+
+Single Ring             Redundant Rings
+
+#
+# The Totem Redundant Ring Protocol
+#
+
+The Totem Single Ring Protocol (Totem SRP), used by corosync, imposes a logical
+token-passing ring on the network to accomplish the following:
+
+- Reliable delivery of messages
+- Causal and total message ordering
+- Flow control
+- Fault Detection
+- Group Membership
+
+Based on - and working together with - the Totem SRP, the Totem Redundant Ring
+Protocol (Totem RRP) was created to enable use of redundant networks in these
+fault-tolerant distributed systems.
+
+In simple terms, Totem SRP protocol works by allowing a node - part of a cluster
+- to broadcast a message only if it holds the token. Whenever the nodes want to
+send a message, it accumulates this message in a queue and, as soon as it
+receives the token, it broadcasts all accumulated messages in the order they
+were enqueued (FIFO). After finishing the message broadcast, it passes along the
+token for the next node to do the same.
+
+Right before broadcasting the message, Totem SRP protocol marks the message with
+a sequence number (SEQ #). All messages are marked with the next available SEQ #
+and that makes other nodes to know if they missed any message. After finishing
+sending messages, the token, also passed as a message (directly to the next
+node, and not broadcasted), is also marked with the next available SEQ #.
+
+              |
+              | RECV TOKEN SEQ #N
+              |
+              V
+MSGx ---->                       | MSGx SEQ #N+1
+MSGy ----> TOTEM ----> BROADCAST | MSGy SEQ #N+2
+MSGz ---->                       | MSGz SEQ #N+size(queue)
+              |
+              | SEND TOKEN SEQ #N + size(queue) + 1
+              |
+              V
+
+It is mandatory that the Totem protocol (no matter if single or redundant)
+continues in case of a missing message on any node. All nodes keep receiving
+broadcasted messages from the cluster. Some messages might disappear (if we
+consider we're using UDP packets and delivery is not guaranteed). Messages can
+also arrive out-of-order because of different routing (Layer 2 or 3) paths.
+
+The Totem protocol buffer will keep receiving messages, arriving from Totem RRP
+layer (if enabled), or from SRP layer (if no redundancy is set), and will
+enqueue all messages in a receive buffer. Whenever the node receives the Token
+again, meaning that no more messages should be expected, Totem SRP protocol
+checks the incoming buffer for all messages and its sequence numbers, trying to
+find a GAP.
+
+If a gap is found (a SEQ # is missing), Totem protocol knows that there is a
+missing message and, instead of proceeding on sending all scheduled messages (in
+the sending buffer), it creates a Token (a "special" message, with similar
+characteristics) containing a retransmission request.
+
+When the next node receives that Token, it can either broadcast missing
+messages, if they exist in that node, or broadcast the token to the next node
+(without removing the retransmission request), if it doesn't exist. This way,
+all the nodes that don't have those messages will receive and populate their
+Totem incoming buffer with missing messages.
+
+During the retransmission, if the node receives a duplicate message, it discards
+it, so, only nodes that are missing the message will care about the
+retransmission.
+
+##
+## Replication Styles (rrp_mode)
+##
+
+#
+# Active Replication
+#
+
+* messages & tokens are duplicated and sent over ALL ring networks
+  simultaneously.
+
+With Active Replication, Totem RRP sends every message over all networks. All
+networks should exhibit similar throughput and similar latency. Totem RRP sends
+different copies of messages (and tokens) in same order. In a UDP over IP over
+Ethernet scenario, the FIFO behavior is only violated when a message is dropped.
+
+When using active replication, the Totem RRP requirements are:
+
+(1) Message must be delivered only once to the application.
+(2) Retransmissions (when having token) can be made if msgs/tokens were lost.
+(3) Networks must remain synchronised (slower networks can't fall behind).
+(4) Totem RRP must continue if message or token is lost.
+(5) Totem RRP must detect permanent network failures.
+(6) Totem RRP network failure can't occur because of sporadic losses.
+
+And the requirements are guaranteed by:
+
+1 - Messages are delivered on all networks (rings). Identical copies of messages
+are destroyed by Totem SRP (filtered by sequence numbers). The first message
+will be delivered to application and all subsequent ones will be discarded.
+
+2 & 3 - Differently from Messages, Tokens are only passed to Totem SRP IF they
+have been received on all rings. Waiting for the token on all rings cause side
+effects that guarantee (2) and (3): All retransmissions were finished by the
+time the totem is received AND networks are synchronised since no messages are
+broadcasted while the totem hasn't been fully received.
+
+Clarification: In this replication case, Tokens are special messages that have
+to be duplicated to every existent ring in the cluster. Tokens have to be
+delivered on ALL existing network rings (and not only in 1, like messages),
+thus, differently from messages, tokens can be lost more easily. Totem RRP
+protocol maintains a problem_counter for each ring network and increments it
+every time a token is lost.
+
+4 & 5 - The way Totem RRP discovers it lost a Token is this: After receiving a
+Token in one ring network, the Totem protocol starts a timer waiting for the
+same token to arrive from all other ring networks. Every time this timer
+triggers, it means that the timeout (rrp_token_expired_timeout) passed and the
+Token message never arrived in the other path(s). Totem protocol increments the
+error for that particular ring network, until some threshold
+(rrp_problem_count_threshold) is reached, when the
+network can be marked as faulty.
+
+6 - The problem_counter variable has to be decremented from time to time
+(rrp_problem_count_timeout) so that operational networks are not considered
+faulty when operational (at least operational enough to keep the Totem protocol
+to work).
+
+#
+# Passive Replication
+#
+
+* differently from Active replication, messages are NOT duplicated.
+* messages and tokens are sent over ALL ring networks in round-robin fashion.
+
+With Passive Replication, Totem RRP sends only a single copy of a message or a
+token. Received messages are passed to the Totem SRP directly.
+
+When using passive replication, the Totem RRP requirements are:
+
+(1) -
+(2) Retransmissions (when having token) can be made if msgs/tokens were lost.
+(3) Networks must remain synchronised (slower networks can't fall behind).
+(4) Totem RRP must continue if message or token is lost.
+(5) Totem RRP must detect permanent network failures.
+(6) Totem RRP network failure can't occur because of sporadic losses.
+
+2 & 4 - Algorithm sends a single copy of a message or a token. Received messages
+are passed to Totem SRP directly if no messages are missing. If there are
+outstanding messages, token is stored in token buffer until a timeout occurs.
+When timeout occurs, messages are given to Totem SRP to deal with missing
+messages (creating a Totem message with retransmission request, for example).
+
+3 - Because all networks participate in transferring tokens in a round-robin
+fashion (differently from Active Replication, but, still, with same principles),
+the networks will be re-synchronized every time token is sent via the slowest
+network.
+
+Clarification: In this replication case, Tokens are special messages that are
+sent to a single existent network ring in the cluster. Tokens DO NOT have to be
+delivered on ALL existing network rings (like the Active replication). This
+makes lost tokens recognition harder.
+
+5 - Since there are 2 networks receiving different set of packages (and tokens),
+it is hard to know if one Token was lost or not. Differently from messages,
+where you can follow the SEQ #, the Token is the "last" message to be received
+and hard to know if it was lost.
+
+The way Totem protocol perceives missing Token, when using Passive replication,
+is this: by comparing the number of messages (and tokens) arrived from one ring
+network and another. If the delta of received messages in different network
+rings exceeds a threshold, the network containing smaller number of messages is
+marked as faulty. It is likely less effective than the Active replication.
+
+6 - (5) would cause any network having sporadic packet losses to, eventually, be
+considered as faulty. Totem protocol, when working with passive replication,
+increments the number of received messages automatically, from time to time, for
+networks falling behind. This fixes an eventual packet loss BUT is less
+effective than Active Replication method.
+
+##
+## Relevant settings from corosync.conf:
+##
+
+rrp_problem_count_timeout (default = 2000 ms, or, 2 sec)
+
+    This specifies the time in milliseconds to wait before decrementing the
+    problem count by 1 for a particular ring to ensure a link is not marked faulty
+    for transient network failures.
+
+rrp_problem_count_threshold (default = 10)
+
+    This specifies the number of times a problem is detected with a link before
+    setting the link faulty. Once a link is set faulty, no more data is transmitted
+    upon it.
+
+rrp_token_expired_timeout (default = 47 ms)
+
+    This specifies the time in milliseconds to increment the problem counter
+    for the redundant ring protocol after not having received a token from all rings
+    for a particular processor.
+
+rrp_autorecovery_check_timeout (default = 1000 ms, or, 1 sec)
+
+    This specifies the time in milliseconds to check if the failed ring can be
+    auto-recovered.
+
+##
+## References
+##
+
+The Totem Redundant Ring Protocol
+R.R. Koch, L.E. Moser, P.M. Melliar-Smith
+Department of Electrical and Computer Engineering
+University of California, Santa Barbara
+Proceedings - International Conference on Distributed Computing Systems 01/2002
+(https://goo.gl/CiFhrN)
+
+The Totem Single-Ring Ordering and Membership Protocol
+Y. Amir, L.E. Moser, P.M. Melliar-Smith, D.A. Agarwal, P. Ciarfella
+University of California, Santa Barbara
+ACM Transactions on Computer Systems
+Volume 13 Issue 4, Nov. 1995
+Pages 311-342
+(https://goo.gl/vGCLNC)
