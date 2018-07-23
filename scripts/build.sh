@@ -19,6 +19,7 @@ KCROSS=0        # are you cross compiling ? (default: 0)
 KCLEAN=1        # want to run make clean ? (default: 1)
 GCLEAN=1        # want to run git reset ? (default: 1)
 KCONFIG=1       # want to copy and process conf file ? (default: 1)
+KPREPARE=1      # want to prepare ? (default: 1)
 KBUILD=1        # want to build ? :o) (default: 1)
 KSELFTESTS=0    # want to build and generate kselftests .tar.gz ? (default: 0)
 KDEBUG=0        # want your kernel to have debug symbols ? (default: 0)
@@ -233,22 +234,24 @@ for dir in $DIRS; do
         # fi
 
         cp $CONFIG $TARGET/$dir/.config
-        # fixconfig $TARGET/$dir/.config
+        fixconfig $TARGET/$dir/.config
         # # $COMPILE O=$TARGET/$dir menuconfig
-        # $COMPILE O=$TARGET/$dir olddefconfig
+        $COMPILE O=$TARGET/$dir olddefconfig
     fi
 
-    # if [ $KBUILD != 0 ]; then
+    if [ $KPREPARE != 0 ]; then
 
-    #     # compines and generates debpkg
+        $COMPILE O=$TARGET/$dir prepare
+        $COMPILE O=$TARGET/$dir scripts
+    fi
 
-    #     # $COMPILE O=$TARGET/$dir prepare
-    #     # $COMPILE O=$TARGET/$dir scripts
-    #     # $COMPILE O=$TARGET/$dir zImage
-    #     # $COMPILE O=$TARGET/$dir modules
-    #     # $COMPILE O=$TARGET/$dir modules_install INSTALL_MOD_PATH=$TARGET/$dir/modinstall
-    #     $COMPILE O=$TARGET/$dir bindeb-pkg
-    # fi
+    if [ $KBUILD != 0 ]; then
+        true
+        # $COMPILE O=$TARGET/$dir zImage
+        # $COMPILE O=$TARGET/$dir modules
+        # $COMPILE O=$TARGET/$dir modules_install INSTALL_MOD_PATH=$TARGET/$dir/modinstall
+        # $COMPILE O=$TARGET/$dir bindeb-pkg
+    fi
 
     # if [ $KSELFTESTS != 0 ]; then
 
