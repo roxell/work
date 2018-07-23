@@ -29,8 +29,8 @@ for dir in $DIRS; do
 
     basedir=$(basename $dir)
 
-    MAINCONTENT="\* [BUG $basedir](https://bugs.linaro.org/show_bug.cgi?id=$basedir)"
-    echo $MAINCONTENT >> README.md
+    MAINCONTENT="[BUG $basedir](https://bugs.linaro.org/show_bug.cgi?id=$basedir)"
+    echo \* $MAINCONTENT >> README.md
 
     [ ! -d $dir ] && getout $dir is not a dir ?
 
