@@ -164,3 +164,6 @@
 	path = sources/linux/stable-rc/stable-rc-linux-4.17.y
 	url = http://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable-rc.git
 	branch = linux-4.17.y
+[submodule "sources/trees/kexec-takahiro"]
+	path = sources/trees/kexec-takahiro
+	url = https://git.linaro.org/people/takahiro.akashi/kexec-tools.git
