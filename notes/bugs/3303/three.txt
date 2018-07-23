@@ -1,0 +1,207 @@
+
+4295025408  ffff800000b92050  ffff8000003e68b0  <__prandom_timer>
+4295042560  ffff800000bda7e0  ffff800000673368  <flow_cache_new_hashrnd>
+4295042560  ffff800000ba3a78  ffff8000005031f0  <blank_screen_t>
+4316397568  ffff8000f9f71100  ffff800000713ea0  <ipv6_regen_rndid>
+4295016000  ffff8000f9ed0628  ffff8000003b4460  <blk_mq_rq_timer>
+4295015254  ffff8000b782bcc0  ffff800000129190  <process_timeout>
+4295013572  ffff800000c493b8  ffff8000001bf678  <writeout_period>
+4295042388  ffff8000fb3cbd50  ffff800000129190  <process_timeout>
+
+4295014845  ffff800000c52868  ffff8000000d9d40  <delayed_work_timer_fn>
+4295015000  ffff8000fff92cc0  ffff8000000d9d40  <delayed_work_timer_fn>
+4295018064  ffff800000bdfdb8  ffff8000000d9d40  <delayed_work_timer_fn>
+4295018064  ffff800000be3ef0  ffff8000000d9d40  <delayed_work_timer_fn>
+4295014997  ffff8000fffa3cc0  ffff8000000d9d40  <delayed_work_timer_fn>
+4295015532  ffff8000f9ed0368  ffff8000000d9d40  <delayed_work_timer_fn>
+4295014991  ffff800000b45de8  ffff8000000d9d40  <delayed_work_timer_fn>
+4295043840  ffff800000be3660  ffff8000000d9d40  <delayed_work_timer_fn>
+4295044096  ffff800000bdff40  ffff8000000d9d40  <delayed_work_timer_fn>
+4295065600  ffff800000b35930  ffff8000000d9d40  <delayed_work_timer_fn>
+4305715200  ffff800000b59418  ffff8000000d9d40  <delayed_work_timer_fn>
+
+
+struct timer_list.data ffff800000c52868
+struct timer_list.data ffff8000fff92cc0
+struct timer_list.data ffff800000bdfdb8
+struct timer_list.data ffff800000be3ef0
+struct timer_list.data ffff8000fffa3cc0
+struct timer_list.data ffff8000f9ed0368
+struct timer_list.data ffff800000b45de8
+struct timer_list.data ffff800000be3660
+struct timer_list.data ffff800000bdff40
+struct timer_list.data ffff800000b35930
+struct timer_list.data ffff800000b59418
+
+
+crash> struct timer_list.data ffff800000c52868
+  data = 0xffff800000c52848
+crash> struct timer_list.data ffff8000fff92cc0
+  data = 0xffff8000fff92ca0
+crash> struct timer_list.data ffff800000bdfdb8
+  data = 0xffff800000bdfd98
+crash> struct timer_list.data ffff800000be3ef0
+  data = 0xffff800000be3ed0
+crash> struct timer_list.data ffff8000fffa3cc0
+  data = 0xffff8000fffa3ca0
+crash> struct timer_list.data ffff8000f9ed0368
+  data = 0xffff8000f9ed0348
+crash> struct timer_list.data ffff800000b45de8
+  data = 0xffff800000b45dc8
+crash> struct timer_list.data ffff800000be3660
+  data = 0xffff800000be3640
+crash> struct timer_list.data ffff800000bdff40
+  data = 0xffff800000bdff20
+crash> struct timer_list.data ffff800000b35930
+  data = 0xffff800000b35910
+crash> struct timer_list.data ffff800000b59418
+  data = 0xffff800000b593f8
+
+
+struct delayed_work.timer 0xffff800000c52848
+struct delayed_work.timer 0xffff8000fff92ca0
+struct delayed_work.timer 0xffff800000bdfd98
+struct delayed_work.timer 0xffff800000be3ed0
+struct delayed_work.timer 0xffff8000fffa3ca0
+struct delayed_work.timer 0xffff8000f9ed0348
+struct delayed_work.timer 0xffff800000b45dc8
+struct delayed_work.timer 0xffff800000be3640
+struct delayed_work.timer 0xffff800000bdff20
+struct delayed_work.timer 0xffff800000b35910
+struct delayed_work.timer 0xffff800000b593f8
+
+
+
+crash> struct delayed_work.timer 0xffff800000c52848
+  timer = {
+    entry = {
+      next = 0x0,
+      pprev = 0xffff8000fff901a0
+    },
+    expires = 0x10000b9bd,
+    function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+    data = 0xffff800000c52848,
+    flags = 0x200000,
+    slack = 0xffffffff
+  }
+crash> struct delayed_work.timer 0xffff8000fff92ca0
+  timer = {
+    entry = {
+      next = 0x0,
+      pprev = 0xffff8000fff90588
+    },
+    expires = 0x10000ba58,
+    function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+    data = 0xffff8000fff92ca0,
+    flags = 0x200000,
+    slack = 0xffffffff
+  }
+crash> struct delayed_work.timer 0xffff800000bdfd98
+  timer = {
+    entry = {
+      next = 0xffff800000be3ef0 <nd_tbl+296>,
+      pprev = 0xffff8000fff903e8
+    },
+    expires = 0x10000c650,
+    function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+    data = 0xffff800000bdfd98,
+    flags = 0x300000,
+    slack = 0xffffffff
+  }
+crash> struct delayed_work.timer 0xffff800000be3ed0
+  timer = {
+    entry = {
+      next = 0x0,
+      pprev = 0xffff800000bdfdb8 <arp_tbl+296>
+    },
+    expires = 0x10000c650,
+    function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+    data = 0xffff800000be3ed0,
+    flags = 0x300000,
+    slack = 0xffffffff
+  }
+crash> struct delayed_work.timer 0xffff8000fffa3ca0
+  timer = {
+    entry = {
+      next = 0x0,
+      pprev = 0xffff8000fffa1588
+    },
+    expires = 0x10000ba55,
+    function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+    data = 0xffff8000fffa3ca0,
+    flags = 0x200001,
+    slack = 0xffffffff
+  }
+crash> struct delayed_work.timer 0xffff8000f9ed0348
+  timer = {
+    entry = {
+      next = 0x0,
+      pprev = 0xffff8000fffa1598
+    },
+    expires = 0x10000bc6c,
+    function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+    data = 0xffff8000f9ed0348,
+    flags = 0x200001,
+    slack = 0xffffffff
+  }
+crash> struct delayed_work.timer 0xffff800000b45dc8
+  timer = {
+    entry = {
+      next = 0x0,
+      pprev = 0xffff8000fffc2e30
+    },
+    expires = 0x10000ba4f,
+    function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+    data = 0xffff800000b45dc8,
+    flags = 0x200003,
+    slack = 0xffffffff
+  }
+crash> struct delayed_work.timer 0xffff800000be3640
+  timer = {
+    entry = {
+      next = 0xffff8000fb3cbd50,
+      pprev = 0xffff800000bdff40 <check_lifetime_work+32>
+    },
+    expires = 0x100012b00,
+    function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+    data = 0xffff800000be3640,
+    flags = 0x200003,
+    slack = 0xffffffff
+  }
+crash> struct delayed_work.timer 0xffff800000bdff20
+  timer = {
+    entry = {
+      next = 0xffff800000be3660 <addr_chk_work+32>,
+      pprev = 0xffff8000fffc35d8
+    },
+    expires = 0x100012c00,
+    function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+    data = 0xffff800000bdff20,
+    flags = 0x200003,
+    slack = 0xffffffff
+  }
+crash> struct delayed_work.timer 0xffff800000b35910
+  timer = {
+    entry = {
+      next = 0x0,
+      pprev = 0xffff8000fffc35e8
+    },
+    expires = 0x100018000,
+    function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+    data = 0xffff800000b35910,
+    flags = 0x200003,
+    slack = 0xffffffff
+  }
+crash> struct delayed_work.timer 0xffff800000b593f8
+  timer = {
+    entry = {
+      next = 0x0,
+      pprev = 0xffff8000fffc3808
+    },
+    expires = 0x100a40000,
+    function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+    data = 0xffff800000b593f8,
+    flags = 0x200003,
+    slack = 0xffffffff
+  }
+

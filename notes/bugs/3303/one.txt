@@ -1,0 +1,278 @@
+##
+## USERLAND TASK
+## 
+
+## main task called wait() for children
+
+crash> foreach fanotify07 bt
+PID: 915    TASK: ffff800008863200  CPU: 3   COMMAND: "fanotify07"
+ #0 [ffff8000fabebd50] __switch_to at ffff800000086c0c
+ #1 [ffff8000fabebd70] __schedule at ffff800000765168
+ #2 [ffff8000fabebdd0] schedule at ffff8000007656b0
+ #3 [ffff8000fabebde0] do_wait at ffff8000000c2dc4
+ #4 [ffff8000fabebe30] sys_wait4 at ffff8000000c3f10
+ #5 [ffff8000fabebec0] el0_svc_naked at ffff800000085dec
+
+## before context switching, executes work added by task_work_add()
+## hang inside kernel logic, right before a context switch happens
+## userland is hang and no signals are treated (like we've seen)
+##
+## missing user stack but likely coming from SAFE_CLOSE(fd_notify);
+## since there are unresponded events (on purpose)
+
+PID: 916    TASK: ffff8000b4958c80  CPU: 0   COMMAND: "fanotify07"
+ #0 [ffff8000f9827b60] __switch_to at ffff800000086c0c
+ #1 [ffff8000f9827b80] __schedule at ffff800000765168
+ #2 [ffff8000f9827be0] schedule at ffff8000007656b0
+ #3 [ffff8000f9827bf0] schedule_timeout at ffff8000007685c0
+ #4 [ffff8000f9827c70] wait_for_common at ffff800000766250
+ #5 [ffff8000f9827cf0] wait_for_completion at ffff8000007662ec
+ #6 [ffff8000f9827d10] __synchronize_srcu at ffff80000011f83c
+ #7 [ffff8000f9827d70] synchronize_srcu at ffff80000011f920
+ #8 [ffff8000f9827d90] fsnotify_destroy_group at ffff800000271a8c
+ #9 [ffff8000f9827db0] fanotify_release at ffff800000275660
+#10 [ffff8000f9827e00] __fput at ffff80000022bd00
+#11 [ffff8000f9827e50] ____fput at ffff80000022bebc
+#12 [ffff8000f9827e70] task_work_run at ffff8000000df12c
+#13 [ffff8000f9827ea0] do_notify_resume at ffff80000008a000
+#14 [ffff8000f9827ec0] work_pending at ffff800000085ce4
+
+## tasks waiting for fanotify events that never happened (auth access):
+
+PID: 929    TASK: ffff8000b4bf0c80  CPU: 1   COMMAND: "fanotify07"
+PID: 930    TASK: ffff8000b4bf1900  CPU: 0   COMMAND: "fanotify07"
+PID: 931    TASK: ffff8000b4bf0000  CPU: 1   COMMAND: "fanotify07"
+PID: 932    TASK: ffff8000b4bf5780  CPU: 2   COMMAND: "fanotify07"
+PID: 919    TASK: ffff8000f9cc8c80  CPU: 3   COMMAND: "fanotify07"
+PID: 918    TASK: ffff8000f9ccbe80  CPU: 1   COMMAND: "fanotify07"
+PID: 917    TASK: ffff8000f9cccb00  CPU: 2   COMMAND: "fanotify07"
+PID: 920    TASK: ffff8000f9ccd780  CPU: 0   COMMAND: "fanotify07"
+PID: 921    TASK: ffff8000f9cc8000  CPU: 0   COMMAND: "fanotify07"
+PID: 922    TASK: ffff8000f9cce400  CPU: 3   COMMAND: "fanotify07"
+PID: 923    TASK: ffff8000f9ccb200  CPU: 3   COMMAND: "fanotify07"
+PID: 924    TASK: ffff8000f9ccf080  CPU: 2   COMMAND: "fanotify07"
+PID: 925    TASK: ffff8000f9cca580  CPU: 2   COMMAND: "fanotify07"
+PID: 926    TASK: ffff8000fb251900  CPU: 1   COMMAND: "fanotify07"
+PID: 927    TASK: ffff8000b4bf3200  CPU: 1   COMMAND: "fanotify07"
+PID: 928    TASK: ffff8000b4bf6400  CPU: 0   COMMAND: "fanotify07"
+ #0 [xxx] __switch_to at ffff800000086c0c
+ #1 [xxx] __schedule at ffff800000765168
+ #2 [xxx] schedule at ffff8000007656b0
+ #3 [xxx] fanotify_handle_event at ffff8000002752d8
+ #4 [xxx] fsnotify at ffff800000270f58
+ #5 [xxx] security_file_permission at ffff80000033f488
+ #6 [xxx] rw_verify_area at ffff800000229ec4
+ #7 [xxx] vfs_read at ffff800000229fec
+ #8 [xxx] sys_read at ffff80000022ad30
+ #9 [xxx] el0_svc_naked at ffff800000085dec
+
+---------
+
+##
+## REGULAR TASK
+##
+
+PID: 916    TASK: ffff8000b4958c80  CPU: 0   COMMAND: "fanotify07"
+ #0 [ffff8000f9827b60] __switch_to at ffff800000086c0c
+ #1 [ffff8000f9827b80] __schedule at ffff800000765168
+ #2 [ffff8000f9827be0] schedule at ffff8000007656b0
+ #3 [ffff8000f9827bf0] schedule_timeout at ffff8000007685c0
+ #4 [ffff8000f9827c70] wait_for_common at ffff800000766250
+ #5 [ffff8000f9827cf0] wait_for_completion at ffff8000007662ec	- waiting for srcu read-side critical-section completion
+ #6 [ffff8000f9827d10] __synchronize_srcu at ffff80000011f83c
+ #7 [ffff8000f9827d70] synchronize_srcu at ffff80000011f920
+
+	void synchronize_srcu(struct srcu_struct *sp)		- waits for prior srcu read-side critical-section completion
+	{													  wait for the count to drain to zero of both indexes
+		__synchronize_srcu(sp, rcu_gp_is_expedited()	  illegal to call it from corresponding srcu read-side critical critical-section
+				   ? SYNCHRONIZE_SRCU_EXP_TRYCOUNT
+				   : SYNCHRONIZE_SRCU_TRYCOUNT);
+	}
+
+ #8 [ffff8000f9827d90] fsnotify_destroy_group at ffff800000271a8c
+
+	fsnotify_group_stop_queueing(group);
+
+	fsnotify_clear_marks_by_group(group); 
+
+	synchronize_srcu(&fsnotify_mark_srcu); -> "BLOCKS"
+			  |
+			sleep RCU structure initialized by module initialization (fsnotify_init)	
+			  |
+			fsnotify_init			- creates the sleep rcu
+			fsnotify 				- main function called by all vfs fops hooks, read-side critical
+			fsnotify_mark_destroy	- BLOCKED (active) in kernel thread bellow
+			fsnotify_destroy_group	- BLOCKED (active) here
+
+	...
+
+
+ #9 [ffff8000f9827db0] fanotify_release at ffff800000275660		last reference to fanotify fd was freed
+									fanotify_fops { .release = ... }
+
+	group comes from fd->private_data
+	destroy group is the last function before release returns
+
+	# allows all remaining permission events (access list and queue) and simulate reply from userspace
+
+	locks the group->fanotify_data
+		for each existing event in fanotify_data.access_list:
+			removes event from event->fae.fse.list
+			responds event with FAN_ALLOW
+	unlocks group->fanotify_data
+
+	# gets events from notify queue and: if non permission, destroy, if permission allows (set response)
+
+	mutex_lock(&group->notification_mutex);
+	while (!fsnotify_notify_queue_is_empty(group)) {
+		fsn_event = fsnotify_remove_first_event(group);
+		if (!(fsn_event->mask & FAN_ALL_PERM_EVENTS))
+			fsnotify_destroy_event(group, fsn_event);
+		else
+			FANOTIFY_PE(fsn_event)->response = FAN_ALLOW;
+	}
+	mutex_unlock(&group->notification_mutex);
+
+	# wakes wait queue
+
+	wake_up(&group->fanotify_data.access_waitq);
+
+	/* matches the fanotify_init->fsnotify_alloc_group */
+
+	fsnotify_destroy_group(group); -> "BLOCKS"
+
+##
+## KERNEL THREAD
+##
+
+crash> bt
+PID: 44     TASK: ffff8000b48c0c80  CPU: 1   COMMAND: "fsnotify_mark"
+ #0 [ffff8000b491bb60] __switch_to at ffff800000086c0c
+ #1 [ffff8000b491bb80] __schedule at ffff800000765168
+ #2 [ffff8000b491bbe0] schedule at ffff8000007656b0
+ #3 [ffff8000b491bbf0] schedule_timeout at ffff8000007685c0
+ #4 [ffff8000b491bc70] wait_for_common at ffff800000766250
+ #5 [ffff8000b491bcf0] wait_for_completion at ffff8000007662ec
+ #6 [ffff8000b491bd10] __synchronize_srcu at ffff80000011f83c
+ #7 [ffff8000b491bd70] synchronize_srcu at ffff80000011f920			-> waiting for srcu read-side critical-section completion
+ #8 [ffff8000b491bd90] fsnotify_mark_destroy at ffff800000272180
+ #9 [ffff8000b491be20] kthread at ffff8000000e15cc
+
+========
+
+SRCU is waiting on its own completion (from __synchronize_srcu())
+
+	- it schedules a "wakeme_after_rcu" to finaly return from the completion wait (rcu_batch_queue "batch_check0")
+	- since it scheduled a rcu_head at the end of the queue, it will guarantee all work was done
+	- synchronize_srcu() finaly returns
+
+	- synchronize_srcu() calls srcu_advance_batcches()
+	- it moves callbacks from ->batch_check0 to ->batch_check1 and ->batch_done as readers drain
+
+* 2 TASKS WAITING ON RCU CALLBACKS *
+
+Regular task fanotify07 is "stuck". called synchronize_rcu() and it is waiting its completion.
+	- it is stuck at fsnotify_destroy_group() which tried to sync rcu
+	- being 1st or 2nd call, it would be on its own completion and its own grace period
+	- being 1st call it would have triggered the grace period logic to sync (calling all existing callbacks)
+
+Kernel thread fsnotify_mark is "stuck". called synchronize_rcu() and it is waiting its completion.
+	- it is stuck at fsnotify_mark_destroy() which tried to sync rcu
+	- being 1st or 2nd call, it would be on its own completion and its own grace period
+	- being 1st call it would have triggered the grace period logic to sync (calling all existing callbacks)
+
+========
+
+Has all the work been dispatched from srcu_reschedule to "system_power_efficient_wq" work queue ? (this work is sp->work, is process_srcu)
+	
+	-> srcu_schedule() schedules "process_srcu" function using SRCU_INTERVAL, so the scheduling is scheduled for later
+	-> after SRCU_INTERVAL, timer for callback of "process_srcu" work will trigger, calling delayed_work_timer_fn().
+	-> delayed_work_timer_fn() calls __queue_work() to schedule "process_srcu" in a per-cpu workqueue
+
+	-> delayed_work_timer_fn() will queue the process_srcu() into the workqueue "system_power_efficient_wq" (now for real) 
+ 	-> process_srcu(), when called, will call srcu_invoke_callbacks(), and it will finally call the rcu callbacks.
+ 	-> if process_srcu() was executed, then it has invoked all srcu callbacks and it would have also called srcu_reschedule() 
+
+The SRCU is "blocked" waiting on the completion of all scheduled callbacks of the graceful period. 
+
+TODO: Find out which callbacks are on the CPU(s) queue and why they're not finishing.
+
+IDEA: To find a way to unblock this logic (even if not backed by an upstream change)
+
+========
+
+static int init_srcu_struct_fields(struct srcu_struct *sp)
+{
+	sp->completed = 0;
+	spin_lock_init(&sp->queue_lock);
+	sp->running = false;
+	rcu_batch_init(&sp->batch_queue);
+	rcu_batch_init(&sp->batch_check0);
+	rcu_batch_init(&sp->batch_check1);
+	rcu_batch_init(&sp->batch_done);
+	INIT_DELAYED_WORK(&sp->work, process_srcu);					- work-queue function handling rcu grace periods
+	sp->per_cpu_ref = alloc_percpu(struct srcu_struct_array);
+	return sp->per_cpu_ref ? 0 : -ENOMEM;
+}
+
+void process_srcu(struct work_struct *work)
+{
+	struct srcu_struct *sp;
+
+	sp = container_of(work, struct srcu_struct, work.work);
+
+	srcu_collect_new(sp);
+	srcu_advance_batches(sp, 1);
+	srcu_invoke_callbacks(sp);
+	srcu_reschedule(sp);
+}
+
+======== 
+
+static __init int fsnotify_init(void)
+{
+...
+	ret = init_srcu_struct(&fsnotify_mark_srcu);
+...
+}
+
+static int init_srcu_struct_fields(struct srcu_struct *sp)
+{
+	sp->completed = 0;
+	spin_lock_init(&sp->queue_lock);
+	sp->running = false;
+	rcu_batch_init(&sp->batch_queue);
+	rcu_batch_init(&sp->batch_check0);
+	rcu_batch_init(&sp->batch_check1);
+	rcu_batch_init(&sp->batch_done);
+	INIT_DELAYED_WORK(&sp->work, process_srcu);
+	sp->per_cpu_ref = alloc_percpu(struct srcu_struct_array);
+	return sp->per_cpu_ref ? 0 : -ENOMEM;
+}
+
+
+- process_srcu() is the work function, delayed_work_timer_fn() is the timer function to call it
+- it calls:
+
+/*
+ * Invoke a limited number of SRCU callbacks that have passed through
+ * their grace period.  If there are more to do, SRCU will reschedule
+ * the workqueue.
+ */
+static void srcu_invoke_callbacks(struct srcu_struct *sp)
+{
+	int i;
+	struct rcu_head *head;
+
+	for (i = 0; i < SRCU_CALLBACK_BATCH; i++) {
+		head = rcu_batch_dequeue(&sp->batch_done);
+		if (!head)
+			break;
+		local_bh_disable();
+		head->func(head);
+		local_bh_enable();
+	}
+}
+
+========
+

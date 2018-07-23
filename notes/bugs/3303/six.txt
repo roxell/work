@@ -1,0 +1,62 @@
+
+crash> print fsnotify_mark_srcu.per_cpu_ref
+$8 = (struct srcu_struct_array *) 0xffff800000afb590
+
+crash> kmem -o
+PER-CPU OFFSET VALUES:
+  CPU 0: ff49e000
+  CPU 1: ff4af000
+  CPU 2: ff4c0000
+  CPU 3: ff4d1000
+
+crash> struct srcu_struct_array 0xFFFF8000FFF99590
+struct srcu_struct_array {
+  c = {0x0, 0x0},				- no read locks
+  seq = {0x3, 0xc}
+}
+
+crash> struct srcu_struct_array 0xFFFF8000FFFAA590
+struct srcu_struct_array {
+  c = {0x0, 0x3},				- read locks	- 3 read locks
+  seq = {0x0, 0x18}
+}
+
+crash> struct srcu_struct_array 0xFFFF8000FFFBB590
+struct srcu_struct_array {
+  c = {0x0, 0x4},				- read locks	- 4 read locks
+  seq = {0x0, 0x19}
+}
+
+crash> struct srcu_struct_array 0xFFFF8000FFFCC590
+struct srcu_struct_array {
+  c = {0x0, 0x9},				- read locks	- 9 read locks
+  seq = {0x1, 0x27}
+}
+
+total = 16 read locks, and =):
+
+PID: 929    TASK: ffff8000b4bf0c80  CPU: 1   COMMAND: "fanotify07"
+PID: 930    TASK: ffff8000b4bf1900  CPU: 0   COMMAND: "fanotify07"
+PID: 931    TASK: ffff8000b4bf0000  CPU: 1   COMMAND: "fanotify07"
+PID: 932    TASK: ffff8000b4bf5780  CPU: 2   COMMAND: "fanotify07"
+PID: 919    TASK: ffff8000f9cc8c80  CPU: 3   COMMAND: "fanotify07"
+PID: 918    TASK: ffff8000f9ccbe80  CPU: 1   COMMAND: "fanotify07"
+PID: 917    TASK: ffff8000f9cccb00  CPU: 2   COMMAND: "fanotify07"
+PID: 920    TASK: ffff8000f9ccd780  CPU: 0   COMMAND: "fanotify07"
+PID: 921    TASK: ffff8000f9cc8000  CPU: 0   COMMAND: "fanotify07"
+PID: 922    TASK: ffff8000f9cce400  CPU: 3   COMMAND: "fanotify07"
+PID: 923    TASK: ffff8000f9ccb200  CPU: 3   COMMAND: "fanotify07"
+PID: 924    TASK: ffff8000f9ccf080  CPU: 2   COMMAND: "fanotify07"
+PID: 925    TASK: ffff8000f9cca580  CPU: 2   COMMAND: "fanotify07"
+PID: 926    TASK: ffff8000fb251900  CPU: 1   COMMAND: "fanotify07"
+PID: 927    TASK: ffff8000b4bf3200  CPU: 1   COMMAND: "fanotify07"
+PID: 928    TASK: ffff8000b4bf6400  CPU: 0   COMMAND: "fanotify07"
+
+16 processes waiting for a response from fsnotify mechanism =).
+
+Fortunately (or not ;) this proves that SRCU grace period can't move forward
+(batch stages) because someone is holding the read lock (fsnotify() function).
+
+fsnotify_mark_destroy() is trying to synchronize srcu. 1st or 2nd grace period. -> kernel thread
+fanotify_release() -> fsnotify_destroy_group() is trying to synchronize srcu. 1st or 2nd grace period. -> process (fanotify07 main proc)
+fsnotify_handle_event() is holding the read lock for fanotify srcu and will never let go (while userland doesn't respond to it)

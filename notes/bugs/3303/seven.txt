@@ -1,0 +1,26 @@
+
+fsnotify()
+
+	srcu_read_lock()
+
+	srcu_dereferences
+
+	send_to_group()
+
+		group->ops->handle_event() == fanotify_fsnotify_ops{ ... .handle_event == fanotify_handle_event() }
+
+			fanotify_should_send_event() ? (could return no ?)
+
+			fanotify_alloc_event()
+
+			# adds event to group notification queue
+			fsnotify_add_event(group, fsn_event, fanotify_merge())
+
+			# waits event to be triggered (userland task on fsnotify file descriptor)
+WAIT		fanotify_get_response(group, ...) == wait_event(group->fanotify_data.access_waitq, event->response)
+
+			fsnotify_destroy_event()
+
+	srcu_read_unlock()
+
+

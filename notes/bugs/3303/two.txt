@@ -1,0 +1,219 @@
+# checking the srcu structure:
+
+crash> fsnotify_mark_srcu
+fsnotify_mark_srcu = $9 = {
+  completed = 0xe,
+  per_cpu_ref = 0xffff800000afb590,
+  queue_lock = {
+    {
+      rlock = {
+        raw_lock = {
+          owner = 0x1d,
+          next = 0x1d
+        }
+      }
+    }
+  },
+  running = 0x1,
+  batch_queue = {
+    head = 0x0,
+    tail = 0xffff800000c52808 <fsnotify_mark_srcu+24>
+  },
+  batch_check0 = {
+    head = 0xffff8000b491bd40,                                  - wakeme_after_rcu
+    tail = 0xffff8000b491bd40                                   - head == tail
+  },
+  batch_check1 = {
+    head = 0xffff8000f9827d40,                                  - wakeme_after_rcu
+    tail = 0xffff8000f9827d40                                   - head == tail
+  },
+  batch_done = {
+    head = 0x0,                                                 - null
+    tail = 0xffff800000c52838 <fsnotify_mark_srcu+72>           - itself (null)
+  },
+  work = {
+    work = {
+      data = {
+        counter = 0x1
+      },
+      entry = {
+        next = 0xffff800000c52850 <fsnotify_mark_srcu+96>,
+        prev = 0xffff800000c52850 <fsnotify_mark_srcu+96>
+      },
+      func = 0xffff80000011f990 <process_srcu>
+    },
+    timer = {
+      entry = {
+        next = 0x0,
+        pprev = 0xffff8000fff901a0
+      },
+      expires = 0x10000b9bd,
+      function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+      data = 0xffff800000c52848,
+      flags = 0x200000,
+      slack = 0xffffffff
+    },
+    wq = 0xffff8000fb02d600,
+    cpu = 0x100
+  }
+}
+
+----
+
+# this graceful period will have a single wakeme_after_rcu() callback (internal to srcu)
+
+batch_check1 = {
+  head = 0xffff8000f9827d40,
+  tail = 0xffff8000f9827d40
+},
+
+struct callback_head {
+  next = 0x0,
+  func = 0xffff80000011eaf0 <wakeme_after_rcu>
+}
+
+----
+
+# next graceful period will have a single wakeme_after_rcu() callback (internal to srcu)
+
+batch_check0 = {
+  head = 0xffff8000b491bd40,
+  tail = 0xffff8000b491bd40
+},
+
+struct callback_head {
+  next = 0x0,
+  func = 0xffff80000011eaf0 <wakeme_after_rcu>
+}
+
+----
+
+as soon as both callbacks run, the completion from the synchronize_srcu() will finish
+and it will unlock the logic.
+
+""
+srcu_reschedule():
+
+  if (pending)
+    queue_delayed_work(system_power_efficient_wq,&sp->work, SRCU_INTERVAL);   # schedules func in queue
+""
+
+sp->work here is fsnotify_mark_srcu.work:
+
+crash> print fsnotify_mark_srcu.work
+$16 = {
+  work = {
+    data = {
+      counter = 0x1
+    },
+    entry = {
+      next = 0xffff800000c52850 <fsnotify_mark_srcu+96>,
+      prev = 0xffff800000c52850 <fsnotify_mark_srcu+96>
+    },
+    func = 0xffff80000011f990 <process_srcu>                 # process_srcu "is" scheduled to run (and call completions)
+  },
+
+this means that queue_delayed_work() is scheduling a function (sp->work, process_srcu() in our case)
+to be run after SRCU_INTERVAL. This function, process_srcu() will then run the callbacks that will free
+the completions that are blocking the other 2 tasks.
+
+problem is that.. it does not look like the process_srcu() got queued into the workqueue "system_power_efficient_wq"
+after SRCU_INTERVAL (orelse the tasks wouldn't be blocked). The logic for that is dependant on a timer for the 
+runqueue (__queue_delayed_work() -> add_timer() for the scheduled function). 
+
+the timer (to be ran after SRCU_INTERVAL) comes from: INIT_DELAYED_WORK(&sp->work, process_srcu); inside
+init_srcu_struct_fields(). Timer callback is "delayed_work_timer_fn()" and it is part of delayed work framework. 
+it basically re-runs  __queue_work(dwork->cpu, dwork->wq, &dwork->work); so the job is finally queued without a
+timer.
+
+----
+
+now we go to the timers:
+
+crash> timer
+TVEC_BASES[0]: ffff8000fff8fb80
+  JIFFIES
+4295014844
+  EXPIRES      TIMER_LIST         FUNCTION
+4295014845  ffff800000c52868  ffff8000000d9d40  <delayed_work_timer_fn>
+4295015000  ffff8000fff92cc0  ffff8000000d9d40  <delayed_work_timer_fn>
+4295018064  ffff800000bdfdb8  ffff8000000d9d40  <delayed_work_timer_fn>
+4295018064  ffff800000be3ef0  ffff8000000d9d40  <delayed_work_timer_fn>
+4295025408  ffff800000b92050  ffff8000003e68b0  <__prandom_timer>
+4295042560  ffff800000bda7e0  ffff800000673368  <flow_cache_new_hashrnd>
+4295042560  ffff800000ba3a78  ffff8000005031f0  <blank_screen_t>
+4316397568  ffff8000f9f71100  ffff800000713ea0  <ipv6_regen_rndid>
+TVEC_BASES[1]: ffff8000fffa0b80
+  JIFFIES
+4295014844
+  EXPIRES      TIMER_LIST         FUNCTION
+4295014997  ffff8000fffa3cc0  ffff8000000d9d40  <delayed_work_timer_fn>
+4295015254  ffff8000b782bcc0  ffff800000129190  <process_timeout>
+4295015532  ffff8000f9ed0368  ffff8000000d9d40  <delayed_work_timer_fn>
+4295016000  ffff8000f9ed0628  ffff8000003b4460  <blk_mq_rq_timer>
+TVEC_BASES[2]: ffff8000fffb1b80
+  JIFFIES
+4295014844
+  EXPIRES      TIMER_LIST         FUNCTION
+4295013572  ffff800000c493b8  ffff8000001bf678  <writeout_period>
+TVEC_BASES[3]: ffff8000fffc2b80
+  JIFFIES
+4295014844
+  EXPIRES      TIMER_LIST         FUNCTION
+4295014991  ffff800000b45de8  ffff8000000d9d40  <delayed_work_timer_fn>
+4295042388  ffff8000fb3cbd50  ffff800000129190  <process_timeout>
+4295043840  ffff800000be3660  ffff8000000d9d40  <delayed_work_timer_fn>
+4295044096  ffff800000bdff40  ffff8000000d9d40  <delayed_work_timer_fn>
+4295065600  ffff800000b35930  ffff8000000d9d40  <delayed_work_timer_fn>
+4305715200  ffff800000b59418  ffff8000000d9d40  <delayed_work_timer_fn>
+
+and discover that there are many scheduled delayed_work_timer_fn(), but all to run in the future.
+this either means that, if we are facing a hard lockup, they be being re-scheduled over and over,
+OR that we are NOT in a hard locked state, just with a HUGE amont of backing operations for SRCU.
+
+going through timer functions:
+
+crash> struct timer_list ffff800000c52868
+struct timer_list {
+  entry = {
+    next = 0x0,
+    pprev = 0xffff8000fff901a0
+  },
+  expires = 0x10000b9bd,                                      -> 4295014845 (expires) now: 4295014844 = missing 1 jiffie =)
+  function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+  data = 0xffff800000c52848,
+  flags = 0x200000,
+  slack = 0xffffffff
+}
+crash> struct delayed_work 0xffff800000c52848
+struct delayed_work {
+  work = {
+    data = {
+      counter = 0x1
+    },
+    entry = {
+      next = 0xffff800000c52850 <fsnotify_mark_srcu+96>,
+      prev = 0xffff800000c52850 <fsnotify_mark_srcu+96>
+    },
+    func = 0xffff80000011f990 <process_srcu>                  -> will schedule this to run and complete srcu logic
+  },
+  timer = {
+    entry = {
+      next = 0x0,
+      pprev = 0xffff8000fff901a0
+    },
+    expires = 0x10000b9bd,
+    function = 0xffff8000000d9d40 <delayed_work_timer_fn>,
+    data = 0xffff800000c52848,
+    flags = 0x200000,
+    slack = 0xffffffff
+  },
+  wq = 0xffff8000fb02d600,
+  cpu = 0x100
+}
+
+----
+
+TODO: check if timers are okay and callbacks are being called
+TODO: check to see if this is a real hard lockup or not (panic on lockup ?)
+TODO: check srcu patches to see if they aliviate this logic for srcu grace period syncs

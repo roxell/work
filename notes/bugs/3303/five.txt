@@ -1,0 +1,169 @@
+
+## those tasks blocked waiting for authorization (that never happened, on purpose, by the test):
+
+[  360.291752] INFO: task fanotify07:1168 blocked for more than 120 seconds.
+[  360.293012]       Not tainted 4.4.139-rc1+ #6
+[  360.293828] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+[  360.295499] fanotify07      D ffff800000086c10     0  1168   1161 0x00000008
+[  360.296859] Call trace:
+[  360.297331] [<ffff800000086c10>] __switch_to+0x98/0xb0
+[  360.298291] [<ffff80000076516c>] __schedule+0x254/0x768
+[  360.299478] [<ffff8000007656b4>] schedule+0x34/0x98
+[  360.300394] [<ffff8000002752dc>] fanotify_handle_event+0x1c4/0x2d8
+[  360.301601] [<ffff800000270f5c>] fsnotify+0x24c/0x520
+[  360.302649] [<ffff80000033f48c>] security_file_permission+0xc4/0xe8
+[  360.304868] [<ffff800000229ec8>] rw_verify_area+0x58/0x118
+[  360.305942] [<ffff800000229ff0>] vfs_read+0x68/0x158
+[  360.307753] [<ffff80000022ad34>] SyS_read+0x54/0xb0
+[  360.308703] [<ffff800000085df0>] el0_svc_naked+0x24/0x28
+
+[  360.309719] INFO: task fanotify07:1169 blocked for more than 120 seconds.
+[  360.311185]       Not tainted 4.4.139-rc1+ #6
+[  360.312006] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+[  360.313449] fanotify07      D ffff800000086c10     0  1169   1161 0x00000008
+[  360.314888] Call trace:
+[  360.315374] [<ffff800000086c10>] __switch_to+0x98/0xb0
+[  360.316394] [<ffff80000076516c>] __schedule+0x254/0x768
+[  360.317424] [<ffff8000007656b4>] schedule+0x34/0x98
+[  360.319574] [<ffff8000002752dc>] fanotify_handle_event+0x1c4/0x2d8
+[  360.320761] [<ffff800000270f5c>] fsnotify+0x24c/0x520
+[  360.322336] [<ffff80000033f48c>] security_file_permission+0xc4/0xe8
+[  360.323815] [<ffff800000229ec8>] rw_verify_area+0x58/0x118
+[  360.324863] [<ffff800000229ff0>] vfs_read+0x68/0x158
+[  360.325793] [<ffff80000022ad34>] SyS_read+0x54/0xb0
+[  360.326782] [<ffff800000085df0>] el0_svc_naked+0x24/0x28
+
+
+##
+
+PID=1177
+PID=1176
+PID=1175
+PID=1174
+PID=1173
+PID=1172
+PID=1171
+PID=1170
+PID=1169
+PID=1168
+PID=1167
+PID=1166
+PID=1165
+PID=1164
+PID=1163
+PID=1162
+[<ffff800000086c10>] __switch_to+0x98/0xb0
+[<ffff8000002752dc>] fanotify_handle_event+0x1c4/0x2d8
+[<ffff800000270f5c>] fsnotify+0x24c/0x520
+[<ffff80000033f48c>] security_file_permission+0xc4/0xe8
+[<ffff800000229ec8>] rw_verify_area+0x58/0x118
+[<ffff800000229ff0>] vfs_read+0x68/0x158
+[<ffff80000022ad34>] SyS_read+0x54/0xb0
+[<ffff800000085df0>] el0_svc_naked+0x24/0x28
+[<ffffffffffffffff>] 0xffffffffffffffff
+
+#ifdef CONFIG_FANOTIFY_ACCESS_PERMISSIONS
+	if (mask & FAN_ALL_PERM_EVENTS) {
+		ret = fanotify_get_response(group, FANOTIFY_PE(fsn_event));
+		fsnotify_destroy_event(group, fsn_event);
+	}
+#endif
+
+#ifdef CONFIG_FANOTIFY_ACCESS_PERMISSIONS
+static int fanotify_get_response(struct fsnotify_group *group,
+				 struct fanotify_perm_event_info *event)
+{
+	int ret;
+
+	pr_debug("%s: group=%p event=%p\n", __func__, group, event);
+
+	wait_event(group->fanotify_data.access_waitq, event->response);		-> STUCK HERE, waiting for userland event
+
+	/* userspace responded, convert to something usable */
+	switch (event->response) {
+	case FAN_ALLOW:
+		ret = 0;
+		break;
+	case FAN_DENY:
+	default:
+		ret = -EPERM;
+	}
+	event->response = 0;
+
+PID=1161
+[<ffff800000086c10>] __switch_to+0x98/0xb0
+[<ffff80000011f840>] __synchronize_srcu+0x88/0x138
+[<ffff80000011f924>] synchronize_srcu+0x34/0x40							-> STUCK HERE (really stuck ? looping ?)
+[<ffff800000271a90>] fsnotify_destroy_group+0x48/0x78
+[<ffff800000275664>] fanotify_release+0x124/0x170
+[<ffff80000022bd04>] __fput+0x94/0x1d8
+[<ffff80000022bec0>] ____fput+0x20/0x30
+[<ffff8000000df130>] task_work_run+0xb0/0xd0
+[<ffff80000008a004>] do_notify_resume+0x7c/0x88
+[<ffff800000085ce8>] work_pending+0x1c/0x20
+[<ffffffffffffffff>] 0xffffffffffffffff
+
+PID=44 (kthread fsnotify_mark)
+root@fanotify07:~$ cat /proc/44/stack
+[<ffff800000086c10>] __switch_to+0x98/0xb0
+[<ffff80000011f840>] __synchronize_srcu+0x88/0x138
+[<ffff80000011f924>] synchronize_srcu+0x34/0x40							-> STUCK HERE (really stuck ? looping ?)
+[<ffff800000272184>] fsnotify_mark_destroy+0x74/0x110
+[<ffff8000000e15d0>] kthread+0x110/0x118
+[<ffff800000085d90>] ret_from_fork+0x10/0x40
+[<ffffffffffffffff>] 0xffffffffffffffff
+
+--------
+
+Okay, 
+
+I was able to finally understand what is happening. SRCU is broken for 4.4 and fanotify07, somehow, is able to trigger this logic (I have yet to test without monotonic clock patches, but, looks promising).
+
+## HISTORY
+
+SRCU is waiting on its own completion (from __synchronize_srcu()) on 2 tasks (user task and kernel thread)
+
+How SRCU works:
+
+- it schedules a "wakeme_after_rcu()" to finaly return from the completion wait (rcu_batch_queue "batch_check0")
+- since it scheduled a rcu_head at the end of the queue, it will guarantee all work (callbacks) are done
+- synchronize_srcu() finaly returns
+
+- synchronize_srcu() calls srcu_advance_batches()
+- it moves callbacks from ->batch_check0 to ->batch_check1 and ->batch_done as readers drain
+
+Inside the RCU logic, what should have happened:
+
+-> srcu_schedule() schedules "process_srcu" function using SRCU_INTERVAL, so the callbacks scheduling is scheduled for later
+-> after SRCU_INTERVAL, the delayed work timer for "delayed_work_timer_fn()" will trigger, then...
+-> delayed_work_timer_fn() calls __queue_work() to schedule "process_srcu" in a per-cpu workqueue
+-> delayed_work_timer_fn() will queue the process_srcu() into the workqueue "system_power_efficient_wq" (per-cpu queue)
+-> process_srcu(), when called, will call srcu_invoke_callbacks(), and the rcu callbacks will call ->done() to complete work
+
+NOTES
+
+- wakeme_after_rcu(), to unblock the completion queue, is a rcu callback at the end of all callbacks
+- if all callbacks are processed, wakeme_after_rcu is ran at last
+- "process_srcu" calls srcu_invoke_callbacks: it dequeues rcu_head (rcu cbs) from srcu_struct (fsnotify_mark_srcu->batch_done)
+- in my dumps, there are no left callbacks to be dequeued (wakeme_after_rcu is in the next 2 rcu grace periods)
+
+RESULT
+
+- synchronize_srcu is BROKEN: SRCU its active, waiting on completion but batch_done is EMPTY (no callbacks to be called)
+- synchronize_srcu is waiting for wakeme_after_rcu() but it is scheduled for the NEXT 2 grace period (not this one)
+- timers are scheduled (delayed_work_timer_fn) which will call process_srcu() but there are not callbacks to call (batch_done is empty)
+
+TODO
+
+Will investigate what race might have happened to cause SRCU to be dead locked. Most likely:
+
+__synchronized_srcu() scheduled a wakeme_after_rcu() in rcu batch0 but srcu_advance_batches() did not move into batch "done" (for the callback to be called). OR, since I'm always getting 2 locked synchronize_srcu() (task and kthread), the if(running) else { batch } logic might be broken, since both callbacks were "batched" instead of in the "next to call" batch of callbacks.
+
+FINAL
+
+Most recent kernels refactored all SRCU related code, all the callbacks logic was changed and paralelized (what might have made this bug to disappear in other kernels). Unfortunately v4.4 is suffering from this bug.
+
+
+
+
+
