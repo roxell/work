@@ -56,8 +56,7 @@ for dir in $DIRS; do
     gitclean
     git fetch -a 2>&1 | grep -v "redirecting to"
     BRANCH=$(git branch | grep "*" | sed 's:* ::g')
-    ORIGIN=$(git branch -r | grep -v HEAD | grep origin | grep $BRANCH | sed 's: ::g')
-    git reset --hard $ORIGIN
+    git reset --hard origin/$BRANCH
     #echo -------- CLOSING $dir
 
     cd $OLDDIR
