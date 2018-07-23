@@ -39,13 +39,16 @@ for dir in $DIRS; do
 
     [ $CHOICE ] && [ ! "$dir" == "$CHOICE" ] && continue;
 
+    OLDDIR=$(pwd)
+
     cd $dir
 
-    echo ++++++++ ENTERING $dir ...
+    #echo ++++++++ ENTERING $dir ...
+
+    echo "# $dir"
 
     git branch | grep -q "HEAD detached" && {
         echo CHECK THIS MANUALLY
-        echo -------- CLOSING $dir
         cd $MAINDIR
         continue
     }
@@ -55,10 +58,10 @@ for dir in $DIRS; do
     BRANCH=$(git branch | grep "*" | sed 's:* ::g')
     ORIGIN=$(git branch -r | grep -v HEAD | grep origin | grep $BRANCH | sed 's: ::g')
     git reset --hard $ORIGIN
-    echo -------- CLOSING $dir
+    #echo -------- CLOSING $dir
 
-    cd $MAINDIR
+    cd $OLDDIR
 
 done
 
-cd $OLDDIR
+#cd $OLDDIR
