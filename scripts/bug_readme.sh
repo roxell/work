@@ -1,6 +1,12 @@
 #!/bin/bash
 
-CHOICE=${1/\/}
+#
+# creates README.md files for directories that describe
+# bugs found in bugs.linaro.org. those files contain links
+# to the specified bug based on the folder name (bug #).
+#
+
+CHOICE=$(echo $1 | sed 's:/$::')
 
 OLDDIR=$PWD
 MAINDIR=$(dirname $0)
@@ -12,10 +18,6 @@ getout() {
 }
 
 cd $MAINDIR
-
-#FILEDIR=$(pwd | sed 's:work/sources/.*:work/sources/../files/:g')
-#PROJECT=$FILEDIR/project
-#CPROJECT=$FILEDIR/cproject
 
 [ ! -d $FILEDIR ] && getout something went wrong
 

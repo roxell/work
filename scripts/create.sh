@@ -1,5 +1,12 @@
 #!/bin/bash
 
+#
+# initializes the git submodule based on the 1_<DIR> file
+# found in <DIR>. contents describe the submodules to be
+# initialized. this has to be done mainly for those submodules
+# that were never added to .gitmodules
+#
+
 OLDDIR=$PWD
 MAINDIR=$(dirname $0)
 

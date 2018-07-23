@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#
+# this script creates .project and .cproject in directories
+# to be opened as Makefile projects inside eclipse. it makes
+# easier to open any source directory as a project
+#
+
 CHOICE=${1/\/}
 
 OLDDIR=$PWD

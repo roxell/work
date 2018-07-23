@@ -1,5 +1,10 @@
 #!/bin/bash
 
+#
+# this script updates the git submodules (directories) inside
+# a specific directory. without arguments it updates all dirs
+#
+
 CHOICE=$(echo $1 | sed 's:/$::')
 
 OLDDIR=$PWD
