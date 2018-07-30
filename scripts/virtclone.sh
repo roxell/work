@@ -69,7 +69,7 @@ if [ x$ARG0 == x"virtclone.sh" ]; then
                 --name $CLONE \
                 --file $CLONEDIR/disk01.ext4.qcow2 2>&1 >> $LOGFILE 2>&1
 
-    $SUDO $VIRSH dumpxml $CLONE > /tmp/$$.xml 2>&1 >> $LOGFILE 2>&1
+    $SUDO $VIRSH dumpxml $CLONE > /tmp/$$.xml
     $SUDO sed -i "s:$MACHINE:$CLONE:g" /tmp/$$.xml 2>&1 >> $LOGFILE 2>&1
     $SUDO $VIRSH define /tmp/$$.xml 2>&1 >> $LOGFILE 2>&1
     $SUDO rm /tmp/$$.xml
