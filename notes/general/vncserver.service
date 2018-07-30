@@ -1,0 +1,38 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:         vncserver
+# Required-Start:   $remote_fs $syslog
+# Required-Stop:    $remote_fs $syslog
+# Default-Start:    2 3 4 5
+# Default-Stop:
+# Short-Description:
+### END INIT INFO
+
+. /lib/lsb/init-functions
+
+PATH="$PATH:/usr/bin/"
+USER="inaddy"
+DISPLAY="1"
+DEPTH="16"
+GEOMETRY="1920x1080"
+#GEOMETRY="1680x1050"
+#GEOMETRY="2560x1440"
+#GEOMETRY="3008x1692"
+DPI=96
+OPTIONS="-depth ${DEPTH} -geometry ${GEOMETRY} :${DISPLAY} -dpi $DPI"
+
+export $USER
+
+case "$1" in
+    start)
+        log_action_begin_msg "Starting vncserver for user '${USER}' on localhost:${DISPLAY}"
+        su ${USER} -c "/usr/bin/vncserver ${OPTIONS}"
+    ;;
+    stop)
+        log_action_begin_msg "Stopping vncserver for user '${USER}' on localhost:${DISPLAY}"
+        su ${USER} -c "/usr/bin/vncserver -kill :${DISPLAY}"
+    ;;
+esac
+
+exit 0

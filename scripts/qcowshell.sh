@@ -107,6 +107,14 @@ if   [ x$ARG0 == x"qcowshell.sh" ]; then
 
     $SUDO -- lxc-start -n lxc$$ -F
 
+elif [ x$ARG0 == x"qcowcmd.sh"  ]; then
+
+    $SUDO -- lxc-start -n lxc$$
+    sleep 1
+    $SUDO lxc-attach -n lxc$$ -- $ARGUMENT
+    sleep 1
+    $SUDO -- lxc-stop -n lxc$$
+
 elif [ x$ARG0 == x"qcowhome.sh"  ]; then
     # update home dir inside qcow2 image
 
