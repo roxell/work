@@ -16,16 +16,15 @@ getout() {
     exit 1
 }
 
+[ -f /tmp/noupdate ] && getout "NOT UPDATING DUE TO REQUEST"
+
 cd $MAINDIR
 
 FILES=$(find . -type l -iregex ".*[0-9]*_update.sh")
 
 for file in $FILES; do
 
-    #basedir=$(dirname $file)
-    #filename=$(basename $file)
-
-    [ ! -x $file ] && getout $file is not executable ?
+    [ ! -x $file ] && "getout $file is not executable"
 
     $file
 
