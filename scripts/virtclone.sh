@@ -74,6 +74,12 @@ if [ x$ARG0 == x"virtclone.sh" ]; then
     $SUDO $VIRSH define /tmp/$$.xml 2>&1 >> $LOGFILE 2>&1
     $SUDO rm /tmp/$$.xml
 
+    echo "running:"
+    echo "- qcowhostname.sh $CLONE"
+    qcowhostname.sh $CLONE
+    echo "- qcowhome.sh $CLONE"
+    qcowhome.sh $CLONE
+
 elif [ x$ARG0 == x"virtdel.sh" ]; then
 
     for temp in $TEMPLATES; do
