@@ -16,13 +16,13 @@ NUMCPU=`cat /proc/cpuinfo | grep proce | wc -l`
 NCPU=$(($NUMCPU - 1))
 
 KCROSS=0        # are you cross compiling ? (default: 0)
-KCLEAN=1        # want to run make clean ? (default: 1)
-GCLEAN=1        # want to run git reset ? (default: 1)
-KCONFIG=1       # want to copy and process conf file ? (default: 1)
-KPREPARE=1      # want to prepare ? (default: 1)
+KCLEAN=0        # want to run make clean ? (default: 1)
+GCLEAN=0        # want to run git reset ? (default: 1)
+KCONFIG=0       # want to copy and process conf file ? (default: 1)
+KPREPARE=0      # want to prepare ? (default: 1)
 KBUILD=1        # want to build ? :o) (default: 1)
-KSELFTESTS=0    # want to build and generate kselftests .tar.gz ? (default: 0)
-KDEBUG=0        # want your kernel to have debug symbols ? (default: 0)
+KSELFTESTS=1    # want to build and generate kselftests .tar.gz ? (default: 0)
+KDEBUG=1        # want your kernel to have debug symbols ? (default: 0)
 KVERBOSE=1      # want it to shut up ? (default: 1)
 
 MYARCH="amd64"  # (amd64|arm64|armhf|armel)
@@ -31,6 +31,7 @@ TOARCH="amd64"  # (amd64|arm64|armhf|armel)
 FILEDIR=$(pwd | sed 's:work/sources/.*:work/sources/../files/:g')
 MAINDIR=$(pwd | sed 's:work/sources/.*:work/sources/../sources/linux:g')
 TARGET=$(pwd | sed 's:work/sources/.*:work/sources/../build/linux:g')
+KERNELS=$(pwd | sed 's:work/sources/.*:work/sources/../kernels:g')
 
 ARMHFCONFIG="$FILEDIR/config-armhf"
 ARM64CONFIG="$FILEDIR/config-arm64"
@@ -218,6 +219,8 @@ for dir in $DIRS; do
 
     echo ++++++++ ENTERING $dir ...
 
+    DESCRIBE=$(git describe)
+
     if [ $KCLEAN != 0 ]; then
 
         if [ $GCLEAN != 0 ]; then gitclean; fi
@@ -235,7 +238,7 @@ for dir in $DIRS; do
 
         cp $CONFIG $TARGET/$dir/.config
         fixconfig $TARGET/$dir/.config
-        # # $COMPILE O=$TARGET/$dir menuconfig
+        # $COMPILE O=$TARGET/$dir menuconfig
         $COMPILE O=$TARGET/$dir olddefconfig
     fi
 
@@ -251,26 +254,37 @@ for dir in $DIRS; do
         # $COMPILE O=$TARGET/$dir modules
         # $COMPILE O=$TARGET/$dir modules_install INSTALL_MOD_PATH=$TARGET/$dir/modinstall
         # $COMPILE O=$TARGET/$dir bindeb-pkg
+
+        # move
+        mkdir -p $KERNELS/$dir/$DESCRIBE
+        [ ! -d $KERNELS/$dir/$DESCRIBE ] && getout "kernels directory could not be created"
+        mv $TARGET/$dir/../*.deb $KERNELS/$dir/$DESCRIBE
     fi
 
-    # if [ $KSELFTESTS != 0 ]; then
+    if [ $KSELFTESTS != 0 ]; then
 
-    #     if [ $KCROSS != 0 ]; then
-    #         echo "kselftests can't cross-compile. do it in a lxc container!"
-    #         exit 1
-    #     fi
+        if [ $KCROSS != 0 ]; then
+            echo "kselftests can't cross-compile. do it in a lxc container!"
+            exit 1
+        fi
 
-    #     # kselftests generation
+        # kselftests generation
 
-    #     # $COMPILE -C tools clean
-    #     # $COMPILE -C tools gpio
-    #     # $COMPILE -C tools selftests
-    #     # $COMPILE -C tools/testing/selftests TARGETS=gpio all
-    #     # $COMPILE -C tools/testing/selftests TARGETS=zram all
-    #     $COMPILE -C tools/testing/selftests clean
-    #     $COMPILE -C tools/testing/selftests all
-    #     tar cfz $TARGET/$dir/tools.tar.gz ./tools
-    # fi
+        # $COMPILE -C tools clean
+        # $COMPILE -C tools gpio
+        # $COMPILE -C tools selftests
+        # $COMPILE -C tools/testing/selftests TARGETS=gpio all
+        # $COMPILE -C tools/testing/selftests TARGETS=zram all
+        # $COMPILE -C tools/testing/selftests clean
+        # $COMPILE -C tools/testing/selftests all
+        tar cfz $TARGET/$dir/tools.tar.gz ./tools
+
+        # move
+        mkdir -p $KERNELS/$dir/$DESCRIBE
+        [ ! -f $TARGET/$dir/tools.tar.gz ] && getout "tools not created"
+        [ ! -d $KERNELS/$dir/$DESCRIBE ] && getout "kernels directory could not be created"
+        mv $TARGET/$dir/tools.tar.gz $KERNELS/$dir/$DESCRIBE
+    fi
 
     # if [ $KCLEAN != 0 ] && [ $GCLEAN != 0 ]; then gitclean; fi
 
