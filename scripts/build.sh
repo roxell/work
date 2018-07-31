@@ -16,10 +16,10 @@ NUMCPU=`cat /proc/cpuinfo | grep proce | wc -l`
 NCPU=$(($NUMCPU - 1))
 
 KCROSS=0        # are you cross compiling ? (default: 0)
-KCLEAN=0        # want to run make clean ? (default: 1)
-GCLEAN=0        # want to run git reset ? (default: 1)
-KCONFIG=0       # want to copy and process conf file ? (default: 1)
-KPREPARE=0      # want to prepare ? (default: 1)
+KCLEAN=1        # want to run make clean ? (default: 1)
+GCLEAN=1        # want to run git reset ? (default: 1)
+KCONFIG=1       # want to copy and process conf file ? (default: 1)
+KPREPARE=1      # want to prepare ? (default: 1)
 KBUILD=1        # want to build ? :o) (default: 1)
 KSELFTESTS=1    # want to build and generate kselftests .tar.gz ? (default: 0)
 KDEBUG=1        # want your kernel to have debug symbols ? (default: 0)
@@ -253,7 +253,7 @@ for dir in $DIRS; do
         # $COMPILE O=$TARGET/$dir zImage
         # $COMPILE O=$TARGET/$dir modules
         # $COMPILE O=$TARGET/$dir modules_install INSTALL_MOD_PATH=$TARGET/$dir/modinstall
-        # $COMPILE O=$TARGET/$dir bindeb-pkg
+        $COMPILE O=$TARGET/$dir bindeb-pkg
 
         # move
         mkdir -p $KERNELS/$dir/$DESCRIBE
@@ -275,8 +275,9 @@ for dir in $DIRS; do
         # $COMPILE -C tools selftests
         # $COMPILE -C tools/testing/selftests TARGETS=gpio all
         # $COMPILE -C tools/testing/selftests TARGETS=zram all
-        # $COMPILE -C tools/testing/selftests clean
-        # $COMPILE -C tools/testing/selftests all
+        $COMPILE -C tools/testing/selftests clean
+        $COMPILE -C tools/testing/selftests all
+
         tar cfz $TARGET/$dir/tools.tar.gz ./tools
 
         # move
