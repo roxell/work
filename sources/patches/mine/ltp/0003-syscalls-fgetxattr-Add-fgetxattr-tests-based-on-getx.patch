@@ -1,7 +1,7 @@
 From 3ed342fbfc090ad150eeeac6a191efd69f0f761b Mon Sep 17 00:00:00 2001
 From: Rafael David Tinoco <rafael.tinoco@linaro.org>
 Date: Wed, 25 Jul 2018 17:41:32 -0300
-Subject: [PATCH 2/2] syscalls/fgetxattr: Add fgetxattr() tests based on
+Subject: [PATCH 3/3] syscalls/fgetxattr: Add fgetxattr() tests based on
  getxattr() ones
 
 Fixes: #272

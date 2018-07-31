@@ -1,0 +1,5022 @@
+From 18b780d2d374e2d3bbb75872a9b19fbb4ee5f53c Mon Sep 17 00:00:00 2001
+From: Christian Lanig <clanig@suse.com>
+Date: Mon, 23 Jul 2018 15:24:50 +0200
+Subject: [PATCH 1/3] Rename TEST_ERRNO and TEST_RETURN for new test lib
+
+Fixes #336
+
+Signed-off-by: Christian Lanig <clanig@suse.com>
+Acked-by: Jan Stancek <jstancek@redhat.com>
+Signed-off-by: Cyril Hrubis <chrubis@suse.cz>
+---
+ doc/test-writing-guidelines.txt               |  4 +-
+ include/tst_test.h                            | 10 ++--
+ lib/tst_crypto.c                              | 10 ++--
+ lib/tst_test.c                                |  7 ++-
+ testcases/cve/cve-2015-3290.c                 |  4 +-
+ testcases/kernel/crypto/pcrypt_aead01.c       |  6 +--
+ testcases/kernel/fs/read_all/read_all.c       |  6 +--
+ testcases/kernel/logging/kmsg/kmsg01.c        | 50 +++++++++----------
+ .../kernel/mem/hugetlb/hugemmap/hugemmap06.c  |  4 +-
+ .../mem/hugetlb/hugeshmctl/hugeshmctl02.c     |  4 +-
+ .../mem/hugetlb/hugeshmctl/hugeshmctl03.c     |  4 +-
+ .../mem/hugetlb/hugeshmget/hugeshmget02.c     |  4 +-
+ .../mem/hugetlb/hugeshmget/hugeshmget03.c     |  4 +-
+ .../mem/hugetlb/hugeshmget/hugeshmget05.c     |  4 +-
+ testcases/kernel/mem/ksm/ksm05.c              |  2 +-
+ testcases/kernel/mem/lib/mem.c                |  4 +-
+ testcases/kernel/mem/thp/thp01.c              |  4 +-
+ testcases/kernel/syscalls/access/access01.c   |  6 +--
+ testcases/kernel/syscalls/access/access02.c   | 14 +++---
+ testcases/kernel/syscalls/access/access03.c   |  4 +-
+ testcases/kernel/syscalls/access/access04.c   |  4 +-
+ testcases/kernel/syscalls/add_key/add_key01.c |  2 +-
+ testcases/kernel/syscalls/add_key/add_key02.c |  8 +--
+ testcases/kernel/syscalls/add_key/add_key03.c |  8 +--
+ testcases/kernel/syscalls/add_key/add_key04.c |  6 +--
+ testcases/kernel/syscalls/brk/brk01.c         |  2 +-
+ testcases/kernel/syscalls/chdir/chdir03.c     |  4 +-
+ testcases/kernel/syscalls/chmod/chmod06.c     |  4 +-
+ .../syscalls/clock_getres/clock_getres01.c    |  8 +--
+ .../clock_nanosleep/clock_nanosleep01.c       |  6 +--
+ .../clock_nanosleep/clock_nanosleep02.c       |  4 +-
+ .../clock_nanosleep2/clock_nanosleep2_01.c    |  2 +-
+ testcases/kernel/syscalls/clone/clone08.c     |  6 +--
+ testcases/kernel/syscalls/clone/clone09.c     |  6 +--
+ .../copy_file_range/copy_file_range01.c       |  4 +-
+ testcases/kernel/syscalls/creat/creat04.c     |  4 +-
+ testcases/kernel/syscalls/creat/creat05.c     |  6 +--
+ testcases/kernel/syscalls/creat/creat06.c     |  4 +-
+ testcases/kernel/syscalls/creat/creat07.c     |  4 +-
+ .../kernel/syscalls/epoll_ctl/epoll_ctl01.c   |  2 +-
+ .../kernel/syscalls/epoll_ctl/epoll_ctl02.c   |  6 +--
+ .../kernel/syscalls/epoll_wait/epoll_wait01.c | 18 +++----
+ .../kernel/syscalls/epoll_wait/epoll_wait02.c |  4 +-
+ testcases/kernel/syscalls/fchdir/fchdir03.c   |  4 +-
+ testcases/kernel/syscalls/fchmod/fchmod01.c   |  2 +-
+ testcases/kernel/syscalls/fchmod/fchmod02.c   |  2 +-
+ testcases/kernel/syscalls/fchmod/fchmod06.c   |  8 +--
+ testcases/kernel/syscalls/fcntl/fcntl02.c     | 10 ++--
+ testcases/kernel/syscalls/fcntl/fcntl03.c     |  4 +-
+ testcases/kernel/syscalls/fcntl/fcntl04.c     |  8 +--
+ .../kernel/syscalls/flistxattr/flistxattr01.c |  2 +-
+ .../kernel/syscalls/flistxattr/flistxattr02.c |  6 +--
+ .../kernel/syscalls/flistxattr/flistxattr03.c |  4 +-
+ testcases/kernel/syscalls/fsync/fsync01.c     |  4 +-
+ .../kernel/syscalls/futex/futex_wait05.c      |  6 +--
+ testcases/kernel/syscalls/getcwd/getcwd01.c   |  4 +-
+ testcases/kernel/syscalls/getcwd/getcwd02.c   |  2 +-
+ testcases/kernel/syscalls/getcwd/getcwd05.c   |  2 +-
+ .../syscalls/getpriority/getpriority01.c      |  8 +--
+ .../syscalls/getpriority/getpriority02.c      |  6 +--
+ .../kernel/syscalls/getrandom/getrandom01.c   |  4 +-
+ .../kernel/syscalls/getrandom/getrandom02.c   |  8 +--
+ .../kernel/syscalls/getrandom/getrandom03.c   |  6 +--
+ .../kernel/syscalls/getrandom/getrandom04.c   |  4 +-
+ testcases/kernel/syscalls/inotify/inotify03.c |  6 +--
+ .../kernel/syscalls/io_destroy/io_destroy01.c |  6 +--
+ .../kernel/syscalls/io_setup/io_setup01.c     | 10 ++--
+ testcases/kernel/syscalls/ioctl/ioctl04.c     |  6 +--
+ .../kernel/syscalls/ipc/msgctl/msgctl01.c     |  4 +-
+ .../kernel/syscalls/ipc/msgctl/msgctl02.c     |  2 +-
+ .../kernel/syscalls/ipc/msgctl/msgctl03.c     |  6 +--
+ .../kernel/syscalls/ipc/msgctl/msgctl04.c     |  6 +--
+ .../kernel/syscalls/ipc/msgctl/msgctl12.c     |  4 +-
+ .../kernel/syscalls/ipc/msgget/msgget01.c     |  4 +-
+ .../kernel/syscalls/ipc/msgget/msgget02.c     |  4 +-
+ .../kernel/syscalls/ipc/msgget/msgget03.c     |  4 +-
+ .../kernel/syscalls/ipc/msgsnd/msgsnd01.c     |  2 +-
+ .../kernel/syscalls/ipc/msgsnd/msgsnd02.c     |  4 +-
+ .../kernel/syscalls/ipc/msgsnd/msgsnd05.c     |  4 +-
+ .../kernel/syscalls/ipc/msgsnd/msgsnd06.c     |  4 +-
+ .../kernel/syscalls/ipc/shmctl/shmctl05.c     |  4 +-
+ testcases/kernel/syscalls/kcmp/kcmp01.c       |  8 +--
+ testcases/kernel/syscalls/kcmp/kcmp02.c       |  4 +-
+ testcases/kernel/syscalls/kcmp/kcmp03.c       |  4 +-
+ testcases/kernel/syscalls/keyctl/keyctl01.c   |  8 +--
+ testcases/kernel/syscalls/keyctl/keyctl03.c   |  2 +-
+ testcases/kernel/syscalls/keyctl/keyctl04.c   | 10 ++--
+ testcases/kernel/syscalls/keyctl/keyctl05.c   | 26 +++++-----
+ testcases/kernel/syscalls/keyctl/keyctl06.c   |  8 +--
+ testcases/kernel/syscalls/keyctl/keyctl07.c   | 14 +++---
+ .../kernel/syscalls/lgetxattr/lgetxattr01.c   | 10 ++--
+ .../kernel/syscalls/lgetxattr/lgetxattr02.c   |  4 +-
+ testcases/kernel/syscalls/link/link08.c       |  6 +--
+ .../kernel/syscalls/listxattr/listxattr01.c   |  2 +-
+ .../kernel/syscalls/listxattr/listxattr02.c   |  6 +--
+ .../kernel/syscalls/listxattr/listxattr03.c   |  4 +-
+ .../kernel/syscalls/llistxattr/llistxattr01.c |  2 +-
+ .../kernel/syscalls/llistxattr/llistxattr02.c |  6 +--
+ .../kernel/syscalls/llistxattr/llistxattr03.c |  4 +-
+ testcases/kernel/syscalls/lseek/lseek01.c     |  6 +--
+ testcases/kernel/syscalls/lseek/lseek02.c     |  4 +-
+ testcases/kernel/syscalls/lseek/lseek07.c     |  6 +--
+ testcases/kernel/syscalls/madvise/madvise01.c |  6 +--
+ testcases/kernel/syscalls/madvise/madvise02.c |  4 +-
+ testcases/kernel/syscalls/madvise/madvise05.c |  6 +--
+ testcases/kernel/syscalls/madvise/madvise06.c |  2 +-
+ testcases/kernel/syscalls/madvise/madvise10.c |  4 +-
+ testcases/kernel/syscalls/mbind/mbind01.c     | 10 ++--
+ .../syscalls/memfd_create/memfd_create02.c    |  6 +--
+ .../memfd_create/memfd_create_common.c        | 10 ++--
+ testcases/kernel/syscalls/mkdir/mkdir03.c     |  6 +--
+ testcases/kernel/syscalls/mkdir/mkdir05.c     |  2 +-
+ testcases/kernel/syscalls/mkdirat/mkdirat02.c |  6 +--
+ .../kernel/syscalls/move_pages/move_pages12.c |  6 +--
+ .../kernel/syscalls/mq_notify/mq_notify01.c   | 14 +++---
+ testcases/kernel/syscalls/mq_open/mq_open01.c | 18 +++----
+ .../mq_timedreceive/mq_timedreceive01.c       | 10 ++--
+ .../syscalls/mq_timedsend/mq_timedsend01.c    | 16 +++---
+ .../kernel/syscalls/mq_unlink/mq_unlink01.c   |  6 +--
+ .../kernel/syscalls/nanosleep/nanosleep01.c   |  4 +-
+ testcases/kernel/syscalls/nice/nice01.c       |  8 +--
+ testcases/kernel/syscalls/nice/nice02.c       |  6 +--
+ testcases/kernel/syscalls/nice/nice03.c       |  4 +-
+ testcases/kernel/syscalls/nice/nice04.c       |  6 +--
+ testcases/kernel/syscalls/open/open01.c       |  2 +-
+ testcases/kernel/syscalls/open/open02.c       |  4 +-
+ testcases/kernel/syscalls/open/open08.c       | 12 ++---
+ testcases/kernel/syscalls/pause/pause01.c     |  4 +-
+ testcases/kernel/syscalls/pipe/pipe01.c       |  2 +-
+ testcases/kernel/syscalls/pipe/pipe02.c       |  2 +-
+ testcases/kernel/syscalls/pipe/pipe03.c       |  6 +--
+ testcases/kernel/syscalls/poll/poll01.c       |  4 +-
+ testcases/kernel/syscalls/poll/poll02.c       |  4 +-
+ testcases/kernel/syscalls/prctl/prctl01.c     |  4 +-
+ testcases/kernel/syscalls/prctl/prctl02.c     |  4 +-
+ testcases/kernel/syscalls/preadv/preadv01.c   |  6 +--
+ testcases/kernel/syscalls/preadv/preadv02.c   |  4 +-
+ testcases/kernel/syscalls/preadv/preadv03.c   |  6 +--
+ testcases/kernel/syscalls/pselect/pselect01.c |  4 +-
+ testcases/kernel/syscalls/pselect/pselect03.c |  4 +-
+ testcases/kernel/syscalls/ptrace/ptrace07.c   | 16 +++---
+ testcases/kernel/syscalls/pwrite/pwrite02.c   |  4 +-
+ testcases/kernel/syscalls/pwrite/pwrite03.c   |  2 +-
+ testcases/kernel/syscalls/pwritev/pwritev01.c |  6 +--
+ testcases/kernel/syscalls/pwritev/pwritev02.c |  4 +-
+ testcases/kernel/syscalls/pwritev/pwritev03.c |  6 +--
+ .../kernel/syscalls/quotactl/quotactl01.c     |  2 +-
+ .../kernel/syscalls/quotactl/quotactl02.c     |  2 +-
+ .../kernel/syscalls/quotactl/quotactl03.c     |  8 +--
+ testcases/kernel/syscalls/read/read01.c       |  4 +-
+ testcases/kernel/syscalls/read/read02.c       |  6 +--
+ .../kernel/syscalls/readlink/readlink01.c     |  6 +--
+ .../kernel/syscalls/readlink/readlink03.c     |  6 +--
+ .../syscalls/request_key/request_key01.c      |  4 +-
+ .../syscalls/request_key/request_key02.c      |  4 +-
+ .../syscalls/request_key/request_key03.c      | 16 +++---
+ .../syscalls/request_key/request_key04.c      | 22 ++++----
+ testcases/kernel/syscalls/rmdir/rmdir01.c     |  2 +-
+ testcases/kernel/syscalls/rmdir/rmdir02.c     |  6 +--
+ testcases/kernel/syscalls/rmdir/rmdir03.c     |  6 +--
+ .../sched_setscheduler/sched_setscheduler03.c |  2 +-
+ testcases/kernel/syscalls/select/select04.c   |  4 +-
+ testcases/kernel/syscalls/sendto/sendto02.c   |  4 +-
+ .../syscalls/setpriority/setpriority01.c      |  2 +-
+ .../syscalls/setpriority/setpriority02.c      |  6 +--
+ .../kernel/syscalls/setrlimit/setrlimit02.c   |  4 +-
+ .../kernel/syscalls/setrlimit/setrlimit03.c   |  4 +-
+ .../kernel/syscalls/setrlimit/setrlimit05.c   |  4 +-
+ .../kernel/syscalls/setsockopt/setsockopt02.c | 10 ++--
+ testcases/kernel/syscalls/setuid/setuid01.c   |  2 +-
+ testcases/kernel/syscalls/setuid/setuid03.c   |  4 +-
+ testcases/kernel/syscalls/setuid/setuid04.c   |  4 +-
+ .../kernel/syscalls/setxattr/setxattr01.c     | 10 ++--
+ .../kernel/syscalls/setxattr/setxattr02.c     | 10 ++--
+ testcases/kernel/syscalls/socket/socket01.c   |  8 +--
+ .../kernel/syscalls/socketcall/socketcall01.c |  6 +--
+ .../kernel/syscalls/socketpair/socketpair01.c |  8 +--
+ .../kernel/syscalls/socketpair/socketpair02.c |  2 +-
+ testcases/kernel/syscalls/splice/splice02.c   |  4 +-
+ testcases/kernel/syscalls/splice/splice03.c   |  6 +--
+ testcases/kernel/syscalls/sysctl/sysctl01.c   |  2 +-
+ testcases/kernel/syscalls/sysctl/sysctl03.c   |  4 +-
+ testcases/kernel/syscalls/sysctl/sysctl04.c   |  4 +-
+ testcases/kernel/syscalls/tee/tee02.c         |  6 +--
+ testcases/kernel/syscalls/umask/umask01.c     |  8 +--
+ testcases/kernel/syscalls/umount/umount01.c   |  4 +-
+ testcases/kernel/syscalls/umount/umount02.c   |  4 +-
+ testcases/kernel/syscalls/umount/umount03.c   |  4 +-
+ testcases/kernel/syscalls/unlink/unlink05.c   |  2 +-
+ testcases/kernel/syscalls/unlink/unlink07.c   |  4 +-
+ testcases/kernel/syscalls/unlink/unlink08.c   |  4 +-
+ testcases/kernel/syscalls/utimes/utimes01.c   |  4 +-
+ .../kernel/syscalls/vmsplice/vmsplice02.c     |  6 +--
+ testcases/kernel/syscalls/wait4/wait401.c     |  6 +--
+ testcases/kernel/syscalls/write/write01.c     |  6 +--
+ testcases/kernel/syscalls/write/write02.c     |  2 +-
+ testcases/kernel/syscalls/write/write04.c     |  4 +-
+ testcases/kernel/syscalls/write/write05.c     |  4 +-
+ testcases/kernel/syscalls/writev/writev01.c   | 10 ++--
+ testcases/kernel/syscalls/writev/writev07.c   | 18 +++----
+ testcases/network/lib6/in6_01.c               |  6 +--
+ testcases/network/lib6/in6_02.c               | 22 ++++----
+ 202 files changed, 605 insertions(+), 602 deletions(-)
+
+diff --git a/doc/test-writing-guidelines.txt b/doc/test-writing-guidelines.txt
+index 86d36493b..b6b394590 100644
+--- a/doc/test-writing-guidelines.txt
++++ b/doc/test-writing-guidelines.txt
+@@ -413,7 +413,7 @@ Printf-like function to report test result, it's mostly used with ttype:
+ |==============================
+ 
+ The 'ttype' can be combined bitwise with 'TERRNO' or 'TTERRNO' to print
+-'errno', 'TEST_ERRNO' respectively.
++'errno', 'TST_ERR' respectively.
+ 
+ [source,c]
+ -------------------------------------------------------------------------------
+@@ -429,7 +429,7 @@ Printf-like function to report error and exit the test, it can be used with ttyp
+ |============================================================
+ 
+ The 'ttype' can be combined bitwise with 'TERRNO' or 'TTERRNO' to print
+-'errno', 'TEST_ERRNO' respectively.
++'errno', 'TST_ERR' respectively.
+ 
+ [source,c]
+ -------------------------------------------------------------------------------
+diff --git a/include/tst_test.h b/include/tst_test.h
+index 7caf2e174..90938bc29 100644
+--- a/include/tst_test.h
++++ b/include/tst_test.h
+@@ -188,12 +188,12 @@ void tst_reinit(void);
+ #define TEST(SCALL) \
+ 	do { \
+ 		errno = 0; \
+-		TEST_RETURN = SCALL; \
+-		TEST_ERRNO = errno; \
++		TST_RET = SCALL; \
++		TST_ERR = errno; \
+ 	} while (0)
+ 
+-extern long TEST_RETURN;
+-extern int TEST_ERRNO;
++extern long TST_RET;
++extern int TST_ERR;
+ 
+ extern void *TST_RET_PTR;
+ 
+@@ -201,7 +201,7 @@ extern void *TST_RET_PTR;
+ 	do { \
+ 		errno = 0; \
+ 		TST_RET_PTR = (void*)SCALL; \
+-		TEST_ERRNO = errno; \
++		TST_ERR = errno; \
+ 	} while (0)
+ 
+ /*
+diff --git a/lib/tst_crypto.c b/lib/tst_crypto.c
+index 8b3d4bdc7..37d5eb731 100644
+--- a/lib/tst_crypto.c
++++ b/lib/tst_crypto.c
+@@ -27,15 +27,15 @@
+ void tst_crypto_open(struct tst_crypto_session *ses)
+ {
+ 	TEST(socket(AF_NETLINK, SOCK_DGRAM, NETLINK_CRYPTO));
+-	if (TEST_RETURN < 0 && TEST_ERRNO == EPROTONOSUPPORT)
++	if (TST_RET < 0 && TST_ERR == EPROTONOSUPPORT)
+ 		tst_brk(TCONF | TTERRNO, "NETLINK_CRYPTO is probably disabled");
+ 
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_brk(TBROK | TTERRNO,
+ 			"socket(AF_NETLINK, SOCK_DGRAM, NETLINK_CRYPTO)");
+ 	}
+ 
+-	ses->fd = TEST_RETURN;
++	ses->fd = TST_RET;
+ 	ses->seq_num = 0;
+ }
+ 
+@@ -109,7 +109,7 @@ int tst_crypto_del_alg(struct tst_crypto_session *ses,
+ 		SAFE_NETLINK_SEND(ses->fd, &nh, alg);
+ 
+ 		TEST(tst_crypto_recv_ack(ses));
+-		if (TEST_RETURN != -EBUSY || i >= ses->retries)
++		if (TST_RET != -EBUSY || i >= ses->retries)
+ 			break;
+ 
+ 		if (usleep(1) && errno != EINTR)
+@@ -118,5 +118,5 @@ int tst_crypto_del_alg(struct tst_crypto_session *ses,
+ 		++i;
+ 	}
+ 
+-	return TEST_RETURN;
++	return TST_RET;
+ }
+diff --git a/lib/tst_test.c b/lib/tst_test.c
+index 80808854e..008bcefe0 100644
+--- a/lib/tst_test.c
++++ b/lib/tst_test.c
+@@ -70,6 +70,9 @@ const char *tst_ipc_path = ipc_path;
+ 
+ static char shm_path[1024];
+ 
++int TST_ERR;
++long TST_RET;
++
+ static void do_cleanup(void);
+ static void do_exit(int ret) __attribute__ ((noreturn));
+ 
+@@ -213,10 +216,10 @@ static void print_result(const char *file, const int lineno, int ttype,
+ 		str_errno = tst_strerrno(errno);
+ 
+ 	if (ttype & TTERRNO)
+-		str_errno = tst_strerrno(TEST_ERRNO);
++		str_errno = tst_strerrno(TST_ERR);
+ 
+ 	if (ttype & TRERRNO) {
+-		ret = TEST_RETURN < 0 ? -(int)TEST_RETURN : (int)TEST_RETURN;
++		ret = TST_RET < 0 ? -(int)TST_RET : (int)TST_RET;
+ 		str_errno = tst_strerrno(ret);
+ 	}
+ 
+diff --git a/testcases/cve/cve-2015-3290.c b/testcases/cve/cve-2015-3290.c
+index 631702e2e..435ed44ba 100644
+--- a/testcases/cve/cve-2015-3290.c
++++ b/testcases/cve/cve-2015-3290.c
+@@ -216,10 +216,10 @@ static void set_ldt(void)
+ 	};
+ 
+ 	TEST(tst_syscall(__NR_modify_ldt, 1, &data_desc, sizeof(data_desc)));
+-	if (TEST_RETURN == -EINVAL) {
++	if (TST_RET == -EINVAL) {
+ 		tst_brk(TCONF | TRERRNO,
+ 			"modify_ldt: 16-bit data segments are probably disabled");
+-	} else if (TEST_RETURN != 0) {
++	} else if (TST_RET != 0) {
+ 		tst_brk(TBROK | TRERRNO, "modify_ldt");
+ 	}
+ }
+diff --git a/testcases/kernel/crypto/pcrypt_aead01.c b/testcases/kernel/crypto/pcrypt_aead01.c
+index 1c2aa8e18..92ce3b2d5 100644
+--- a/testcases/kernel/crypto/pcrypt_aead01.c
++++ b/testcases/kernel/crypto/pcrypt_aead01.c
+@@ -56,15 +56,15 @@ void run(void)
+ 
+ 	for (i = 0; i < ATTEMPTS; ++i) {
+ 		TEST(tst_crypto_add_alg(&ses, &a));
+-		if (TEST_RETURN && TEST_RETURN == -ENOENT) {
++		if (TST_RET && TST_RET == -ENOENT) {
+ 			tst_brk(TCONF | TRERRNO,
+ 				"pcrypt, hmac, sha256, cbc or aes not supported");
+ 		}
+-		if (TEST_RETURN && TEST_RETURN != -EEXIST)
++		if (TST_RET && TST_RET != -EEXIST)
+ 			tst_brk(TBROK | TRERRNO, "add_alg");
+ 
+ 		TEST(tst_crypto_del_alg(&ses, &a));
+-		if (TEST_RETURN)
++		if (TST_RET)
+ 			tst_brk(TBROK | TRERRNO, "del_alg");
+ 	}
+ 
+diff --git a/testcases/kernel/fs/read_all/read_all.c b/testcases/kernel/fs/read_all/read_all.c
+index 42babae0c..ac463dba9 100644
+--- a/testcases/kernel/fs/read_all/read_all.c
++++ b/testcases/kernel/fs/read_all/read_all.c
+@@ -260,7 +260,7 @@ static void maybe_drop_privs(void)
+ 		return;
+ 
+ 	TEST(setgroups(0, NULL));
+-	if (TEST_RETURN < 0 && TEST_ERRNO != EPERM) {
++	if (TST_RET < 0 && TST_ERR != EPERM) {
+ 		tst_brk(TBROK | TTERRNO,
+ 			"Failed to clear suplementary group set");
+ 	}
+@@ -268,11 +268,11 @@ static void maybe_drop_privs(void)
+ 	nobody = SAFE_GETPWNAM("nobody");
+ 
+ 	TEST(setgid(nobody->pw_gid));
+-	if (TEST_RETURN < 0 && TEST_ERRNO != EPERM)
++	if (TST_RET < 0 && TST_ERR != EPERM)
+ 		tst_brk(TBROK | TTERRNO, "Failed to use nobody gid");
+ 
+ 	TEST(setuid(nobody->pw_uid));
+-	if (TEST_RETURN < 0 && TEST_ERRNO != EPERM)
++	if (TST_RET < 0 && TST_ERR != EPERM)
+ 		tst_brk(TBROK | TTERRNO, "Failed to use nobody uid");
+ }
+ 
+diff --git a/testcases/kernel/logging/kmsg/kmsg01.c b/testcases/kernel/logging/kmsg/kmsg01.c
+index 7f077c9a3..1c0095bb8 100644
+--- a/testcases/kernel/logging/kmsg/kmsg01.c
++++ b/testcases/kernel/logging/kmsg/kmsg01.c
+@@ -70,8 +70,8 @@ static int inject_msg(const char *msg)
+ 	f = SAFE_OPEN("/dev/kmsg", O_WRONLY);
+ 	TEST(write(f, msg, strlen(msg)));
+ 	SAFE_CLOSE(f);
+-	errno = TEST_ERRNO;
+-	return TEST_RETURN;
++	errno = TST_ERR;
++	return TST_RET;
+ }
+ 
+ /*
+@@ -100,18 +100,18 @@ static int find_msg(int fd, const char *text_to_find, char *buf, int bufsize,
+ 
+ 	while (1) {
+ 		TEST(read(f, msg, MAX_MSGSIZE));
+-		if (TEST_RETURN < 0) {
+-			if (TEST_ERRNO == EAGAIN)
++		if (TST_RET < 0) {
++			if (TST_ERR == EAGAIN)
+ 				/* there are no more messages */
+ 				break;
+-			else if (TEST_ERRNO == EPIPE)
++			else if (TST_ERR == EPIPE)
+ 				/* current message was overwritten */
+ 				continue;
+ 			else
+ 				tst_brk(TBROK|TTERRNO, "err reading /dev/kmsg");
+-		} else if (TEST_RETURN < bufsize) {
++		} else if (TST_RET < bufsize) {
+ 			/* lines from kmsg are not NULL terminated */
+-			msg[TEST_RETURN] = '\0';
++			msg[TST_RET] = '\0';
+ 			if (strstr(msg, text_to_find) != NULL) {
+ 				strncpy(buf, msg, bufsize);
+ 				msg_found = 1;
+@@ -210,10 +210,10 @@ static int timed_read_kmsg(int fd, long timeout_usec)
+ 			if (write(pipefd[1], "", 1) == -1)
+ 				tst_brk(TBROK|TERRNO, "write to pipe");
+ 			TEST(read(fd, msg, MAX_MSGSIZE));
+-			if (TEST_RETURN == 0)
++			if (TST_RET == 0)
+ 				break;
+-			if (TEST_RETURN == -1 && TEST_ERRNO != EPIPE) {
+-				ret = TEST_ERRNO;
++			if (TST_RET == -1 && TST_ERR != EPIPE) {
++				ret = TST_ERR;
+ 				break;
+ 			}
+ 		}
+@@ -226,11 +226,11 @@ static int timed_read_kmsg(int fd, long timeout_usec)
+ 	/* parent reads pipe until it reaches eof or until read times out */
+ 	do {
+ 		TEST(timed_read(pipefd[0], timeout_usec));
+-	} while (TEST_RETURN > 0);
++	} while (TST_RET > 0);
+ 	SAFE_CLOSE(pipefd[0]);
+ 
+ 	/* child is blocked, kill it */
+-	if (TEST_RETURN == -2)
++	if (TST_RET == -2)
+ 		kill(child, SIGTERM);
+ 	SAFE_WAITPID(child, &status, 0);
+ 	if (WIFEXITED(status)) {
+@@ -252,11 +252,11 @@ static void test_read_nonblock(void)
+ 	fd = SAFE_OPEN("/dev/kmsg", O_RDONLY | O_NONBLOCK);
+ 
+ 	TEST(timed_read_kmsg(fd, 5000000));
+-	if (TEST_RETURN == -1 && TEST_ERRNO == EAGAIN)
++	if (TST_RET == -1 && TST_ERR == EAGAIN)
+ 		tst_res(TPASS, "non-block read returned EAGAIN");
+ 	else
+ 		tst_res(TFAIL|TTERRNO, "non-block read returned: %ld",
+-			TEST_RETURN);
++			TST_RET);
+ 	SAFE_CLOSE(fd);
+ }
+ 
+@@ -268,10 +268,10 @@ static void test_read_block(void)
+ 	fd = SAFE_OPEN("/dev/kmsg", O_RDONLY);
+ 
+ 	TEST(timed_read_kmsg(fd, 500000));
+-	if (TEST_RETURN == -2)
++	if (TST_RET == -2)
+ 		tst_res(TPASS, "read blocked");
+ 	else
+-		tst_res(TFAIL|TTERRNO, "read returned: %ld", TEST_RETURN);
++		tst_res(TFAIL|TTERRNO, "read returned: %ld", TST_RET);
+ 	SAFE_CLOSE(fd);
+ }
+ 
+@@ -284,10 +284,10 @@ static void test_partial_read(void)
+ 	fd = SAFE_OPEN("/dev/kmsg", O_RDONLY | O_NONBLOCK);
+ 
+ 	TEST(read(fd, msg, 1));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_res(TPASS|TTERRNO, "read failed as expected");
+ 	else
+-		tst_res(TFAIL, "read returned: %ld", TEST_RETURN);
++		tst_res(TFAIL, "read returned: %ld", TST_RET);
+ 	SAFE_CLOSE(fd);
+ }
+ 
+@@ -369,10 +369,10 @@ static void test_read_returns_first_message(void)
+ 
+ 		TEST(read(fd, msg, sizeof(msg)));
+ 		SAFE_CLOSE(fd);
+-		if (TEST_RETURN != -1)
++		if (TST_RET != -1)
+ 			break;
+ 
+-		if (TEST_ERRNO == EPIPE)
++		if (TST_ERR == EPIPE)
+ 			tst_res(TINFO, "msg overwritten, retrying");
+ 		else
+ 			tst_res(TFAIL|TTERRNO, "read failed");
+@@ -438,16 +438,16 @@ static void test_messages_overwritten(void)
+ 
+ 	/* first message is overwritten, so this next read should fail */
+ 	TEST(read(fd, msg, sizeof(msg)));
+-	if (TEST_RETURN == -1 && TEST_ERRNO == EPIPE)
++	if (TST_RET == -1 && TST_ERR == EPIPE)
+ 		tst_res(TPASS, "read failed with EPIPE as expected");
+ 	else
+-		tst_res(TFAIL|TTERRNO, "read returned: %ld", TEST_RETURN);
++		tst_res(TFAIL|TTERRNO, "read returned: %ld", TST_RET);
+ 
+ 	/* seek position is updated to the next available record */
+ 	tst_res(TINFO, "TEST: Subsequent reads() will return available "
+ 		"records again");
+ 	if (find_msg(fd, "", msg, sizeof(msg), 1) != 0)
+-		tst_res(TFAIL|TTERRNO, "read returned: %ld", TEST_RETURN);
++		tst_res(TFAIL|TTERRNO, "read returned: %ld", TST_RET);
+ 	else
+ 		tst_res(TPASS, "after EPIPE read returned next record");
+ 
+@@ -459,10 +459,10 @@ static int read_msg_seqno(int fd, unsigned long *seqno)
+ 	char msg[MAX_MSGSIZE];
+ 
+ 	TEST(read(fd, msg, sizeof(msg)));
+-	if (TEST_RETURN == -1 && TEST_ERRNO != EPIPE)
++	if (TST_RET == -1 && TST_ERR != EPIPE)
+ 		tst_brk(TBROK|TTERRNO, "failed to read /dev/kmsg");
+ 
+-	if (TEST_ERRNO == EPIPE)
++	if (TST_ERR == EPIPE)
+ 		return -1;
+ 
+ 	if (get_msg_fields(msg, NULL, seqno) != 0) {
+diff --git a/testcases/kernel/mem/hugetlb/hugemmap/hugemmap06.c b/testcases/kernel/mem/hugetlb/hugemmap/hugemmap06.c
+index 550a91e03..a230bb798 100644
+--- a/testcases/kernel/mem/hugetlb/hugemmap/hugemmap06.c
++++ b/testcases/kernel/mem/hugetlb/hugemmap/hugemmap06.c
+@@ -111,7 +111,7 @@ static void do_mmap(unsigned int j LTP_ATTRIBUTE_UNUSED)
+ 		mmap_sz[i].addr = addr;
+ 
+ 		TEST(pthread_create(&tid[i], NULL, thr, &mmap_sz[i]));
+-		if (TEST_RETURN)
++		if (TST_RET)
+ 			tst_brk(TBROK | TRERRNO,
+ 					"pthread_create failed");
+ 
+@@ -128,7 +128,7 @@ static void do_mmap(unsigned int j LTP_ATTRIBUTE_UNUSED)
+ 
+ 	for (i = 0; i < ARSZ; ++i) {
+ 		TEST(pthread_join(tid[i], NULL));
+-		if (TEST_RETURN)
++		if (TST_RET)
+ 			tst_brk(TBROK | TRERRNO,
+ 					"pthread_join failed");
+ 	}
+diff --git a/testcases/kernel/mem/hugetlb/hugeshmctl/hugeshmctl02.c b/testcases/kernel/mem/hugetlb/hugeshmctl/hugeshmctl02.c
+index af2bf4a3a..4009fd804 100644
+--- a/testcases/kernel/mem/hugetlb/hugeshmctl/hugeshmctl02.c
++++ b/testcases/kernel/mem/hugetlb/hugeshmctl/hugeshmctl02.c
+@@ -72,12 +72,12 @@ static void test_hugeshmctl(void)
+ 
+ 	for (i = 0; i < ARRAY_SIZE(tcases); i++) {
+ 		TEST(shmctl(*(tcases[i].shmid), tcases[i].cmd, tcases[i].sbuf));
+-		if (TEST_RETURN != -1) {
++		if (TST_RET != -1) {
+ 			tst_res(TFAIL, "shmctl succeeded "
+ 					"unexpectedly");
+ 			continue;
+ 		}
+-		if (TEST_ERRNO == tcases[i].error) {
++		if (TST_ERR == tcases[i].error) {
+ 			tst_res(TPASS | TTERRNO, "shmctl failed "
+ 					"as expected");
+ 		} else {
+diff --git a/testcases/kernel/mem/hugetlb/hugeshmctl/hugeshmctl03.c b/testcases/kernel/mem/hugetlb/hugeshmctl/hugeshmctl03.c
+index 63dc4ce6d..00872e9d6 100644
+--- a/testcases/kernel/mem/hugetlb/hugeshmctl/hugeshmctl03.c
++++ b/testcases/kernel/mem/hugetlb/hugeshmctl/hugeshmctl03.c
+@@ -98,12 +98,12 @@ static void do_child(void)
+ 
+ 	for (i = 0; i < ARRAY_SIZE(tcases); i++) {
+ 		TEST(shmctl(*(tcases[i].shmid), tcases[i].cmd, tcases[i].sbuf));
+-		if (TEST_RETURN != -1) {
++		if (TST_RET != -1) {
+ 			tst_res(TFAIL, "shmctl succeeded "
+ 					"unexpectedly");
+ 			continue;
+ 		}
+-		if (TEST_ERRNO == tcases[i].error)
++		if (TST_ERR == tcases[i].error)
+ 			tst_res(TPASS | TTERRNO, "shmctl failed "
+ 					"as expected");
+ 		else
+diff --git a/testcases/kernel/mem/hugetlb/hugeshmget/hugeshmget02.c b/testcases/kernel/mem/hugetlb/hugeshmget/hugeshmget02.c
+index 8df943e0e..d1c0e64b8 100644
+--- a/testcases/kernel/mem/hugetlb/hugeshmget/hugeshmget02.c
++++ b/testcases/kernel/mem/hugetlb/hugeshmget/hugeshmget02.c
+@@ -66,12 +66,12 @@ static void test_hugeshmget(unsigned int i)
+ 
+ 	TEST(shmget(*(tcases[i].skey), tcases[i].size_coe * shm_size,
+ 					tcases[i].flags));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "shmget succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tcases[i].error) {
++	if (TST_ERR != tcases[i].error) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"shmget failed unexpectedly, expected %s",
+ 			tst_strerrno(tcases[i].error));
+diff --git a/testcases/kernel/mem/hugetlb/hugeshmget/hugeshmget03.c b/testcases/kernel/mem/hugetlb/hugeshmget/hugeshmget03.c
+index 2ea3df94a..733a25cdb 100644
+--- a/testcases/kernel/mem/hugetlb/hugeshmget/hugeshmget03.c
++++ b/testcases/kernel/mem/hugetlb/hugeshmget/hugeshmget03.c
+@@ -49,11 +49,11 @@ static void test_hugeshmget(void)
+ {
+ 	TEST(shmget(IPC_PRIVATE, shm_size,
+ 				SHM_HUGETLB | IPC_CREAT | IPC_EXCL | SHM_RW));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "shmget succeeded unexpectedly");
+ 		return;
+ 	}
+-	if (TEST_ERRNO == ENOSPC)
++	if (TST_ERR == ENOSPC)
+ 		tst_res(TPASS | TTERRNO, "shmget failed as expected");
+ 	else
+ 		tst_res(TFAIL | TTERRNO, "shmget failed unexpectedly "
+diff --git a/testcases/kernel/mem/hugetlb/hugeshmget/hugeshmget05.c b/testcases/kernel/mem/hugetlb/hugeshmget/hugeshmget05.c
+index ae28bb35d..841f527b7 100644
+--- a/testcases/kernel/mem/hugetlb/hugeshmget/hugeshmget05.c
++++ b/testcases/kernel/mem/hugetlb/hugeshmget/hugeshmget05.c
+@@ -63,11 +63,11 @@ static void test_hugeshmget(void)
+ static void do_child(void)
+ {
+ 	TEST(shmget(shmkey, shm_size, SHM_HUGETLB | SHM_RW));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "shmget succeeded unexpectedly");
+ 		return;
+ 	}
+-	if (TEST_ERRNO == EACCES)
++	if (TST_ERR == EACCES)
+ 		tst_res(TPASS | TTERRNO, "shmget failed as expected");
+ 	else
+ 		tst_res(TFAIL | TTERRNO, "shmget failed unexpectedly "
+diff --git a/testcases/kernel/mem/ksm/ksm05.c b/testcases/kernel/mem/ksm/ksm05.c
+index 2f1ca3559..f715dc5aa 100644
+--- a/testcases/kernel/mem/ksm/ksm05.c
++++ b/testcases/kernel/mem/ksm/ksm05.c
+@@ -67,7 +67,7 @@ static void test_ksm(void)
+ 	sa.sa_handler = sighandler;
+ 	sa.sa_flags = 0;
+ 	TEST(sigaction(SIGSEGV, &sa, NULL));
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_brk(TBROK | TRERRNO,
+ 				"SIGSEGV signal setup failed");
+ 
+diff --git a/testcases/kernel/mem/lib/mem.c b/testcases/kernel/mem/lib/mem.c
+index f36b33a83..ce21bc7a1 100644
+--- a/testcases/kernel/mem/lib/mem.c
++++ b/testcases/kernel/mem/lib/mem.c
+@@ -91,13 +91,13 @@ static void child_alloc(int testcase, int lite, int threads)
+ 	for (i = 0; i < threads; i++) {
+ 		TEST(pthread_create(&th[i], NULL, child_alloc_thread,
+ 			(void *)((long)testcase)));
+-		if (TEST_RETURN) {
++		if (TST_RET) {
+ 			tst_res(TINFO | TRERRNO, "pthread_create");
+ 			/*
+ 			 * Keep going if thread other than first fails to
+ 			 * spawn due to lack of resources.
+ 			 */
+-			if (i == 0 || TEST_RETURN != EAGAIN)
++			if (i == 0 || TST_RET != EAGAIN)
+ 				goto out;
+ 		}
+ 	}
+diff --git a/testcases/kernel/mem/thp/thp01.c b/testcases/kernel/mem/thp/thp01.c
+index 2f2bb2bdb..b2ad921c5 100644
+--- a/testcases/kernel/mem/thp/thp01.c
++++ b/testcases/kernel/mem/thp/thp01.c
+@@ -78,7 +78,7 @@ static void thp_test(void)
+ 			args[bst->mid] = NULL;
+ 
+ 			TEST(execvp("true", args));
+-			if (TEST_ERRNO != E2BIG)
++			if (TST_ERR != E2BIG)
+ 				tst_brk(TBROK | TTERRNO, "execvp(\"true\", ...)");
+ 			bst->left = prev_left;
+ 			bst->right = bst->mid;
+@@ -98,7 +98,7 @@ static void thp_test(void)
+ 	if (pid == 0) {
+ 		args[bst->left] = NULL;
+ 		TEST(execvp("true", args));
+-		if (TEST_ERRNO != E2BIG)
++		if (TST_ERR != E2BIG)
+ 			tst_brk(TBROK | TTERRNO, "execvp(\"true\", ...)");
+ 		exit(0);
+ 	}
+diff --git a/testcases/kernel/syscalls/access/access01.c b/testcases/kernel/syscalls/access/access01.c
+index b67983210..f36a9d273 100644
+--- a/testcases/kernel/syscalls/access/access01.c
++++ b/testcases/kernel/syscalls/access/access01.c
+@@ -252,7 +252,7 @@ static struct tcase {
+ 
+ static void verify_success(struct tcase *tc, const char *user)
+ {
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO,
+ 		        "access(%s, %s) as %s failed unexpectedly",
+ 		        tc->fname, tc->name, user);
+@@ -264,13 +264,13 @@ static void verify_success(struct tcase *tc, const char *user)
+ 
+ static void verify_failure(struct tcase *tc, const char *user)
+ {
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "access(%s, %s) as %s succeded unexpectedly",
+ 		        tc->fname, tc->name, user);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->exp_errno) {
++	if (TST_ERR != tc->exp_errno) {
+ 		tst_res(TFAIL | TTERRNO,
+ 		        "access(%s, %s) as %s should fail with %s",
+ 		        tc->fname, tc->name, user,
+diff --git a/testcases/kernel/syscalls/access/access02.c b/testcases/kernel/syscalls/access/access02.c
+index 78449ca0b..5030288e8 100644
+--- a/testcases/kernel/syscalls/access/access02.c
++++ b/testcases/kernel/syscalls/access/access02.c
+@@ -75,7 +75,7 @@ static void access_test(struct tcase *tc, const char *user)
+ 
+ 	TEST(access(tc->pathname, tc->mode));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "access(%s, %s) as %s failed",
+ 			tc->pathname, tc->name, user);
+ 		return;
+@@ -90,7 +90,7 @@ static void access_test(struct tcase *tc, const char *user)
+ 		 */
+ 		TEST(stat(tc->targetname, &stat_buf));
+ 
+-		if (TEST_RETURN == -1) {
++		if (TST_RET == -1) {
+ 			tst_res(TFAIL | TTERRNO, "stat(%s) as %s failed",
+ 				tc->targetname, user);
+ 			return;
+@@ -105,14 +105,14 @@ static void access_test(struct tcase *tc, const char *user)
+ 		 */
+ 		TEST(open(tc->targetname, O_RDONLY));
+ 
+-		if (TEST_RETURN == -1) {
++		if (TST_RET == -1) {
+ 			tst_res(TFAIL | TTERRNO,
+ 				"open %s with O_RDONLY as %s failed",
+ 				tc->targetname, user);
+ 			return;
+ 		}
+ 
+-		SAFE_CLOSE(TEST_RETURN);
++		SAFE_CLOSE(TST_RET);
+ 
+ 		break;
+ 	case W_OK:
+@@ -123,14 +123,14 @@ static void access_test(struct tcase *tc, const char *user)
+ 		 */
+ 		TEST(open(tc->targetname, O_WRONLY));
+ 
+-		if (TEST_RETURN == -1) {
++		if (TST_RET == -1) {
+ 			tst_res(TFAIL | TTERRNO,
+ 				"open %s with O_WRONLY as %s failed",
+ 				tc->targetname, user);
+ 			return;
+ 		}
+ 
+-		SAFE_CLOSE(TEST_RETURN);
++		SAFE_CLOSE(TST_RET);
+ 
+ 		break;
+ 	case X_OK:
+@@ -143,7 +143,7 @@ static void access_test(struct tcase *tc, const char *user)
+ 
+ 		TEST(system(command));
+ 
+-		if (TEST_RETURN != 0) {
++		if (TST_RET != 0) {
+ 			tst_res(TFAIL | TTERRNO, "execute %s as %s failed",
+ 				tc->targetname, user);
+ 			return;
+diff --git a/testcases/kernel/syscalls/access/access03.c b/testcases/kernel/syscalls/access/access03.c
+index bba3068b0..13ee15fd0 100644
+--- a/testcases/kernel/syscalls/access/access03.c
++++ b/testcases/kernel/syscalls/access/access03.c
+@@ -49,13 +49,13 @@ static void access_test(struct tcase *tc, const char *user)
+ {
+ 	TEST(access(tc->addr, tc->mode));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "access(%p, %s) as %s succeeded unexpectedly",
+ 			tc->addr, tc->name, user);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != EFAULT) {
++	if (TST_ERR != EFAULT) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"access(%p, %s) as %s should fail with EFAULT",
+ 			tc->addr, tc->name, user);
+diff --git a/testcases/kernel/syscalls/access/access04.c b/testcases/kernel/syscalls/access/access04.c
+index 626e6df2c..401a348a4 100644
+--- a/testcases/kernel/syscalls/access/access04.c
++++ b/testcases/kernel/syscalls/access/access04.c
+@@ -72,12 +72,12 @@ static void access_test(struct tcase *tc, const char *user)
+ {
+ 	TEST(access(tc->pathname, tc->mode));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "access as %s succeeded unexpectedly", user);
+ 		return;
+ 	}
+ 
+-	if (tc->exp_errno != TEST_ERRNO) {
++	if (tc->exp_errno != TST_ERR) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"access as %s should fail with %s",
+ 			user, tst_strerrno(tc->exp_errno));
+diff --git a/testcases/kernel/syscalls/add_key/add_key01.c b/testcases/kernel/syscalls/add_key/add_key01.c
+index 6756702b1..e19cfe772 100644
+--- a/testcases/kernel/syscalls/add_key/add_key01.c
++++ b/testcases/kernel/syscalls/add_key/add_key01.c
+@@ -32,7 +32,7 @@
+ static void verify_add_key(void)
+ {
+ 	TEST(add_key("keyring", "wjkey", NULL, 0, KEY_SPEC_THREAD_KEYRING));
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_res(TFAIL | TTERRNO, "add_key call failed");
+ 	else
+ 		tst_res(TPASS, "add_key call succeeded");
+diff --git a/testcases/kernel/syscalls/add_key/add_key02.c b/testcases/kernel/syscalls/add_key/add_key02.c
+index 369e828e3..6d19ff2d8 100644
+--- a/testcases/kernel/syscalls/add_key/add_key02.c
++++ b/testcases/kernel/syscalls/add_key/add_key02.c
+@@ -63,20 +63,20 @@ static void verify_add_key(unsigned int i)
+ 	TEST(add_key(tcases[i].type,
+ 		"abc:def", NULL, tcases[i].plen, KEY_SPEC_PROCESS_KEYRING));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL,
+ 			"add_key() with key type '%s' unexpectedly succeeded",
+ 			tcases[i].type);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == EFAULT) {
++	if (TST_ERR == EFAULT) {
+ 		tst_res(TPASS, "received expected EFAULT with key type '%s'",
+ 			tcases[i].type);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == ENODEV) {
++	if (TST_ERR == ENODEV) {
+ 		tst_res(TCONF, "kernel doesn't support key type '%s'",
+ 			tcases[i].type);
+ 		return;
+@@ -87,7 +87,7 @@ static void verify_add_key(unsigned int i)
+ 	 * no asymmetric key parsers registered.  In that case, attempting to
+ 	 * add a key of type asymmetric will fail with EBADMSG.
+ 	 */
+-	if (TEST_ERRNO == EBADMSG && !strcmp(tcases[i].type, "asymmetric")) {
++	if (TST_ERR == EBADMSG && !strcmp(tcases[i].type, "asymmetric")) {
+ 		tst_res(TCONF, "no asymmetric key parsers are registered");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/add_key/add_key03.c b/testcases/kernel/syscalls/add_key/add_key03.c
+index 27edcb27f..95ac2ee6e 100644
+--- a/testcases/kernel/syscalls/add_key/add_key03.c
++++ b/testcases/kernel/syscalls/add_key/add_key03.c
+@@ -38,21 +38,21 @@ static key_serial_t create_keyring(const char *description)
+ {
+ 	TEST(add_key("keyring", description, NULL, 0,
+ 		     KEY_SPEC_PROCESS_KEYRING));
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_brk(TBROK | TTERRNO,
+ 			"unable to create keyring '%s'", description);
+ 	}
+-	return TEST_RETURN;
++	return TST_RET;
+ }
+ 
+ static key_serial_t get_keyring_id(key_serial_t special_id)
+ {
+ 	TEST(keyctl(KEYCTL_GET_KEYRING_ID, special_id, 1));
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_brk(TBROK | TTERRNO,
+ 			"unable to get ID of keyring %d", special_id);
+ 	}
+-	return TEST_RETURN;
++	return TST_RET;
+ }
+ 
+ static void do_test(void)
+diff --git a/testcases/kernel/syscalls/add_key/add_key04.c b/testcases/kernel/syscalls/add_key/add_key04.c
+index debf34942..1872cd58f 100644
+--- a/testcases/kernel/syscalls/add_key/add_key04.c
++++ b/testcases/kernel/syscalls/add_key/add_key04.c
+@@ -49,7 +49,7 @@ static void do_test(void)
+ 	int status;
+ 
+ 	TEST(keyctl(KEYCTL_JOIN_SESSION_KEYRING, NULL));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_brk(TBROK | TTERRNO, "failed to join new session keyring");
+ 
+ 	if (SAFE_FORK() == 0) {
+@@ -61,7 +61,7 @@ static void do_test(void)
+ 			sprintf(description, "keyring%d", i);
+ 			TEST(add_key("keyring", description, NULL, 0,
+ 				     KEY_SPEC_SESSION_KEYRING));
+-			if (TEST_RETURN < 0) {
++			if (TST_RET < 0) {
+ 				tst_brk(TBROK | TTERRNO,
+ 					"unable to create keyring %d", i);
+ 			}
+@@ -69,7 +69,7 @@ static void do_test(void)
+ 
+ 		TEST(add_key("user", "userkey", payload, sizeof(payload),
+ 			     KEY_SPEC_SESSION_KEYRING));
+-		if (TEST_RETURN < 0)
++		if (TST_RET < 0)
+ 			tst_brk(TBROK | TTERRNO, "unable to create user key");
+ 
+ 		exit(0);
+diff --git a/testcases/kernel/syscalls/brk/brk01.c b/testcases/kernel/syscalls/brk/brk01.c
+index c95fd0d9b..aee340e10 100644
+--- a/testcases/kernel/syscalls/brk/brk01.c
++++ b/testcases/kernel/syscalls/brk/brk01.c
+@@ -45,7 +45,7 @@ void verify_brk(void)
+ 
+ 		TEST(brk((void *)new_brk));
+ 
+-		if (TEST_RETURN == -1) {
++		if (TST_RET == -1) {
+ 			tst_res(TFAIL | TERRNO, "brk() failed");
+ 			return;
+ 		}
+diff --git a/testcases/kernel/syscalls/chdir/chdir03.c b/testcases/kernel/syscalls/chdir/chdir03.c
+index 12924664e..d5f38190e 100644
+--- a/testcases/kernel/syscalls/chdir/chdir03.c
++++ b/testcases/kernel/syscalls/chdir/chdir03.c
+@@ -47,12 +47,12 @@ void verify_chdir(void)
+ 
+ 		TEST(chdir(DIRNAME));
+ 
+-		if (TEST_RETURN != -1) {
++		if (TST_RET != -1) {
+ 			tst_res(TFAIL, "chdir() succeeded unexpectedly");
+ 			return;
+ 		}
+ 
+-		if (TEST_ERRNO != EACCES) {
++		if (TST_ERR != EACCES) {
+ 			tst_res(TFAIL | TTERRNO,
+ 				"chdir() should fail with EACCES");
+ 			return;
+diff --git a/testcases/kernel/syscalls/chmod/chmod06.c b/testcases/kernel/syscalls/chmod/chmod06.c
+index ad0a3615b..e5bb58fc5 100644
+--- a/testcases/kernel/syscalls/chmod/chmod06.c
++++ b/testcases/kernel/syscalls/chmod/chmod06.c
+@@ -90,12 +90,12 @@ void run(unsigned int i)
+ 	if (tc[i].cleanup)
+ 		tc[i].cleanup();
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "chmod succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc[i].exp_errno) {
++	if (TST_ERR == tc[i].exp_errno) {
+ 		tst_res(TPASS | TTERRNO, "chmod failed as expected");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO, "chmod failed unexpectedly; "
+diff --git a/testcases/kernel/syscalls/clock_getres/clock_getres01.c b/testcases/kernel/syscalls/clock_getres/clock_getres01.c
+index 989683ff6..da37b8ae7 100644
+--- a/testcases/kernel/syscalls/clock_getres/clock_getres01.c
++++ b/testcases/kernel/syscalls/clock_getres/clock_getres01.c
+@@ -59,8 +59,8 @@ static void do_test(unsigned int i)
+ {
+ 	TEST(clock_getres(tcase[i].clk_id, tcase[i].res));
+ 
+-	if (TEST_RETURN != tcase[i].ret) {
+-		if (TEST_ERRNO == EINVAL) {
++	if (TST_RET != tcase[i].ret) {
++		if (TST_ERR == EINVAL) {
+ 			tst_res(TCONF, "clock_getres(%s, ...) NO SUPPORTED", tcase[i].name);
+ 			return;
+ 		}
+@@ -69,10 +69,10 @@ static void do_test(unsigned int i)
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tcase[i].err) {
++	if (TST_ERR != tcase[i].err) {
+ 		tst_res(TFAIL,
+ 			"clock_getres(%s, ...) failed unexpectedly: %s, expected: %s",
+-			tcase[i].name, tst_strerrno(TEST_ERRNO), tst_strerrno(tcase[i].err));
++			tcase[i].name, tst_strerrno(TST_ERR), tst_strerrno(tcase[i].err));
+ 		return;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/clock_nanosleep/clock_nanosleep01.c b/testcases/kernel/syscalls/clock_nanosleep/clock_nanosleep01.c
+index 9ddc9a7d8..2be211bd6 100644
+--- a/testcases/kernel/syscalls/clock_nanosleep/clock_nanosleep01.c
++++ b/testcases/kernel/syscalls/clock_nanosleep/clock_nanosleep01.c
+@@ -133,15 +133,15 @@ static void do_test(unsigned int i)
+ 		}
+ 	}
+ 
+-	if (TEST_RETURN != tc->exp_ret) {
++	if (TST_RET != tc->exp_ret) {
+ 		tst_res(TFAIL | TTERRNO, "returned %ld, expected %d,"
+-			" expected errno: %s (%d)", TEST_RETURN,
++			" expected errno: %s (%d)", TST_RET,
+ 			tc->exp_ret, tst_strerrno(tc->exp_err), tc->exp_err);
+ 		return;
+ 	}
+ 
+ 	tst_res(TPASS, "returned %s (%ld)",
+-		tst_strerrno(TEST_RETURN), TEST_RETURN);
++		tst_strerrno(TST_RET), TST_RET);
+ }
+ 
+ static struct tst_test test = {
+diff --git a/testcases/kernel/syscalls/clock_nanosleep/clock_nanosleep02.c b/testcases/kernel/syscalls/clock_nanosleep/clock_nanosleep02.c
+index 9b0b24318..a79ef5e90 100644
+--- a/testcases/kernel/syscalls/clock_nanosleep/clock_nanosleep02.c
++++ b/testcases/kernel/syscalls/clock_nanosleep/clock_nanosleep02.c
+@@ -34,9 +34,9 @@ int sample_fn(int clk_id, long long usec)
+ 	tst_timer_stop();
+ 	tst_timer_sample();
+ 
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_res(TFAIL | TERRNO,
+-			"nanosleep() returned %li", TEST_RETURN);
++			"nanosleep() returned %li", TST_RET);
+ 		return 1;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/clock_nanosleep2/clock_nanosleep2_01.c b/testcases/kernel/syscalls/clock_nanosleep2/clock_nanosleep2_01.c
+index 3d8288c2a..244508e0c 100644
+--- a/testcases/kernel/syscalls/clock_nanosleep2/clock_nanosleep2_01.c
++++ b/testcases/kernel/syscalls/clock_nanosleep2/clock_nanosleep2_01.c
+@@ -50,7 +50,7 @@ static void verify_clock_nanosleep2(void)
+ 
+ 	TEST(clock_nanosleep2(CLOCK_TO_USE, TIMER_ABSTIME, &ts, NULL));
+ 
+-	if (TEST_RETURN)
++	if (TST_RET)
+ 		tst_res(TFAIL | TTERRNO, "clock_nanosleep2() failed");
+ 	else
+ 		tst_res(TPASS, "clock_nanosleep2() passed");
+diff --git a/testcases/kernel/syscalls/clone/clone08.c b/testcases/kernel/syscalls/clone/clone08.c
+index a228b2f73..a567340d1 100644
+--- a/testcases/kernel/syscalls/clone/clone08.c
++++ b/testcases/kernel/syscalls/clone/clone08.c
+@@ -97,13 +97,13 @@ static long clone_child(const struct test_case *t)
+ 	TEST(ltp_clone7(t->flags, t->do_child, NULL, CHILD_STACK_SIZE,
+ 		child_stack, &ptid, NULL, &ctid));
+ 
+-	if (TEST_RETURN == -1 && TTERRNO == ENOSYS)
++	if (TST_RET == -1 && TTERRNO == ENOSYS)
+ 		tst_brk(TCONF, "clone does not support 7 args");
+ 
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_brk(TBROK | TTERRNO, "%s clone() failed", t->name);
+ 
+-	return TEST_RETURN;
++	return TST_RET;
+ }
+ 
+ static void test_clone_parent(int t)
+diff --git a/testcases/kernel/syscalls/clone/clone09.c b/testcases/kernel/syscalls/clone/clone09.c
+index a6ebdd7a1..b133c668b 100644
+--- a/testcases/kernel/syscalls/clone/clone09.c
++++ b/testcases/kernel/syscalls/clone/clone09.c
+@@ -56,13 +56,13 @@ static long clone_child(void)
+ {
+ 	TEST(ltp_clone(flags, newnet, NULL, CHILD_STACK_SIZE, child_stack));
+ 
+-	if (TEST_RETURN == -1 && TEST_ERRNO == EINVAL)
++	if (TST_RET == -1 && TST_ERR == EINVAL)
+ 		tst_brk(TCONF, "CONFIG_NET_NS was disabled");
+ 
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_brk(TBROK | TTERRNO, "clone(CLONE_NEWNET) failed");
+ 
+-	return TEST_RETURN;
++	return TST_RET;
+ }
+ 
+ static void do_test(void)
+diff --git a/testcases/kernel/syscalls/copy_file_range/copy_file_range01.c b/testcases/kernel/syscalls/copy_file_range/copy_file_range01.c
+index 25c701f27..2bca8a403 100644
+--- a/testcases/kernel/syscalls/copy_file_range/copy_file_range01.c
++++ b/testcases/kernel/syscalls/copy_file_range/copy_file_range01.c
+@@ -176,14 +176,14 @@ static void test_one(size_t len, loff_t *off_in, loff_t *off_out)
+ 	do {
+ 		TEST(tst_syscall(__NR_copy_file_range, fd_in, off_in, fd_out,
+ 			off_out, to_copy, 0));
+-		if (TEST_RETURN == -1) {
++		if (TST_RET == -1) {
+ 			tst_res(TFAIL | TTERRNO, "copy_file_range() failed");
+ 			SAFE_CLOSE(fd_in);
+ 			SAFE_CLOSE(fd_out);
+ 			return;
+ 		}
+ 
+-		to_copy -= TEST_RETURN;
++		to_copy -= TST_RET;
+ 	} while (to_copy > 0);
+ 
+ 	ret = check_file_content(TEST_FILE_1, TEST_FILE_2,
+diff --git a/testcases/kernel/syscalls/creat/creat04.c b/testcases/kernel/syscalls/creat/creat04.c
+index ebcaa17b7..623ede0d9 100644
+--- a/testcases/kernel/syscalls/creat/creat04.c
++++ b/testcases/kernel/syscalls/creat/creat04.c
+@@ -48,13 +48,13 @@ static void child_fn(unsigned int i)
+ 
+ 	TEST(creat(tcases[i].fname, 0444));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		SAFE_UNLINK(tcases[i].fname);
+ 		tst_res(TFAIL, "call succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != EACCES) {
++	if (TST_ERR != EACCES) {
+ 		tst_res(TFAIL | TTERRNO, "Expected EACCES");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/creat/creat05.c b/testcases/kernel/syscalls/creat/creat05.c
+index 154f1a259..037a1133d 100644
+--- a/testcases/kernel/syscalls/creat/creat05.c
++++ b/testcases/kernel/syscalls/creat/creat05.c
+@@ -39,13 +39,13 @@ static void verify_creat(void)
+ {
+ 	TEST(creat("filename", 0666));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "call succeeded unexpectedly");
+-		SAFE_CLOSE(TEST_RETURN);
++		SAFE_CLOSE(TST_RET);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == EMFILE)
++	if (TST_ERR == EMFILE)
+ 		tst_res(TPASS, "creat() failed with EMFILE");
+ 	else
+ 		tst_res(TFAIL | TTERRNO, "Expected EMFILE");
+diff --git a/testcases/kernel/syscalls/creat/creat06.c b/testcases/kernel/syscalls/creat/creat06.c
+index 45642f097..146d518ae 100644
+--- a/testcases/kernel/syscalls/creat/creat06.c
++++ b/testcases/kernel/syscalls/creat/creat06.c
+@@ -109,12 +109,12 @@ static void verify_creat(unsigned int i)
+ 	if (tcases[i].cleanup != NULL)
+ 		tcases[i].cleanup();
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "call succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tcases[i].error) {
++	if (TST_ERR == tcases[i].error) {
+ 		tst_res(TPASS | TTERRNO, "got expected failure");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/creat/creat07.c b/testcases/kernel/syscalls/creat/creat07.c
+index a01660402..435e5d54c 100644
+--- a/testcases/kernel/syscalls/creat/creat07.c
++++ b/testcases/kernel/syscalls/creat/creat07.c
+@@ -46,12 +46,12 @@ static void verify_creat(void)
+ 
+ 	TEST(creat(TEST_APP, O_WRONLY));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "creat() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == ETXTBSY)
++	if (TST_ERR == ETXTBSY)
+ 		tst_res(TPASS, "creat() received EXTBSY");
+ 	else
+ 		tst_res(TFAIL | TTERRNO, "creat() failed unexpectedly");
+diff --git a/testcases/kernel/syscalls/epoll_ctl/epoll_ctl01.c b/testcases/kernel/syscalls/epoll_ctl/epoll_ctl01.c
+index f3599de50..e837913fb 100644
+--- a/testcases/kernel/syscalls/epoll_ctl/epoll_ctl01.c
++++ b/testcases/kernel/syscalls/epoll_ctl/epoll_ctl01.c
+@@ -135,7 +135,7 @@ end:
+ static void opera_epoll_ctl(int opt, int fd, struct epoll_event *epvs)
+ {
+ 	TEST(epoll_ctl(epfd, opt, fd, epvs));
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_brk(TBROK | TTERRNO, "epoll_ctl() fails with op %i", opt);
+ }
+ 
+diff --git a/testcases/kernel/syscalls/epoll_ctl/epoll_ctl02.c b/testcases/kernel/syscalls/epoll_ctl/epoll_ctl02.c
+index fcbdcac1a..ce9b55ed9 100644
+--- a/testcases/kernel/syscalls/epoll_ctl/epoll_ctl02.c
++++ b/testcases/kernel/syscalls/epoll_ctl/epoll_ctl02.c
+@@ -81,7 +81,7 @@ static void setup(void)
+ 	events[1].data.fd = fd[1];
+ 
+ 	TEST(epoll_ctl(epfd, EPOLL_CTL_ADD, fd[0], &events[0]));
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_brk(TFAIL | TTERRNO, "epoll_ctl() fails to init");
+ }
+ 
+@@ -102,12 +102,12 @@ static void verify_epoll_ctl(unsigned int n)
+ 	struct testcase *tc = &tcases[n];
+ 
+ 	TEST(epoll_ctl(*tc->epfds, tc->opt, *tc->fds,  tc->ts_event));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "epoll_ctl() succeeds unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (tc->exp_err == TEST_ERRNO) {
++	if (tc->exp_err == TST_ERR) {
+ 		tst_res(TPASS | TTERRNO, "epoll_ctl() fails as expected");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO,
+diff --git a/testcases/kernel/syscalls/epoll_wait/epoll_wait01.c b/testcases/kernel/syscalls/epoll_wait/epoll_wait01.c
+index 7d28b5fbc..0ded12765 100644
+--- a/testcases/kernel/syscalls/epoll_wait/epoll_wait01.c
++++ b/testcases/kernel/syscalls/epoll_wait/epoll_wait01.c
+@@ -113,14 +113,14 @@ static void verify_epollout(void)
+ 
+ 	TEST(epoll_wait(epfd, &ret_evs, 1, -1));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "epoll_wait() epollout failed");
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN != 1) {
++	if (TST_RET != 1) {
+ 		tst_res(TFAIL, "epoll_wait() returned %li, expected 1",
+-			TEST_RETURN);
++			TST_RET);
+ 		return;
+ 	}
+ 
+@@ -151,14 +151,14 @@ static void verify_epollin(void)
+ 
+ 	TEST(epoll_wait(epfd, &ret_evs, 1, -1));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "epoll_wait() epollin failed");
+ 		goto end;
+ 	}
+ 
+-	if (TEST_RETURN != 1) {
++	if (TST_RET != 1) {
+ 		tst_res(TFAIL, "epoll_wait() returned %li, expected 1",
+-			TEST_RETURN);
++			TST_RET);
+ 		goto end;
+ 	}
+ 
+@@ -195,9 +195,9 @@ static void verify_epollio(void)
+ 		bzero(ret_evs, sizeof(ret_evs));
+ 		TEST(epoll_wait(epfd, ret_evs, 2, -1));
+ 
+-		if (TEST_RETURN <= 0) {
++		if (TST_RET <= 0) {
+ 			tst_res(TFAIL | TTERRNO, "epoll_wait() returned %li",
+-				TEST_RETURN);
++				TST_RET);
+ 			goto end;
+ 		}
+ 
+@@ -213,7 +213,7 @@ static void verify_epollio(void)
+ 			events &= ~EPOLLOUT;
+ 		}
+ 
+-		if (TEST_RETURN != events_matched) {
++		if (TST_RET != events_matched) {
+ 			tst_res(TFAIL,
+ 				"epoll_wait() returned unexpected events");
+ 			dump_epevs(ret_evs, 2);
+diff --git a/testcases/kernel/syscalls/epoll_wait/epoll_wait02.c b/testcases/kernel/syscalls/epoll_wait/epoll_wait02.c
+index 70cddb9c9..a1eab2697 100644
+--- a/testcases/kernel/syscalls/epoll_wait/epoll_wait02.c
++++ b/testcases/kernel/syscalls/epoll_wait/epoll_wait02.c
+@@ -41,9 +41,9 @@ int sample_fn(int clk_id, long long usec)
+ 	tst_timer_stop();
+ 	tst_timer_sample();
+ 
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_res(TFAIL | TTERRNO,
+-			"epoll_wait() returned %li", TEST_RETURN);
++			"epoll_wait() returned %li", TST_RET);
+ 		return 1;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/fchdir/fchdir03.c b/testcases/kernel/syscalls/fchdir/fchdir03.c
+index 59685f814..dd610e5ef 100644
+--- a/testcases/kernel/syscalls/fchdir/fchdir03.c
++++ b/testcases/kernel/syscalls/fchdir/fchdir03.c
+@@ -42,12 +42,12 @@ void verify_fchdir(void)
+ {
+ 	TEST(fchdir(fd));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "fchdir() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != EACCES) {
++	if (TST_ERR != EACCES) {
+ 		tst_res(TFAIL | TTERRNO, "fchdir() should fail with EACCES");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/fchmod/fchmod01.c b/testcases/kernel/syscalls/fchmod/fchmod01.c
+index c342f6011..05b566791 100644
+--- a/testcases/kernel/syscalls/fchmod/fchmod01.c
++++ b/testcases/kernel/syscalls/fchmod/fchmod01.c
+@@ -26,7 +26,7 @@ static void verify_fchmod(void)
+ 		mode = (mode_t)modes[ind];
+ 
+ 		TEST(fchmod(fd, mode));
+-		if (TEST_RETURN == -1)
++		if (TST_RET == -1)
+ 			tst_res(TFAIL | TTERRNO, "fchmod() failed unexpectly");
+ 
+ 		SAFE_FSTAT(fd, &stat_buf);
+diff --git a/testcases/kernel/syscalls/fchmod/fchmod02.c b/testcases/kernel/syscalls/fchmod/fchmod02.c
+index a855f9567..d0b35db12 100644
+--- a/testcases/kernel/syscalls/fchmod/fchmod02.c
++++ b/testcases/kernel/syscalls/fchmod/fchmod02.c
+@@ -33,7 +33,7 @@ static void verify_fchmod(void)
+ 	mode_t file_mode;
+ 
+ 	TEST(fchmod(fd, PERMS));
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_res(TFAIL | TTERRNO, "fchmod() failed unexpectly");
+ 
+ 	SAFE_FSTAT(fd, &stat_buf);
+diff --git a/testcases/kernel/syscalls/fchmod/fchmod06.c b/testcases/kernel/syscalls/fchmod/fchmod06.c
+index b5240086e..02d5f9035 100644
+--- a/testcases/kernel/syscalls/fchmod/fchmod06.c
++++ b/testcases/kernel/syscalls/fchmod/fchmod06.c
+@@ -51,20 +51,20 @@ static void verify_fchmod(unsigned int i)
+ 
+ 	TEST(fchmod(*tc->fd, tc->mode));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "fchmod() passed unexpectedly (%li)",
+-		        TEST_RETURN);
++			TST_RET);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tcases[i].exp_errno) {
++	if (TST_ERR == tcases[i].exp_errno) {
+ 		tst_res(TPASS | TTERRNO, "fchmod() failed expectedly");
+ 		return;
+ 	}
+ 
+ 	tst_res(TFAIL | TTERRNO,
+ 	        "fchmod() failed unexpectedly, expected %i - %s",
+-	        TEST_ERRNO, tst_strerrno(TEST_ERRNO));
++		TST_ERR, tst_strerrno(TST_ERR));
+ }
+ 
+ static void setup(void)
+diff --git a/testcases/kernel/syscalls/fcntl/fcntl02.c b/testcases/kernel/syscalls/fcntl/fcntl02.c
+index d7a6c197f..6d0d5a750 100644
+--- a/testcases/kernel/syscalls/fcntl/fcntl02.c
++++ b/testcases/kernel/syscalls/fcntl/fcntl02.c
+@@ -55,21 +55,21 @@ static void verify_fcntl(unsigned int n)
+ 
+ 	TEST(fcntl(fd, F_DUPFD, min_fd));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "fcntl(%s, F_DUPFD, %i) failed",
+ 			fname, min_fd);
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN < min_fd) {
++	if (TST_RET < min_fd) {
+ 		tst_res(TFAIL, "fcntl(%s, F_DUPFD, %i) returned %ld < %i",
+-			fname, min_fd, TEST_RETURN, min_fd);
++			fname, min_fd, TST_RET, min_fd);
+ 	}
+ 
+ 	tst_res(TPASS, "fcntl(%s, F_DUPFD, %i) returned %ld",
+-		fname, min_fd, TEST_RETURN);
++		fname, min_fd, TST_RET);
+ 
+-	SAFE_CLOSE(TEST_RETURN);
++	SAFE_CLOSE(TST_RET);
+ }
+ 
+ static void setup(void)
+diff --git a/testcases/kernel/syscalls/fcntl/fcntl03.c b/testcases/kernel/syscalls/fcntl/fcntl03.c
+index fe1d112b2..b2476bf5f 100644
+--- a/testcases/kernel/syscalls/fcntl/fcntl03.c
++++ b/testcases/kernel/syscalls/fcntl/fcntl03.c
+@@ -51,14 +51,14 @@ static void verify_fcntl(void)
+ {
+ 	TEST(fcntl(fd, F_GETFD, 0));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "fcntl(%s, F_GETFD, 0) failed",
+ 			fname);
+ 		return;
+ 	}
+ 
+ 	tst_res(TPASS, "fcntl(%s, F_GETFD, 0) returned %ld",
+-		fname, TEST_RETURN);
++		fname, TST_RET);
+ }
+ 
+ static void setup(void)
+diff --git a/testcases/kernel/syscalls/fcntl/fcntl04.c b/testcases/kernel/syscalls/fcntl/fcntl04.c
+index c00677c25..1fb978ffc 100644
+--- a/testcases/kernel/syscalls/fcntl/fcntl04.c
++++ b/testcases/kernel/syscalls/fcntl/fcntl04.c
+@@ -50,21 +50,21 @@ static void verify_fcntl(void)
+ {
+ 	TEST(fcntl(fd, F_GETFL, 0));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "fcntl(%s, F_GETFL, 0) failed",
+ 			fname);
+ 		return;
+ 	}
+ 
+-	if ((TEST_RETURN & O_ACCMODE) != O_RDWR) {
++	if ((TST_RET & O_ACCMODE) != O_RDWR) {
+ 		tst_res(TFAIL, "fcntl(%s, F_GETFL, 0) returned wrong "
+ 			"access mode %li, expected %i", fname,
+-			TEST_RETURN & O_ACCMODE, O_RDWR);
++			TST_RET & O_ACCMODE, O_RDWR);
+ 		return;
+ 	}
+ 
+ 	tst_res(TPASS, "fcntl(%s, F_GETFL, 0) returned %lx",
+-		fname, TEST_RETURN);
++		fname, TST_RET);
+ }
+ 
+ static void setup(void)
+diff --git a/testcases/kernel/syscalls/flistxattr/flistxattr01.c b/testcases/kernel/syscalls/flistxattr/flistxattr01.c
+index b287aabc9..278616e28 100644
+--- a/testcases/kernel/syscalls/flistxattr/flistxattr01.c
++++ b/testcases/kernel/syscalls/flistxattr/flistxattr01.c
+@@ -62,7 +62,7 @@ static void verify_flistxattr(void)
+ 	char buf[64];
+ 
+ 	TEST(flistxattr(fd, buf, sizeof(buf)));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "flistxattr() failed");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/flistxattr/flistxattr02.c b/testcases/kernel/syscalls/flistxattr/flistxattr02.c
+index 9f85ee5de..0b81b5151 100644
+--- a/testcases/kernel/syscalls/flistxattr/flistxattr02.c
++++ b/testcases/kernel/syscalls/flistxattr/flistxattr02.c
+@@ -61,14 +61,14 @@ static void verify_flistxattr(unsigned int n)
+ 	char buf[t->size];
+ 
+ 	TEST(flistxattr(*t->fd, buf, t->size));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL,
+ 			"flistxattr() succeeded unexpectedly (returned %ld)",
+-			TEST_RETURN);
++			TST_RET);
+ 		return;
+ 	}
+ 
+-	if (t->exp_err != TEST_ERRNO) {
++	if (t->exp_err != TST_ERR) {
+ 		tst_res(TFAIL | TTERRNO, "flistxattr() failed "
+ 			 "unexpectedlly, expected %s",
+ 			 tst_strerrno(t->exp_err));
+diff --git a/testcases/kernel/syscalls/flistxattr/flistxattr03.c b/testcases/kernel/syscalls/flistxattr/flistxattr03.c
+index 14b68d463..b9f75a865 100644
+--- a/testcases/kernel/syscalls/flistxattr/flistxattr03.c
++++ b/testcases/kernel/syscalls/flistxattr/flistxattr03.c
+@@ -56,12 +56,12 @@ static int check_suitable_buf(const int file, long size)
+ static void verify_flistxattr(unsigned int n)
+ {
+ 	TEST(flistxattr(fd[n], NULL, 0));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "flistxattr() failed");
+ 		return;
+ 	}
+ 
+-	if (check_suitable_buf(fd[n], TEST_RETURN))
++	if (check_suitable_buf(fd[n], TST_RET))
+ 		tst_res(TPASS, "flistxattr() succeed with suitable buffer");
+ 	else
+ 		tst_res(TFAIL, "flistxattr() failed with small buffer");
+diff --git a/testcases/kernel/syscalls/fsync/fsync01.c b/testcases/kernel/syscalls/fsync/fsync01.c
+index c93b131f2..f5e14185c 100644
+--- a/testcases/kernel/syscalls/fsync/fsync01.c
++++ b/testcases/kernel/syscalls/fsync/fsync01.c
+@@ -52,10 +52,10 @@ static void verify_fsync(void)
+ 
+ 		TEST(fsync(fd));
+ 
+-		if (TEST_RETURN == -1)
++		if (TST_RET == -1)
+ 			tst_res(TFAIL | TTERRNO, "fsync failed");
+ 		else
+-			tst_res(TPASS, "fsync() returned %ld", TEST_RETURN);
++			tst_res(TPASS, "fsync() returned %ld", TST_RET);
+ 	}
+ }
+ 
+diff --git a/testcases/kernel/syscalls/futex/futex_wait05.c b/testcases/kernel/syscalls/futex/futex_wait05.c
+index 066944f34..0c5939c53 100644
+--- a/testcases/kernel/syscalls/futex/futex_wait05.c
++++ b/testcases/kernel/syscalls/futex/futex_wait05.c
+@@ -36,13 +36,13 @@ int sample_fn(int clk_id, long long usec)
+ 	tst_timer_stop();
+ 	tst_timer_sample();
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "futex_wait() returned %li, expected -1",
+-		         TEST_RETURN);
++			TST_RET);
+ 		return 1;
+ 	}
+ 
+-	if (TEST_ERRNO != ETIMEDOUT) {
++	if (TST_ERR != ETIMEDOUT) {
+ 		tst_res(TFAIL | TTERRNO, "expected errno=%s",
+ 		        tst_strerrno(ETIMEDOUT));
+ 		return 1;
+diff --git a/testcases/kernel/syscalls/getcwd/getcwd01.c b/testcases/kernel/syscalls/getcwd/getcwd01.c
+index 1199e9f2e..c1d8cb9ef 100644
+--- a/testcases/kernel/syscalls/getcwd/getcwd01.c
++++ b/testcases/kernel/syscalls/getcwd/getcwd01.c
+@@ -59,13 +59,13 @@ static void verify_getcwd(unsigned int n)
+ 
+ 	errno = 0;
+ 	res = getcwd(tc->buf, tc->size);
+-	TEST_ERRNO = errno;
++	TST_ERR = errno;
+ 	if (res) {
+ 		tst_res(TFAIL, "getcwd() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->exp_err) {
++	if (TST_ERR != tc->exp_err) {
+ 		tst_res(TFAIL | TTERRNO, "getcwd() failed unexpectedly, expected %s",
+ 			tst_strerrno(tc->exp_err));
+ 		return;
+diff --git a/testcases/kernel/syscalls/getcwd/getcwd02.c b/testcases/kernel/syscalls/getcwd/getcwd02.c
+index 54440bdb8..1a2d30844 100644
+--- a/testcases/kernel/syscalls/getcwd/getcwd02.c
++++ b/testcases/kernel/syscalls/getcwd/getcwd02.c
+@@ -83,7 +83,7 @@ static void verify_getcwd(unsigned int n)
+ 
+ 	errno = 0;
+ 	res = getcwd(tc->buf, tc->size);
+-	TEST_ERRNO = errno;
++	TST_ERR = errno;
+ 	if (!res) {
+ 		tst_res(TFAIL | TTERRNO, "getcwd() failed");
+ 		goto end;
+diff --git a/testcases/kernel/syscalls/getcwd/getcwd05.c b/testcases/kernel/syscalls/getcwd/getcwd05.c
+index 182f6b56f..f39df4b1d 100644
+--- a/testcases/kernel/syscalls/getcwd/getcwd05.c
++++ b/testcases/kernel/syscalls/getcwd/getcwd05.c
+@@ -32,7 +32,7 @@ static void run(unsigned int i)
+ 		TESTPTR(getcwd(NULL, 0));
+ 	}
+ 
+-	if (TEST_ERRNO != ENOENT) {
++	if (TST_ERR != ENOENT) {
+ 		tst_res(TFAIL | TTERRNO, "returned unexpected errno");
+ 		fail = 1;
+ 	}
+diff --git a/testcases/kernel/syscalls/getpriority/getpriority01.c b/testcases/kernel/syscalls/getpriority/getpriority01.c
+index caf85734b..c7cccbc51 100644
+--- a/testcases/kernel/syscalls/getpriority/getpriority01.c
++++ b/testcases/kernel/syscalls/getpriority/getpriority01.c
+@@ -45,21 +45,21 @@ static void verify_getpriority(unsigned int n)
+ 
+ 	TEST(getpriority(tc->which, 0));
+ 
+-	if (TEST_ERRNO != 0) {
++	if (TST_ERR != 0) {
+ 		tst_res(TFAIL | TTERRNO, "getpriority(%d, 0) failed",
+ 			tc->which);
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN < tc->min || TEST_RETURN > tc->max) {
++	if (TST_RET < tc->min || TST_RET > tc->max) {
+ 		tst_res(TFAIL, "getpriority(%d, 0) returned %ld, "
+ 			"expected in the range of [%d, %d]",
+-			tc->which, TEST_RETURN, tc->min, tc->max);
++			tc->which, TST_RET, tc->min, tc->max);
+ 		return;
+ 	}
+ 
+ 	tst_res(TPASS, "getpriority(%d, 0) returned %ld",
+-		tc->which, TEST_RETURN);
++		tc->which, TST_RET);
+ }
+ 
+ static struct tst_test test = {
+diff --git a/testcases/kernel/syscalls/getpriority/getpriority02.c b/testcases/kernel/syscalls/getpriority/getpriority02.c
+index c2d356039..b771780c4 100644
+--- a/testcases/kernel/syscalls/getpriority/getpriority02.c
++++ b/testcases/kernel/syscalls/getpriority/getpriority02.c
+@@ -53,13 +53,13 @@ static void verify_getpriority(unsigned int n)
+ 
+ 	TEST(getpriority(tc->which, tc->who));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "getpriority(%d, %d) succeeds unexpectedly, "
+-			       "returned %li", tc->which, tc->who, TEST_RETURN);
++			       "returned %li", tc->which, tc->who, TST_RET);
+ 		return;
+ 	}
+ 
+-	if (tc->exp_errno != TEST_ERRNO) {
++	if (tc->exp_errno != TST_ERR) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"getpriority(%d, %d) should fail with %s",
+ 			tc->which, tc->who, tst_strerrno(tc->exp_errno));
+diff --git a/testcases/kernel/syscalls/getrandom/getrandom01.c b/testcases/kernel/syscalls/getrandom/getrandom01.c
+index 8bc026901..d449fbd81 100644
+--- a/testcases/kernel/syscalls/getrandom/getrandom01.c
++++ b/testcases/kernel/syscalls/getrandom/getrandom01.c
+@@ -37,9 +37,9 @@ static void verify_getrandom(unsigned int n)
+ {
+ 	TEST(tst_syscall(__NR_getrandom, NULL, 100, modes[n]));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TPASS | TTERRNO, "getrandom returned %ld",
+-			TEST_RETURN);
++			TST_RET);
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO, "getrandom failed");
+ 	}
+diff --git a/testcases/kernel/syscalls/getrandom/getrandom02.c b/testcases/kernel/syscalls/getrandom/getrandom02.c
+index cc7b0b814..e7d03e799 100644
+--- a/testcases/kernel/syscalls/getrandom/getrandom02.c
++++ b/testcases/kernel/syscalls/getrandom/getrandom02.c
+@@ -63,13 +63,13 @@ static void verify_getrandom(unsigned int n)
+ 
+ 	do {
+ 		TEST(tst_syscall(__NR_getrandom, buf, sizeof(buf), modes[n]));
+-	} while ((modes[n] & GRND_NONBLOCK) && TEST_RETURN == -1
+-		  && TEST_ERRNO == EAGAIN);
++	} while ((modes[n] & GRND_NONBLOCK) && TST_RET == -1
++		  && TST_ERR == EAGAIN);
+ 
+-	if (!check_content(buf, TEST_RETURN))
++	if (!check_content(buf, TST_RET))
+ 		tst_res(TFAIL | TTERRNO, "getrandom failed");
+ 	else
+-		tst_res(TPASS, "getrandom returned %ld", TEST_RETURN);
++		tst_res(TPASS, "getrandom returned %ld", TST_RET);
+ }
+ 
+ static struct tst_test test = {
+diff --git a/testcases/kernel/syscalls/getrandom/getrandom03.c b/testcases/kernel/syscalls/getrandom/getrandom03.c
+index 55c287257..d7081fed8 100644
+--- a/testcases/kernel/syscalls/getrandom/getrandom03.c
++++ b/testcases/kernel/syscalls/getrandom/getrandom03.c
+@@ -54,11 +54,11 @@ static void verify_getrandom(unsigned int n)
+ 
+ 	TEST(tst_syscall(__NR_getrandom, buf, sizes[n], 0));
+ 
+-	if (TEST_RETURN != sizes[n]) {
++	if (TST_RET != sizes[n]) {
+ 		tst_res(TFAIL | TTERRNO, "getrandom returned %li, expected %u",
+-			TEST_RETURN, sizes[n]);
++			TST_RET, sizes[n]);
+ 	} else {
+-		tst_res(TPASS, "getrandom returned %ld", TEST_RETURN);
++		tst_res(TPASS, "getrandom returned %ld", TST_RET);
+ 	}
+ }
+ 
+diff --git a/testcases/kernel/syscalls/getrandom/getrandom04.c b/testcases/kernel/syscalls/getrandom/getrandom04.c
+index 8a3faf94d..26df42348 100644
+--- a/testcases/kernel/syscalls/getrandom/getrandom04.c
++++ b/testcases/kernel/syscalls/getrandom/getrandom04.c
+@@ -46,10 +46,10 @@ static void verify_getrandom(void)
+ 	SAFE_SETRLIMIT(RLIMIT_NOFILE, &lnew);
+ 
+ 	TEST(tst_syscall(__NR_getrandom, buf, 100, 0));
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_res(TFAIL | TTERRNO, "getrandom failed");
+ 	else
+-		tst_res(TPASS, "getrandom returned %ld", TEST_RETURN);
++		tst_res(TPASS, "getrandom returned %ld", TST_RET);
+ 
+ 	SAFE_SETRLIMIT(RLIMIT_NOFILE, &lold);
+ }
+diff --git a/testcases/kernel/syscalls/inotify/inotify03.c b/testcases/kernel/syscalls/inotify/inotify03.c
+index 6bc5e7424..ff7419944 100644
+--- a/testcases/kernel/syscalls/inotify/inotify03.c
++++ b/testcases/kernel/syscalls/inotify/inotify03.c
+@@ -94,10 +94,10 @@ void verify_inotify(void)
+ 
+ 	tst_res(TINFO, "umount %s", tst_device->dev);
+ 	TEST(tst_umount(mntpoint));
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_brk(TBROK, "umount(2) Failed "
+ 			"while unmounting errno = %d : %s",
+-			TEST_ERRNO, strerror(TEST_ERRNO));
++			TST_ERR, strerror(TST_ERR));
+ 	}
+ 	mount_flag = 0;
+ 
+@@ -192,7 +192,7 @@ static void cleanup(void)
+ 
+ 	if (mount_flag) {
+ 		TEST(tst_umount(mntpoint));
+-		if (TEST_RETURN != 0)
++		if (TST_RET != 0)
+ 			tst_res(TWARN | TTERRNO, "umount(%s) failed",
+ 				mntpoint);
+ 	}
+diff --git a/testcases/kernel/syscalls/io_destroy/io_destroy01.c b/testcases/kernel/syscalls/io_destroy/io_destroy01.c
+index 3611477e4..e5ab18812 100644
+--- a/testcases/kernel/syscalls/io_destroy/io_destroy01.c
++++ b/testcases/kernel/syscalls/io_destroy/io_destroy01.c
+@@ -40,18 +40,18 @@ static void verify_io_destroy(void)
+ 	memset(&ctx, 0xff, sizeof(ctx));
+ 
+ 	TEST(io_destroy(ctx));
+-	if (TEST_RETURN == 0) {
++	if (TST_RET == 0) {
+ 		tst_res(TFAIL, "io_destroy() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN == -EINVAL) {
++	if (TST_RET == -EINVAL) {
+ 		tst_res(TPASS,
+ 			"io_destroy() failed as expected, returned -EINVAL");
+ 	} else {
+ 		tst_res(TFAIL, "io_destroy() failed unexpectedly, "
+ 			"returned -%s expected -EINVAL",
+-			tst_strerrno(-TEST_RETURN));
++			tst_strerrno(-TST_RET));
+ 	}
+ }
+ 
+diff --git a/testcases/kernel/syscalls/io_setup/io_setup01.c b/testcases/kernel/syscalls/io_setup/io_setup01.c
+index 243c57905..617689bac 100644
+--- a/testcases/kernel/syscalls/io_setup/io_setup01.c
++++ b/testcases/kernel/syscalls/io_setup/io_setup01.c
+@@ -45,18 +45,18 @@ static void verify_failure(unsigned int nr, io_context_t *ctx, int init_val, lon
+ 		memset(ctx, init_val, sizeof(*ctx));
+ 
+ 	TEST(io_setup(nr, ctx));
+-	if (TEST_RETURN == 0) {
++	if (TST_RET == 0) {
+ 		tst_res(TFAIL, "io_setup() passed unexpectedly");
+ 		io_destroy(*ctx);
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN == -exp_err) {
++	if (TST_RET == -exp_err) {
+ 		tst_res(TPASS, "io_setup() failed as expected, returned -%s",
+ 			tst_strerrno(exp_err));
+ 	} else {
+ 		tst_res(TFAIL, "io_setup() failed unexpectedly, returned -%s "
+-			"expected -%s", tst_strerrno(-TEST_RETURN),
++			"expected -%s", tst_strerrno(-TST_RET),
+ 			tst_strerrno(exp_err));
+ 	}
+ }
+@@ -66,9 +66,9 @@ static void verify_success(unsigned int nr, io_context_t *ctx, int init_val)
+ 	memset(ctx, init_val, sizeof(*ctx));
+ 
+ 	TEST(io_setup(nr, ctx));
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_res(TFAIL, "io_setup() failed unexpectedly with %li (%s)",
+-			TEST_RETURN, tst_strerrno(-TEST_RETURN));
++			TST_RET, tst_strerrno(-TST_RET));
+ 		return;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/ioctl/ioctl04.c b/testcases/kernel/syscalls/ioctl/ioctl04.c
+index 89e89ec87..2a7005532 100644
+--- a/testcases/kernel/syscalls/ioctl/ioctl04.c
++++ b/testcases/kernel/syscalls/ioctl/ioctl04.c
+@@ -52,13 +52,13 @@ static void verify_ioctl(void)
+ 
+ 	TEST(mount(tst_device->dev, "mntpoint", tst_device->fs_type, 0, NULL));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "Mounting RO device RW succeeded");
+ 		tst_umount("mntpoint");
+ 		goto next;
+ 	}
+ 
+-	if (TEST_ERRNO == EACCES) {
++	if (TST_ERR == EACCES) {
+ 		tst_res(TPASS | TERRNO, "Mounting RO device RW failed");
+ 		goto next;
+ 	}
+@@ -69,7 +69,7 @@ static void verify_ioctl(void)
+ next:
+ 	TEST(mount(tst_device->dev, "mntpoint", tst_device->fs_type, MS_RDONLY, NULL));
+ 
+-	if (TEST_RETURN == 0) {
++	if (TST_RET == 0) {
+ 		tst_res(TPASS, "Mounting RO device RO works");
+ 		tst_umount("mntpoint");
+ 	} else {
+diff --git a/testcases/kernel/syscalls/ipc/msgctl/msgctl01.c b/testcases/kernel/syscalls/ipc/msgctl/msgctl01.c
+index 60ccfb9f7..df14264e5 100644
+--- a/testcases/kernel/syscalls/ipc/msgctl/msgctl01.c
++++ b/testcases/kernel/syscalls/ipc/msgctl/msgctl01.c
+@@ -42,8 +42,8 @@ static void verify_msgctl(void)
+ 	memset(&buf, 'a', sizeof(buf));
+ 	TEST(msgctl(msg_id, IPC_STAT, &buf));
+ 
+-	if (TEST_RETURN != 0) {
+-		tst_res(TFAIL | TTERRNO, "msgctl() returned %li", TEST_RETURN);
++	if (TST_RET != 0) {
++		tst_res(TFAIL | TTERRNO, "msgctl() returned %li", TST_RET);
+ 		return;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/ipc/msgctl/msgctl02.c b/testcases/kernel/syscalls/ipc/msgctl/msgctl02.c
+index 4a821d03b..fca49f3dd 100644
+--- a/testcases/kernel/syscalls/ipc/msgctl/msgctl02.c
++++ b/testcases/kernel/syscalls/ipc/msgctl/msgctl02.c
+@@ -39,7 +39,7 @@ static void verify_msgctl(void)
+ 
+ 	TEST(msgctl(msg_id, IPC_SET, &buf));
+ 
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_res(TFAIL | TTERRNO, "msgctl(IPC_SET) failed");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/ipc/msgctl/msgctl03.c b/testcases/kernel/syscalls/ipc/msgctl/msgctl03.c
+index 836d6e76d..707fe2b04 100644
+--- a/testcases/kernel/syscalls/ipc/msgctl/msgctl03.c
++++ b/testcases/kernel/syscalls/ipc/msgctl/msgctl03.c
+@@ -32,7 +32,7 @@ static void verify_msgctl(void)
+ 	msg_q = SAFE_MSGGET(IPC_PRIVATE, MSG_RW);
+ 
+ 	TEST(msgctl(msg_q, IPC_RMID, NULL));
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_res(TFAIL | TTERRNO, "msgctl(IPC_RMID) failed");
+ 		return;
+ 	}
+@@ -40,11 +40,11 @@ static void verify_msgctl(void)
+ 	tst_res(TPASS, "msgctl(IPC_RMID)");
+ 
+ 	TEST(msgctl(msg_q, IPC_STAT, &buf));
+-	if (TEST_ERRNO == EINVAL) {
++	if (TST_ERR == EINVAL) {
+ 		tst_res(TPASS | TTERRNO, "msgctl(IPC_STAT)");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO,
+-			"msgctl(IPC_STAT) returned %li", TEST_RETURN);
++			"msgctl(IPC_STAT) returned %li", TST_RET);
+ 	}
+ }
+ 
+diff --git a/testcases/kernel/syscalls/ipc/msgctl/msgctl04.c b/testcases/kernel/syscalls/ipc/msgctl/msgctl04.c
+index ca36e94fb..8e4af8386 100644
+--- a/testcases/kernel/syscalls/ipc/msgctl/msgctl04.c
++++ b/testcases/kernel/syscalls/ipc/msgctl/msgctl04.c
+@@ -62,12 +62,12 @@ static void verify_msgctl(unsigned int i)
+ {
+ 	TEST(msgctl(*(tc[i].msg_id), tc[i].cmd, tc[i].buf));
+ 
+-	if (TEST_RETURN != -1) {
+-		tst_res(TFAIL, "msgctl() returned %li", TEST_RETURN);
++	if (TST_RET != -1) {
++		tst_res(TFAIL, "msgctl() returned %li", TST_RET);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc[i].error) {
++	if (TST_ERR == tc[i].error) {
+ 		tst_res(TPASS | TTERRNO, "msgctl(%i, %i, %p)",
+ 			*tc[i].msg_id, tc[i].cmd, tc[i].buf);
+ 		return;
+diff --git a/testcases/kernel/syscalls/ipc/msgctl/msgctl12.c b/testcases/kernel/syscalls/ipc/msgctl/msgctl12.c
+index 8fb92e921..403a57e89 100644
+--- a/testcases/kernel/syscalls/ipc/msgctl/msgctl12.c
++++ b/testcases/kernel/syscalls/ipc/msgctl/msgctl12.c
+@@ -45,10 +45,10 @@ static void verify_msgctl(unsigned int i)
+ {
+ 	TEST(msgctl(*tc[i].msg_id,  tc[i].cmd, tc[i].buf));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL,
+ 			 "msgctl() test %s failed with errno: "
+-			 "%d", tc[i].name, TEST_ERRNO);
++			 "%d", tc[i].name, TST_ERR);
+ 	}
+ 
+ 	tst_res(TPASS, "msgctl() test %s succeeded", tc[i].name);
+diff --git a/testcases/kernel/syscalls/ipc/msgget/msgget01.c b/testcases/kernel/syscalls/ipc/msgget/msgget01.c
+index 3d1010faf..ae9e0acdf 100644
+--- a/testcases/kernel/syscalls/ipc/msgget/msgget01.c
++++ b/testcases/kernel/syscalls/ipc/msgget/msgget01.c
+@@ -42,12 +42,12 @@ static struct buf {
+ static void verify_msgget(void)
+ {
+ 	TEST(msgget(msgkey, IPC_CREAT | MSG_RW));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "msgget() failed");
+ 		return;
+ 	}
+ 
+-	queue_id = TEST_RETURN;
++	queue_id = TST_RET;
+ 
+ 	SAFE_MSGSND(queue_id, &snd_buf, MSGSIZE, 0);
+ 
+diff --git a/testcases/kernel/syscalls/ipc/msgget/msgget02.c b/testcases/kernel/syscalls/ipc/msgget/msgget02.c
+index acf4b3866..00f7fa802 100644
+--- a/testcases/kernel/syscalls/ipc/msgget/msgget02.c
++++ b/testcases/kernel/syscalls/ipc/msgget/msgget02.c
+@@ -60,12 +60,12 @@ static void verify_msgget(struct tcase *tc)
+ {
+ 	TEST(msgget(*tc->key, tc->flags));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "msgget() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_err) {
++	if (TST_ERR == tc->exp_err) {
+ 		tst_res(TPASS | TTERRNO, "msgget() failed as expected");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO, "msgget() failed unexpectedly,"
+diff --git a/testcases/kernel/syscalls/ipc/msgget/msgget03.c b/testcases/kernel/syscalls/ipc/msgget/msgget03.c
+index f7e5ace99..c117710cf 100644
+--- a/testcases/kernel/syscalls/ipc/msgget/msgget03.c
++++ b/testcases/kernel/syscalls/ipc/msgget/msgget03.c
+@@ -39,10 +39,10 @@ static key_t msgkey;
+ static void verify_msgget(void)
+ {
+ 	TEST(msgget(msgkey + maxmsgs, IPC_CREAT | IPC_EXCL));
+-	if (TEST_RETURN != -1)
++	if (TST_RET != -1)
+ 		tst_res(TFAIL, "msgget() succeeded unexpectedly");
+ 
+-	if (TEST_ERRNO == ENOSPC) {
++	if (TST_ERR == ENOSPC) {
+ 		tst_res(TPASS | TTERRNO, "msgget() failed as expected");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO, "msgget() failed unexpectedly,"
+diff --git a/testcases/kernel/syscalls/ipc/msgsnd/msgsnd01.c b/testcases/kernel/syscalls/ipc/msgsnd/msgsnd01.c
+index 6036c6414..e05df010d 100644
+--- a/testcases/kernel/syscalls/ipc/msgsnd/msgsnd01.c
++++ b/testcases/kernel/syscalls/ipc/msgsnd/msgsnd01.c
+@@ -41,7 +41,7 @@ static void verify_msgsnd(void)
+ 	struct msqid_ds qs_buf;
+ 
+ 	TEST(msgsnd(queue_id, &snd_buf, MSGSIZE, 0));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "msgsnd() failed");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/ipc/msgsnd/msgsnd02.c b/testcases/kernel/syscalls/ipc/msgsnd/msgsnd02.c
+index 2232b0e4c..1b5f2e346 100644
+--- a/testcases/kernel/syscalls/ipc/msgsnd/msgsnd02.c
++++ b/testcases/kernel/syscalls/ipc/msgsnd/msgsnd02.c
+@@ -74,12 +74,12 @@ static struct tcase {
+ static void verify_msgsnd(struct tcase *tc)
+ {
+ 	TEST(msgsnd(*tc->id, tc->buffer, tc->msgsz, 0));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "smgsnd() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_err) {
++	if (TST_ERR == tc->exp_err) {
+ 		tst_res(TPASS | TTERRNO, "msgsnd() failed as expected");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO, "msgsnd() failed unexpectedly,"
+diff --git a/testcases/kernel/syscalls/ipc/msgsnd/msgsnd05.c b/testcases/kernel/syscalls/ipc/msgsnd/msgsnd05.c
+index d817254df..afadb1e98 100644
+--- a/testcases/kernel/syscalls/ipc/msgsnd/msgsnd05.c
++++ b/testcases/kernel/syscalls/ipc/msgsnd/msgsnd05.c
+@@ -54,12 +54,12 @@ static struct tcase {
+ static void verify_msgsnd(struct tcase *tc)
+ {
+ 	TEST(msgsnd(queue_id, &snd_buf, MSGSIZE, tc->flag));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "msgsnd() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_err) {
++	if (TST_ERR == tc->exp_err) {
+ 		tst_res(TPASS | TTERRNO, "msgsnd() failed as expected");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO, "msgsnd() failed unexpectedly,"
+diff --git a/testcases/kernel/syscalls/ipc/msgsnd/msgsnd06.c b/testcases/kernel/syscalls/ipc/msgsnd/msgsnd06.c
+index 25fce0af0..56f75eb6c 100644
+--- a/testcases/kernel/syscalls/ipc/msgsnd/msgsnd06.c
++++ b/testcases/kernel/syscalls/ipc/msgsnd/msgsnd06.c
+@@ -41,12 +41,12 @@ static struct buf {
+ static void verify_msgsnd(void)
+ {
+ 	TEST(msgsnd(queue_id, &snd_buf, MSGSIZE, 0));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "msgsnd() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == EIDRM) {
++	if (TST_ERR == EIDRM) {
+ 		tst_res(TPASS | TTERRNO, "msgsnd() failed as expected");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO,
+diff --git a/testcases/kernel/syscalls/ipc/shmctl/shmctl05.c b/testcases/kernel/syscalls/ipc/shmctl/shmctl05.c
+index 6fbc6b6c3..a960cc906 100644
+--- a/testcases/kernel/syscalls/ipc/shmctl/shmctl05.c
++++ b/testcases/kernel/syscalls/ipc/shmctl/shmctl05.c
+@@ -85,9 +85,9 @@ static void do_test(void)
+ 			/* This is the system call that crashed */
+ 			TEST(syscall(__NR_remap_file_pages, addr, 4096,
+ 				     0, 0, 0));
+-		} while (TEST_RETURN == 0);
++		} while (TST_RET == 0);
+ 
+-		if (TEST_ERRNO != EIDRM && TEST_ERRNO != EINVAL) {
++		if (TST_ERR != EIDRM && TST_ERR != EINVAL) {
+ 			tst_brk(TBROK | TTERRNO,
+ 				"Unexpected remap_file_pages() error");
+ 		}
+diff --git a/testcases/kernel/syscalls/kcmp/kcmp01.c b/testcases/kernel/syscalls/kcmp/kcmp01.c
+index 1143ad63e..f37fff1bd 100644
+--- a/testcases/kernel/syscalls/kcmp/kcmp01.c
++++ b/testcases/kernel/syscalls/kcmp/kcmp01.c
+@@ -84,15 +84,15 @@ static void do_child(const struct test_case *test)
+ 	SAFE_CLOSE(fd2);
+ 	SAFE_CLOSE(fd3);
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "kcmp() failed unexpectedly");
+ 		return;
+ 	}
+ 
+-	if ((test->exp_different && TEST_RETURN == 0)
+-		|| (test->exp_different == 0 && TEST_RETURN)) {
++	if ((test->exp_different && TST_RET == 0)
++		|| (test->exp_different == 0 && TST_RET)) {
+ 		tst_res(TFAIL, "kcmp() returned %lu instead of %d",
+-			TEST_RETURN, test->exp_different);
++			TST_RET, test->exp_different);
+ 		return;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/kcmp/kcmp02.c b/testcases/kernel/syscalls/kcmp/kcmp02.c
+index 33f132f24..189518ff2 100644
+--- a/testcases/kernel/syscalls/kcmp/kcmp02.c
++++ b/testcases/kernel/syscalls/kcmp/kcmp02.c
+@@ -87,12 +87,12 @@ static void verify_kcmp(unsigned int n)
+ 	TEST(kcmp(*(test->pid1), *(test->pid2), test->type,
+ 		  *(test->fd1), *(test->fd2)));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "kcmp() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (test->exp_errno == TEST_ERRNO) {
++	if (test->exp_errno == TST_ERR) {
+ 		tst_res(TPASS | TTERRNO, "kcmp() returned the expected value");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/kcmp/kcmp03.c b/testcases/kernel/syscalls/kcmp/kcmp03.c
+index b6ca40cff..a1154894e 100644
+--- a/testcases/kernel/syscalls/kcmp/kcmp03.c
++++ b/testcases/kernel/syscalls/kcmp/kcmp03.c
+@@ -67,12 +67,12 @@ static int do_child(void *arg)
+ 	pid2 = getpid();
+ 
+ 	TEST(kcmp(pid1, pid2, *(int *)arg, 0, 0));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "kcmp() failed unexpectedly");
+ 		return 0;
+ 	}
+ 
+-	if (TEST_RETURN == 0)
++	if (TST_RET == 0)
+ 		tst_res(TPASS, "kcmp() returned the expected value");
+ 	else
+ 		tst_res(TFAIL, "kcmp() returned the unexpected value");
+diff --git a/testcases/kernel/syscalls/keyctl/keyctl01.c b/testcases/kernel/syscalls/keyctl/keyctl01.c
+index 5719d5550..d826a8c42 100644
+--- a/testcases/kernel/syscalls/keyctl/keyctl01.c
++++ b/testcases/kernel/syscalls/keyctl/keyctl01.c
+@@ -35,24 +35,24 @@ static void do_test(void)
+ 	key_serial_t key;
+ 
+ 	TEST(keyctl(KEYCTL_GET_KEYRING_ID, KEY_SPEC_USER_SESSION_KEYRING));
+-	if (TEST_RETURN != -1)
++	if (TST_RET != -1)
+ 		tst_res(TPASS, "KEYCTL_GET_KEYRING_ID succeeded");
+ 	else
+ 		tst_res(TFAIL | TTERRNO, "KEYCTL_GET_KEYRING_ID failed");
+ 
+ 	for (key = INT32_MAX; key > INT32_MIN; key--) {
+ 		TEST(keyctl(KEYCTL_READ, key));
+-		if (TEST_RETURN == -1 && TEST_ERRNO == ENOKEY)
++		if (TST_RET == -1 && TST_ERR == ENOKEY)
+ 			break;
+ 	}
+ 
+ 	TEST(keyctl(KEYCTL_REVOKE, key));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "KEYCTL_REVOKE succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != ENOKEY) {
++	if (TST_ERR != ENOKEY) {
+ 		tst_res(TFAIL | TTERRNO, "KEYCTL_REVOKE failed unexpectedly");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/keyctl/keyctl03.c b/testcases/kernel/syscalls/keyctl/keyctl03.c
+index 5c066f704..90e00f8bc 100644
+--- a/testcases/kernel/syscalls/keyctl/keyctl03.c
++++ b/testcases/kernel/syscalls/keyctl/keyctl03.c
+@@ -45,7 +45,7 @@ static void do_test(void)
+ 	request_key("keyring", "foo", "bar", KEY_SPEC_THREAD_KEYRING);
+ 
+ 	TEST(keyctl(KEYCTL_UNLINK, key, KEY_SPEC_SESSION_KEYRING));
+-	if (TEST_RETURN)
++	if (TST_RET)
+ 		tst_res(TFAIL | TTERRNO, "keyctl unlink failed");
+ 	else
+ 		tst_res(TPASS, "Bug not reproduced");
+diff --git a/testcases/kernel/syscalls/keyctl/keyctl04.c b/testcases/kernel/syscalls/keyctl/keyctl04.c
+index be9ceeb54..6e1b4b3e3 100644
+--- a/testcases/kernel/syscalls/keyctl/keyctl04.c
++++ b/testcases/kernel/syscalls/keyctl/keyctl04.c
+@@ -36,18 +36,18 @@ static void do_test(void)
+ 	key_serial_t tid_keyring;
+ 
+ 	TEST(keyctl(KEYCTL_GET_KEYRING_ID, KEY_SPEC_THREAD_KEYRING, 1));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_brk(TBROK | TTERRNO, "failed to create thread keyring");
+-	tid_keyring = TEST_RETURN;
++	tid_keyring = TST_RET;
+ 
+ 	TEST(keyctl(KEYCTL_SET_REQKEY_KEYRING, KEY_REQKEY_DEFL_THREAD_KEYRING));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_brk(TBROK | TTERRNO, "failed to set reqkey keyring");
+ 
+ 	TEST(keyctl(KEYCTL_GET_KEYRING_ID, KEY_SPEC_THREAD_KEYRING, 0));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_brk(TBROK | TTERRNO, "failed to get thread keyring ID");
+-	if (TEST_RETURN == tid_keyring)
++	if (TST_RET == tid_keyring)
+ 		tst_res(TPASS, "thread keyring was not leaked");
+ 	else
+ 		tst_res(TFAIL, "thread keyring was leaked!");
+diff --git a/testcases/kernel/syscalls/keyctl/keyctl05.c b/testcases/kernel/syscalls/keyctl/keyctl05.c
+index c04d1f5b0..2384f7f67 100644
+--- a/testcases/kernel/syscalls/keyctl/keyctl05.c
++++ b/testcases/kernel/syscalls/keyctl/keyctl05.c
+@@ -86,7 +86,7 @@ static const char x509_cert[] =
+ static void new_session_keyring(void)
+ {
+ 	TEST(keyctl(KEYCTL_JOIN_SESSION_KEYRING, NULL));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_brk(TBROK | TTERRNO, "failed to join new session keyring");
+ }
+ 
+@@ -98,18 +98,18 @@ static void test_update_nonupdatable(const char *type,
+ 	new_session_keyring();
+ 
+ 	TEST(add_key(type, "desc", payload, plen, KEY_SPEC_SESSION_KEYRING));
+-	if (TEST_RETURN < 0) {
+-		if (TEST_ERRNO == ENODEV) {
++	if (TST_RET < 0) {
++		if (TST_ERR == ENODEV) {
+ 			tst_res(TCONF, "kernel doesn't support key type '%s'",
+ 				type);
+ 			return;
+ 		}
+-		if (TEST_ERRNO == EBADMSG && !strcmp(type, "asymmetric")) {
++		if (TST_ERR == EBADMSG && !strcmp(type, "asymmetric")) {
+ 			tst_res(TCONF, "kernel is missing x509 cert parser "
+ 				"(CONFIG_X509_CERTIFICATE_PARSER)");
+ 			return;
+ 		}
+-		if (TEST_ERRNO == ENOENT && !strcmp(type, "asymmetric")) {
++		if (TST_ERR == ENOENT && !strcmp(type, "asymmetric")) {
+ 			tst_res(TCONF, "kernel is missing crypto algorithms "
+ 				"needed to parse x509 cert (CONFIG_CRYPTO_RSA "
+ 				"and/or CONFIG_CRYPTO_SHA256)");
+@@ -119,14 +119,14 @@ static void test_update_nonupdatable(const char *type,
+ 			type);
+ 		return;
+ 	}
+-	keyid = TEST_RETURN;
++	keyid = TST_RET;
+ 
+ 	/*
+ 	 * Non-updatable keys don't start with write permission, so we must
+ 	 * explicitly grant it.
+ 	 */
+ 	TEST(keyctl(KEYCTL_SETPERM, keyid, KEY_POS_ALL));
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_res(TBROK | TTERRNO,
+ 			"failed to grant write permission to '%s' key", type);
+ 		return;
+@@ -134,12 +134,12 @@ static void test_update_nonupdatable(const char *type,
+ 
+ 	tst_res(TINFO, "Try to update the '%s' key...", type);
+ 	TEST(keyctl(KEYCTL_UPDATE, keyid, payload, plen));
+-	if (TEST_RETURN == 0) {
++	if (TST_RET == 0) {
+ 		tst_res(TBROK,
+ 			"updating '%s' key unexpectedly succeeded", type);
+ 		return;
+ 	}
+-	if (TEST_ERRNO != EOPNOTSUPP) {
++	if (TST_ERR != EOPNOTSUPP) {
+ 		tst_res(TBROK | TTERRNO,
+ 			"updating '%s' key unexpectedly failed", type);
+ 		return;
+@@ -162,11 +162,11 @@ static void test_update_setperm_race(void)
+ 
+ 	TEST(add_key("user", "desc", payload, sizeof(payload),
+ 		KEY_SPEC_SESSION_KEYRING));
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_res(TBROK | TTERRNO, "failed to add 'user' key");
+ 		return;
+ 	}
+-	keyid = TEST_RETURN;
++	keyid = TST_RET;
+ 
+ 	if (SAFE_FORK() == 0) {
+ 		uint32_t perm = KEY_POS_ALL;
+@@ -174,7 +174,7 @@ static void test_update_setperm_race(void)
+ 		for (i = 0; i < 10000; i++) {
+ 			perm ^= KEY_POS_WRITE;
+ 			TEST(keyctl(KEYCTL_SETPERM, keyid, perm));
+-			if (TEST_RETURN != 0)
++			if (TST_RET != 0)
+ 				tst_brk(TBROK | TTERRNO, "setperm failed");
+ 		}
+ 		exit(0);
+@@ -183,7 +183,7 @@ static void test_update_setperm_race(void)
+ 	tst_res(TINFO, "Try to update the 'user' key...");
+ 	for (i = 0; i < 10000; i++) {
+ 		TEST(keyctl(KEYCTL_UPDATE, keyid, payload, sizeof(payload)));
+-		if (TEST_RETURN != 0 && TEST_ERRNO != EACCES) {
++		if (TST_RET != 0 && TST_ERR != EACCES) {
+ 			tst_res(TBROK | TTERRNO, "failed to update 'user' key");
+ 			return;
+ 		}
+diff --git a/testcases/kernel/syscalls/keyctl/keyctl06.c b/testcases/kernel/syscalls/keyctl/keyctl06.c
+index c62010e0b..bab26ee5c 100644
+--- a/testcases/kernel/syscalls/keyctl/keyctl06.c
++++ b/testcases/kernel/syscalls/keyctl/keyctl06.c
+@@ -37,7 +37,7 @@ static void add_test_key(const char *description)
+ {
+ 	TEST(add_key("user", description, "payload", 7,
+ 		     KEY_SPEC_PROCESS_KEYRING));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_brk(TBROK | TTERRNO, "Failed to add test key");
+ }
+ 
+@@ -51,7 +51,7 @@ static void do_test(void)
+ 	memset(key_ids, 0, sizeof(key_ids));
+ 	TEST(keyctl(KEYCTL_READ, KEY_SPEC_PROCESS_KEYRING,
+ 		    (char *)key_ids, sizeof(key_serial_t)));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_brk(TBROK | TTERRNO, "KEYCTL_READ failed");
+ 
+ 	/*
+@@ -63,9 +63,9 @@ static void do_test(void)
+ 	if (key_ids[1] != 0)
+ 		tst_brk(TFAIL, "KEYCTL_READ overran the buffer");
+ 
+-	if (TEST_RETURN != sizeof(key_ids)) {
++	if (TST_RET != sizeof(key_ids)) {
+ 		tst_brk(TFAIL, "KEYCTL_READ returned %ld but expected %zu",
+-			TEST_RETURN, sizeof(key_ids));
++			TST_RET, sizeof(key_ids));
+ 	}
+ 
+ 	tst_res(TPASS,
+diff --git a/testcases/kernel/syscalls/keyctl/keyctl07.c b/testcases/kernel/syscalls/keyctl/keyctl07.c
+index 08a585b6c..e067ac01d 100644
+--- a/testcases/kernel/syscalls/keyctl/keyctl07.c
++++ b/testcases/kernel/syscalls/keyctl/keyctl07.c
+@@ -49,10 +49,10 @@ static void try_to_read_negative_key(void)
+ 	 */
+ 	TEST(request_key("user", "description", "callout_info",
+ 			 KEY_SPEC_PROCESS_KEYRING));
+-	if (TEST_RETURN != -1)
++	if (TST_RET != -1)
+ 		tst_brk(TBROK, "request_key() unexpectedly succeeded");
+ 
+-	if (TEST_ERRNO != ENOKEY && TEST_ERRNO != ENOENT) {
++	if (TST_ERR != ENOKEY && TST_ERR != ENOENT) {
+ 		tst_brk(TBROK | TTERRNO,
+ 			"request_key() failed with unexpected error");
+ 	}
+@@ -60,11 +60,11 @@ static void try_to_read_negative_key(void)
+ 	/* Get the ID of the negative key by reading the keyring */
+ 	TEST(keyctl(KEYCTL_READ, KEY_SPEC_PROCESS_KEYRING,
+ 		    &key_id, sizeof(key_id)));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_brk(TBROK | TTERRNO, "KEYCTL_READ unexpectedly failed");
+-	if (TEST_RETURN != sizeof(key_id)) {
++	if (TST_RET != sizeof(key_id)) {
+ 		tst_brk(TBROK, "KEYCTL_READ returned %ld but expected %zu",
+-			TEST_RETURN, sizeof(key_id));
++			TST_RET, sizeof(key_id));
+ 	}
+ 
+ 	/*
+@@ -73,11 +73,11 @@ static void try_to_read_negative_key(void)
+ 	 */
+ 	tst_res(TINFO, "trying to read from the negative key...");
+ 	TEST(keyctl(KEYCTL_READ, key_id, buffer, sizeof(buffer)));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_brk(TFAIL,
+ 			"KEYCTL_READ on negative key unexpectedly succeeded");
+ 	}
+-	if (TEST_ERRNO != ENOKEY) {
++	if (TST_ERR != ENOKEY) {
+ 		tst_brk(TFAIL | TTERRNO,
+ 			"KEYCTL_READ on negative key failed with unexpected error");
+ 	}
+diff --git a/testcases/kernel/syscalls/lgetxattr/lgetxattr01.c b/testcases/kernel/syscalls/lgetxattr/lgetxattr01.c
+index 301d5325b..1165db00b 100644
+--- a/testcases/kernel/syscalls/lgetxattr/lgetxattr01.c
++++ b/testcases/kernel/syscalls/lgetxattr/lgetxattr01.c
+@@ -73,17 +73,17 @@ static void verify_lgetxattr(void)
+ 	char buf[size];
+ 
+ 	TEST(lgetxattr("symlink", SECURITY_KEY2, buf, size));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "lgetxattr() failed");
+ 		goto next;
+ 	}
+ 
+-	if (TEST_RETURN != strlen(VALUE2)) {
++	if (TST_RET != strlen(VALUE2)) {
+ 		tst_res(TFAIL, "lgetxattr() got unexpected value size");
+ 		goto next;
+ 	}
+ 
+-	if (!strncmp(buf, VALUE2, TEST_RETURN))
++	if (!strncmp(buf, VALUE2, TST_RET))
+ 		tst_res(TPASS, "lgetxattr() got expected value");
+ 	else
+ 		tst_res(TFAIL, "lgetxattr() got unexpected value");
+@@ -91,12 +91,12 @@ static void verify_lgetxattr(void)
+ next:
+ 	TEST(lgetxattr("symlink", SECURITY_KEY1, buf, size));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "lgetxattr() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == ENODATA) {
++	if (TST_ERR == ENODATA) {
+ 		tst_res(TPASS | TTERRNO, "lgetxattr() failed as expected");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO, "lgetxattr() failed unexpectedly,"
+diff --git a/testcases/kernel/syscalls/lgetxattr/lgetxattr02.c b/testcases/kernel/syscalls/lgetxattr/lgetxattr02.c
+index ebc28f29b..c29d5c02a 100644
+--- a/testcases/kernel/syscalls/lgetxattr/lgetxattr02.c
++++ b/testcases/kernel/syscalls/lgetxattr/lgetxattr02.c
+@@ -62,12 +62,12 @@ static void verify_lgetxattr(unsigned int n)
+ 	char buf[tc->size];
+ 
+ 	TEST(lgetxattr(tc->path, SECURITY_KEY, buf, sizeof(buf)));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "lgetxattr() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->exp_err) {
++	if (TST_ERR != tc->exp_err) {
+ 		tst_res(TFAIL | TTERRNO, "lgetxattr() failed unexpectedlly, "
+ 			"expected %s", tst_strerrno(tc->exp_err));
+ 	} else {
+diff --git a/testcases/kernel/syscalls/link/link08.c b/testcases/kernel/syscalls/link/link08.c
+index 986d5552e..775c0c27b 100644
+--- a/testcases/kernel/syscalls/link/link08.c
++++ b/testcases/kernel/syscalls/link/link08.c
+@@ -62,13 +62,13 @@ static void link_verify(unsigned int i)
+ 
+ 	TEST(link(tc->oldpath, tc->newpath));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "link() succeeded unexpectedly (%li)",
+-		        TEST_RETURN);
++			TST_RET);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_errno) {
++	if (TST_ERR == tc->exp_errno) {
+ 		tst_res(TPASS | TTERRNO, "link() failed as expected");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/listxattr/listxattr01.c b/testcases/kernel/syscalls/listxattr/listxattr01.c
+index e2820ca1a..a59547b19 100644
+--- a/testcases/kernel/syscalls/listxattr/listxattr01.c
++++ b/testcases/kernel/syscalls/listxattr/listxattr01.c
+@@ -61,7 +61,7 @@ static void verify_listxattr(void)
+ 	char buf[64];
+ 
+ 	TEST(listxattr(TESTFILE, buf, sizeof(buf)));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "listxattr() failed");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/listxattr/listxattr02.c b/testcases/kernel/syscalls/listxattr/listxattr02.c
+index 998689a5a..33f57d567 100644
+--- a/testcases/kernel/syscalls/listxattr/listxattr02.c
++++ b/testcases/kernel/syscalls/listxattr/listxattr02.c
+@@ -69,14 +69,14 @@ static void verify_listxattr(unsigned int n)
+ 	char buf[t->size];
+ 
+ 	TEST(listxattr(t->path, buf, sizeof(buf)));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL,
+ 			"listxattr() succeeded unexpectedly (returned %ld)",
+-			TEST_RETURN);
++			TST_RET);
+ 		return;
+ 	}
+ 
+-	if (t->exp_err != TEST_ERRNO) {
++	if (t->exp_err != TST_ERR) {
+ 		tst_res(TFAIL | TTERRNO, "listxattr() failed "
+ 			 "unexpectedlly, expected %s",
+ 			 tst_strerrno(t->exp_err));
+diff --git a/testcases/kernel/syscalls/listxattr/listxattr03.c b/testcases/kernel/syscalls/listxattr/listxattr03.c
+index 9dc7ad76f..dcfb6b1c4 100644
+--- a/testcases/kernel/syscalls/listxattr/listxattr03.c
++++ b/testcases/kernel/syscalls/listxattr/listxattr03.c
+@@ -57,12 +57,12 @@ static void verify_listxattr(unsigned int n)
+ 	const char *name = filename[n];
+ 
+ 	TEST(listxattr(name, NULL, 0));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "listxattr() failed");
+ 		return;
+ 	}
+ 
+-	if (check_suitable_buf(name, TEST_RETURN))
++	if (check_suitable_buf(name, TST_RET))
+ 		tst_res(TPASS, "listxattr() succeed with suitable buffer");
+ 	else
+ 		tst_res(TFAIL, "listxattr() failed with small buffer");
+diff --git a/testcases/kernel/syscalls/llistxattr/llistxattr01.c b/testcases/kernel/syscalls/llistxattr/llistxattr01.c
+index f997e0c79..98c1bdfce 100644
+--- a/testcases/kernel/syscalls/llistxattr/llistxattr01.c
++++ b/testcases/kernel/syscalls/llistxattr/llistxattr01.c
+@@ -62,7 +62,7 @@ static void verify_llistxattr(void)
+ 	char buf[64];
+ 
+ 	TEST(llistxattr(SYMLINK, buf, sizeof(buf)));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "llistxattr() failed");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/llistxattr/llistxattr02.c b/testcases/kernel/syscalls/llistxattr/llistxattr02.c
+index 468ff980c..d239e97bf 100644
+--- a/testcases/kernel/syscalls/llistxattr/llistxattr02.c
++++ b/testcases/kernel/syscalls/llistxattr/llistxattr02.c
+@@ -68,14 +68,14 @@ static void verify_llistxattr(unsigned int n)
+ 	char buf[t->size];
+ 
+ 	TEST(llistxattr(t->path, buf, sizeof(buf)));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL,
+ 			"llistxattr() succeeded unexpectedly (returned %ld)",
+-			TEST_RETURN);
++			TST_RET);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != t->exp_err) {
++	if (TST_ERR != t->exp_err) {
+ 		tst_res(TFAIL | TTERRNO, "llistxattr() failed "
+ 			 "unexpectedlly, expected %s",
+ 			 tst_strerrno(t->exp_err));
+diff --git a/testcases/kernel/syscalls/llistxattr/llistxattr03.c b/testcases/kernel/syscalls/llistxattr/llistxattr03.c
+index 91bb3f481..a62bc214e 100644
+--- a/testcases/kernel/syscalls/llistxattr/llistxattr03.c
++++ b/testcases/kernel/syscalls/llistxattr/llistxattr03.c
+@@ -56,12 +56,12 @@ static void verify_llistxattr(unsigned int n)
+ 	const char *name = filename[n];
+ 
+ 	TEST(llistxattr(name, NULL, 0));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "llistxattr() failed");
+ 		return;
+ 	}
+ 
+-	if (check_suitable_buf(name, TEST_RETURN))
++	if (check_suitable_buf(name, TST_RET))
+ 		tst_res(TPASS, "llistxattr() succeed with suitable buffer");
+ 	else
+ 		tst_res(TFAIL, "llistxattr() failed with small buffer");
+diff --git a/testcases/kernel/syscalls/lseek/lseek01.c b/testcases/kernel/syscalls/lseek/lseek01.c
+index 2e1c36e6f..e7753fd29 100644
+--- a/testcases/kernel/syscalls/lseek/lseek01.c
++++ b/testcases/kernel/syscalls/lseek/lseek01.c
+@@ -57,15 +57,15 @@ static void verify_lseek(unsigned int n)
+ 	memset(read_buf, 0, sizeof(read_buf));
+ 
+ 	TEST(lseek(fd, tc->off, tc->whence));
+-	if (TEST_RETURN == (off_t) -1) {
++	if (TST_RET == (off_t) -1) {
+ 		tst_res(TFAIL | TTERRNO, "lseek(%s, %ld, %s) failed", TFILE,
+ 			tc->off, tc->wname);
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN != tc->exp_off) {
++	if (TST_RET != tc->exp_off) {
+ 		tst_res(TFAIL, "lseek(%s, %ld, %s) returned %ld, expected %ld",
+-			TFILE, tc->off, tc->wname, TEST_RETURN, tc->exp_off);
++			TFILE, tc->off, tc->wname, TST_RET, tc->exp_off);
+ 		return;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/lseek/lseek02.c b/testcases/kernel/syscalls/lseek/lseek02.c
+index 66c7bee31..0387d63be 100644
+--- a/testcases/kernel/syscalls/lseek/lseek02.c
++++ b/testcases/kernel/syscalls/lseek/lseek02.c
+@@ -71,13 +71,13 @@ static void verify_lseek(unsigned int n)
+ 	struct tcase *tc = &tcases[n];
+ 
+ 	TEST(lseek(*tc->fd, (off_t) 1, tc->whence));
+-	if (TEST_RETURN != (off_t) -1) {
++	if (TST_RET != (off_t) -1) {
+ 		tst_res(TFAIL, "lseek(%d, 1, %d) succeeded unexpectedly",
+ 			*tc->fd, tc->whence);
+ 			return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_err) {
++	if (TST_ERR == tc->exp_err) {
+ 		tst_res(TPASS | TTERRNO, "lseek(%d, 1, %d) failed as expected",
+ 			*tc->fd, tc->whence);
+ 	} else {
+diff --git a/testcases/kernel/syscalls/lseek/lseek07.c b/testcases/kernel/syscalls/lseek/lseek07.c
+index b46856b9b..50732854a 100644
+--- a/testcases/kernel/syscalls/lseek/lseek07.c
++++ b/testcases/kernel/syscalls/lseek/lseek07.c
+@@ -54,15 +54,15 @@ static void verify_lseek(unsigned int n)
+ 	memset(read_buf, 0, sizeof(read_buf));
+ 
+ 	TEST(lseek(*tc->fd, tc->off, SEEK_SET));
+-	if (TEST_RETURN == (off_t) -1) {
++	if (TST_RET == (off_t) -1) {
+ 		tst_res(TFAIL | TTERRNO, "lseek(%s, %ld, SEEK_SET) failed",
+ 			tc->fname, tc->off);
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN != tc->exp_off) {
++	if (TST_RET != tc->exp_off) {
+ 		tst_res(TFAIL, "lseek(%s, %ld, SEEK_SET) returned %ld, expected %ld",
+-			tc->fname, tc->off, TEST_RETURN, tc->exp_off);
++			tc->fname, tc->off, TST_RET, tc->exp_off);
+ 		return;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/madvise/madvise01.c b/testcases/kernel/syscalls/madvise/madvise01.c
+index 8d1d78747..ae08db67d 100644
+--- a/testcases/kernel/syscalls/madvise/madvise01.c
++++ b/testcases/kernel/syscalls/madvise/madvise01.c
+@@ -108,13 +108,13 @@ static void verify_madvise(unsigned int i)
+ 
+ 	TEST(madvise(*(tc->addr), st.st_size, tc->advice));
+ 
+-	if (TEST_RETURN == -1) {
+-		if (TEST_ERRNO == EINVAL) {
++	if (TST_RET == -1) {
++		if (TST_ERR == EINVAL) {
+ 			tst_res(TCONF, "%s is not supported", tc->name);
+ 		} else {
+ 			tst_res(TFAIL, "madvise test for %s failed with "
+ 					"return = %ld, errno = %d : %s",
+-					tc->name, TEST_RETURN, TEST_ERRNO,
++					tc->name, TST_RET, TST_ERR,
+ 					tst_strerrno(TFAIL | TTERRNO));
+ 		}
+ 	} else {
+diff --git a/testcases/kernel/syscalls/madvise/madvise02.c b/testcases/kernel/syscalls/madvise/madvise02.c
+index 4c357c514..53e4f517c 100644
+--- a/testcases/kernel/syscalls/madvise/madvise02.c
++++ b/testcases/kernel/syscalls/madvise/madvise02.c
+@@ -183,8 +183,8 @@ static void advice_test(unsigned int i)
+ 	}
+ 
+ 	TEST(madvise(*(tc->addr), st.st_size, tc->advice));
+-	if (TEST_RETURN == -1) {
+-		if (TEST_ERRNO == tc->exp_errno) {
++	if (TST_RET == -1) {
++		if (TST_ERR == tc->exp_errno) {
+ 			tst_res(TPASS | TTERRNO, "%s failed as expected", tc->name);
+ 		} else {
+ 			tst_res(TFAIL | TTERRNO,
+diff --git a/testcases/kernel/syscalls/madvise/madvise05.c b/testcases/kernel/syscalls/madvise/madvise05.c
+index 23dacbd3a..b38a12f79 100644
+--- a/testcases/kernel/syscalls/madvise/madvise05.c
++++ b/testcases/kernel/syscalls/madvise/madvise05.c
+@@ -38,17 +38,17 @@ static void verify_madvise(void)
+ 			MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE, -1, 0);
+ 
+ 	TEST(mprotect(p, ALLOC_SIZE, PROT_NONE));
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_brk(TBROK | TTERRNO, "mprotect failed");
+ 	TEST(madvise(p, ALLOC_SIZE, MADV_WILLNEED));
+ 	SAFE_MUNMAP(p, ALLOC_SIZE);
+ 
+-	if (TEST_RETURN == 0) {
++	if (TST_RET == 0) {
+ 		tst_res(TPASS, "issue has not been reproduced");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == EBADF)
++	if (TST_ERR == EBADF)
+ 		tst_brk(TCONF, "CONFIG_SWAP=n");
+ 	else
+ 		tst_brk(TBROK | TTERRNO, "madvise failed");
+diff --git a/testcases/kernel/syscalls/madvise/madvise06.c b/testcases/kernel/syscalls/madvise/madvise06.c
+index 7b178a230..c40aef851 100644
+--- a/testcases/kernel/syscalls/madvise/madvise06.c
++++ b/testcases/kernel/syscalls/madvise/madvise06.c
+@@ -140,7 +140,7 @@ static void test_advice_willneed(void)
+ 	tst_res(TINFO, "SwapCached (before madvise): %ld", swapcached_start);
+ 
+ 	TEST(madvise(target, CHUNK_SZ, MADV_WILLNEED));
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_brk(TBROK | TERRNO, "madvise failed");
+ 
+ 	do {
+diff --git a/testcases/kernel/syscalls/madvise/madvise10.c b/testcases/kernel/syscalls/madvise/madvise10.c
+index 9cb3d2bf7..ca0b9f39b 100644
+--- a/testcases/kernel/syscalls/madvise/madvise10.c
++++ b/testcases/kernel/syscalls/madvise/madvise10.c
+@@ -102,8 +102,8 @@ static int set_advice(char *addr, int size, int advise)
+ {
+ 	TEST(madvise(addr, size, advise));
+ 
+-	if (TEST_RETURN == -1) {
+-		if (TEST_ERRNO == EINVAL) {
++	if (TST_RET == -1) {
++		if (TST_ERR == EINVAL) {
+ 			tst_res(TCONF, "madvise(%p, %d, 0x%x) is not supported",
+ 			addr, size, advise);
+ 		} else {
+diff --git a/testcases/kernel/syscalls/mbind/mbind01.c b/testcases/kernel/syscalls/mbind/mbind01.c
+index 4b63ed7d4..72345d07b 100644
+--- a/testcases/kernel/syscalls/mbind/mbind01.c
++++ b/testcases/kernel/syscalls/mbind/mbind01.c
+@@ -189,11 +189,11 @@ static void do_test(unsigned int i)
+ 
+ 	tc->test(i, p);
+ 
+-	if (TEST_RETURN >= 0) {
++	if (TST_RET >= 0) {
+ 		/* Check policy of the allocated memory */
+ 		TEST(get_mempolicy(&policy, getnodemask->maskp,
+ 				   getnodemask->size, p, MPOL_F_ADDR));
+-		if (TEST_RETURN < 0) {
++		if (TST_RET < 0) {
+ 			tst_res(TFAIL | TTERRNO, "get_mempolicy failed");
+ 			return;
+ 		}
+@@ -216,12 +216,12 @@ static void do_test(unsigned int i)
+ 		}
+ 	}
+ 
+-	if (TEST_RETURN != tc->ret) {
++	if (TST_RET != tc->ret) {
+ 		tst_res(TFAIL, "wrong return code: %ld, expected: %d",
+-			TEST_RETURN, tc->ret);
++			TST_RET, tc->ret);
+ 		fail = 1;
+ 	}
+-	if (TEST_RETURN == -1 && TEST_ERRNO != tc->err) {
++	if (TST_RET == -1 && TST_ERR != tc->err) {
+ 		tst_res(TFAIL | TTERRNO, "expected errno: %s, got",
+ 			tst_strerrno(tc->err));
+ 		fail = 1;
+diff --git a/testcases/kernel/syscalls/memfd_create/memfd_create02.c b/testcases/kernel/syscalls/memfd_create/memfd_create02.c
+index bc01e4452..80cd5c405 100644
+--- a/testcases/kernel/syscalls/memfd_create/memfd_create02.c
++++ b/testcases/kernel/syscalls/memfd_create/memfd_create02.c
+@@ -88,13 +88,13 @@ static void verify_memfd_create_errno(unsigned int n)
+ 	}
+ 
+ 	TEST(sys_memfd_create(tc->memfd_name, tc->flags));
+-	if (TEST_ERRNO != tc->memfd_create_exp_err)
++	if (TST_ERR != tc->memfd_create_exp_err)
+ 		tst_brk(TFAIL, "test '%s'", tc->descr);
+ 	else
+ 		tst_res(TPASS, "test '%s'", tc->descr);
+ 
+-	if (TEST_RETURN > 0)
+-		SAFE_CLOSE(TEST_RETURN);
++	if (TST_RET > 0)
++		SAFE_CLOSE(TST_RET);
+ }
+ 
+ static struct tst_test test = {
+diff --git a/testcases/kernel/syscalls/memfd_create/memfd_create_common.c b/testcases/kernel/syscalls/memfd_create/memfd_create_common.c
+index f22e3d345..7a84eba05 100644
+--- a/testcases/kernel/syscalls/memfd_create/memfd_create_common.c
++++ b/testcases/kernel/syscalls/memfd_create/memfd_create_common.c
+@@ -129,8 +129,8 @@ int mfd_flags_available(const char *filename, const int lineno,
+ 		unsigned int flags)
+ {
+ 	TEST(sys_memfd_create("dummy_call", flags));
+-	if (TEST_RETURN < 0) {
+-		if (TEST_ERRNO != EINVAL) {
++	if (TST_RET < 0) {
++		if (TST_ERR != EINVAL) {
+ 			tst_brk_(filename, lineno, TBROK | TTERRNO,
+ 					"memfd_create() failed");
+ 		}
+@@ -138,7 +138,7 @@ int mfd_flags_available(const char *filename, const int lineno,
+ 		return 0;
+ 	}
+ 
+-	SAFE_CLOSE(TEST_RETURN);
++	SAFE_CLOSE(TST_RET);
+ 
+ 	return 1;
+ }
+@@ -377,8 +377,8 @@ void check_mfd_non_writeable(const char *filename, const int lineno,
+ 
+ 	/* verify write() fails */
+ 	TEST(write(fd, "data", 4));
+-	if (TEST_RETURN < 0) {
+-		if (TEST_ERRNO != EPERM) {
++	if (TST_RET < 0) {
++		if (TST_ERR != EPERM) {
+ 			tst_brk_(filename, lineno, TFAIL | TTERRNO,
+ 				"write() didn't fail as expected");
+ 		}
+diff --git a/testcases/kernel/syscalls/mkdir/mkdir03.c b/testcases/kernel/syscalls/mkdir/mkdir03.c
+index 9441afee2..8cadf9c21 100644
+--- a/testcases/kernel/syscalls/mkdir/mkdir03.c
++++ b/testcases/kernel/syscalls/mkdir/mkdir03.c
+@@ -65,13 +65,13 @@ static void verify_mkdir(unsigned int n)
+ 	struct tcase *tc = TC + n;
+ 
+ 	TEST(mkdir(tc->pathname, MODE));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "mkdir() returned %ld, expected -1, errno=%d",
+-			TEST_RETURN, tc->exp_errno);
++			TST_RET, tc->exp_errno);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_errno) {
++	if (TST_ERR == tc->exp_errno) {
+ 		tst_res(TPASS | TTERRNO, "mkdir() failed as expected");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO,
+diff --git a/testcases/kernel/syscalls/mkdir/mkdir05.c b/testcases/kernel/syscalls/mkdir/mkdir05.c
+index c3d5f0d3c..bc029c3c7 100644
+--- a/testcases/kernel/syscalls/mkdir/mkdir05.c
++++ b/testcases/kernel/syscalls/mkdir/mkdir05.c
+@@ -35,7 +35,7 @@ static void verify_mkdir(void)
+ 	struct stat buf;
+ 
+ 	TEST(mkdir(TESTDIR, PERMS));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "mkdir() Failed");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/mkdirat/mkdirat02.c b/testcases/kernel/syscalls/mkdirat/mkdirat02.c
+index b2f86efa8..fbe172e11 100644
+--- a/testcases/kernel/syscalls/mkdirat/mkdirat02.c
++++ b/testcases/kernel/syscalls/mkdirat/mkdirat02.c
+@@ -67,13 +67,13 @@ static void mkdirat_verify(unsigned int i)
+ 
+ 	TEST(mkdirat(*test->dirfd, test->pathname, 0777));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "mkdirat() succeeded unexpectedly (%li)",
+-			TEST_RETURN);
++			TST_RET);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == test->exp_errno) {
++	if (TST_ERR == test->exp_errno) {
+ 		tst_res(TPASS | TTERRNO, "mkdirat() failed as expected");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/move_pages/move_pages12.c b/testcases/kernel/syscalls/move_pages/move_pages12.c
+index 5e6245d3a..b1187e307 100644
+--- a/testcases/kernel/syscalls/move_pages/move_pages12.c
++++ b/testcases/kernel/syscalls/move_pages/move_pages12.c
+@@ -87,7 +87,7 @@ static void do_child(void)
+ 
+ 		TEST(numa_move_pages(ppid, test_pages,
+ 			pages, nodes, status, MPOL_MF_MOVE_ALL));
+-		if (TEST_RETURN) {
++		if (TST_RET) {
+ 			tst_res(TFAIL | TTERRNO, "move_pages failed");
+ 			break;
+ 		}
+@@ -166,9 +166,9 @@ static void alloc_free_huge_on_node(unsigned int node, size_t size)
+ 	}
+ 
+ 	TEST(mlock(mem, size));
+-	if (TEST_RETURN) {
++	if (TST_RET) {
+ 		SAFE_MUNMAP(mem, size);
+-		if (TEST_ERRNO == ENOMEM || TEST_ERRNO == EAGAIN)
++		if (TST_ERR == ENOMEM || TST_ERR == EAGAIN)
+ 			tst_brk(TCONF, "Cannot lock huge pages");
+ 		tst_brk(TBROK | TTERRNO, "mlock failed");
+ 	}
+diff --git a/testcases/kernel/syscalls/mq_notify/mq_notify01.c b/testcases/kernel/syscalls/mq_notify/mq_notify01.c
+index b4d0c92c9..c1d789d5b 100644
+--- a/testcases/kernel/syscalls/mq_notify/mq_notify01.c
++++ b/testcases/kernel/syscalls/mq_notify/mq_notify01.c
+@@ -149,8 +149,8 @@ static void do_test(unsigned int i)
+ 
+ 	TEST(mq_notify(*tc->fd, &ev));
+ 
+-	if (TEST_RETURN < 0) {
+-		if (tc->err != TEST_ERRNO)
++	if (TST_RET < 0) {
++		if (tc->err != TST_ERR)
+ 			tst_res(TFAIL | TTERRNO,
+ 				"mq_notify failed unexpectedly, expected %s",
+ 				tst_strerrno(tc->err));
+@@ -170,7 +170,7 @@ static void do_test(unsigned int i)
+ 	if (*tc->fd == fd)
+ 		cleanup_queue(fd);
+ 
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_res(TFAIL | TTERRNO, "mq_timedsend failed");
+ 		return;
+ 	}
+@@ -191,8 +191,8 @@ static void do_test(unsigned int i)
+ 			info.si_uid, getuid());
+ 	}
+ 
+-	if (TEST_RETURN < 0) {
+-		if (tc->err != TEST_ERRNO)
++	if (TST_RET < 0) {
++		if (tc->err != TST_ERR)
+ 			tst_res(TFAIL | TTERRNO,
+ 				"mq_timedsend failed unexpectedly, expected %s",
+ 				tst_strerrno(tc->err));
+@@ -201,9 +201,9 @@ static void do_test(unsigned int i)
+ 		return;
+ 	}
+ 
+-	if (tc->ret != TEST_RETURN) {
++	if (tc->ret != TST_RET) {
+ 		tst_res(TFAIL, "mq_timedsend returned %ld, expected %d",
+-			TEST_RETURN, tc->ret);
++			TST_RET, tc->ret);
+ 		return;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/mq_open/mq_open01.c b/testcases/kernel/syscalls/mq_open/mq_open01.c
+index 3f4bf7e3b..58067cfa4 100644
+--- a/testcases/kernel/syscalls/mq_open/mq_open01.c
++++ b/testcases/kernel/syscalls/mq_open/mq_open01.c
+@@ -261,36 +261,36 @@ static void do_test(unsigned int i)
+ 	}
+ 
+ 	if (tc->ret == 0) {
+-		if (TEST_RETURN < 0) {
++		if (TST_RET < 0) {
+ 			tst_res(TFAIL | TTERRNO, "%s wrong return code: %ld",
+-				tc->desc, TEST_RETURN);
++				tc->desc, TST_RET);
+ 		} else {
+ 			tst_res(TPASS | TTERRNO, "%s returned: %ld",
+-				tc->desc, TEST_RETURN);
++				tc->desc, TST_RET);
+ 		}
+ 
+ 		goto CLEANUP;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->err) {
++	if (TST_ERR != tc->err) {
+ 		tst_res(TFAIL | TTERRNO, "%s expected errno: %d",
+-			tc->desc, TEST_ERRNO);
++			tc->desc, TST_ERR);
+ 		goto CLEANUP;
+ 	}
+ 
+-	if (TEST_RETURN != tc->ret) {
++	if (TST_RET != tc->ret) {
+ 		tst_res(TFAIL | TTERRNO, "%s wrong return code: %ld",
+-			tc->desc, TEST_RETURN);
++			tc->desc, TST_RET);
+ 	} else {
+ 		tst_res(TPASS | TTERRNO, "%s returned: %ld",
+-			tc->desc, TEST_RETURN);
++			tc->desc, TST_RET);
+ 	}
+ 
+ CLEANUP:
+ 	if (tc->cleanup)
+ 		tc->cleanup();
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		if (fd > 0)
+ 			SAFE_CLOSE(fd);
+ 		mq_unlink(qname);
+diff --git a/testcases/kernel/syscalls/mq_timedreceive/mq_timedreceive01.c b/testcases/kernel/syscalls/mq_timedreceive/mq_timedreceive01.c
+index f3f5295c1..1be515ced 100644
+--- a/testcases/kernel/syscalls/mq_timedreceive/mq_timedreceive01.c
++++ b/testcases/kernel/syscalls/mq_timedreceive/mq_timedreceive01.c
+@@ -160,8 +160,8 @@ static void do_test(unsigned int i)
+ 	if (*tc->fd == fd)
+ 		cleanup_queue(fd);
+ 
+-	if (TEST_RETURN < 0) {
+-		if (tc->err != TEST_ERRNO)
++	if (TST_RET < 0) {
++		if (tc->err != TST_ERR)
+ 			tst_res(TFAIL | TTERRNO,
+ 				"mq_timedreceive failed unexpectedly, expected %s",
+ 				tst_strerrno(tc->err));
+@@ -171,9 +171,9 @@ static void do_test(unsigned int i)
+ 		return;
+ 	}
+ 
+-	if (tc->len != TEST_RETURN) {
++	if (tc->len != TST_RET) {
+ 		tst_res(TFAIL, "mq_timedreceive wrong length %ld, expected %zu",
+-			TEST_RETURN, tc->len);
++			TST_RET, tc->len);
+ 		return;
+ 	}
+ 
+@@ -193,7 +193,7 @@ static void do_test(unsigned int i)
+ 	}
+ 
+ 	tst_res(TPASS, "mq_timedreceive returned %ld, priority %u, length: %zu",
+-			TEST_RETURN, prio, len);
++			TST_RET, prio, len);
+ }
+ 
+ static struct tst_test test = {
+diff --git a/testcases/kernel/syscalls/mq_timedsend/mq_timedsend01.c b/testcases/kernel/syscalls/mq_timedsend/mq_timedsend01.c
+index d54de1d65..8f209d396 100644
+--- a/testcases/kernel/syscalls/mq_timedsend/mq_timedsend01.c
++++ b/testcases/kernel/syscalls/mq_timedsend/mq_timedsend01.c
+@@ -161,8 +161,8 @@ static void do_test(unsigned int i)
+ 	if (pid > 0)
+ 		kill_pid(pid);
+ 
+-	if (TEST_RETURN < 0) {
+-		if (tc->err != TEST_ERRNO)
++	if (TST_RET < 0) {
++		if (tc->err != TST_ERR)
+ 			tst_res(TFAIL | TTERRNO,
+ 				"mq_timedsend failed unexpectedly, expected %s",
+ 				tst_strerrno(tc->err));
+@@ -180,8 +180,8 @@ static void do_test(unsigned int i)
+ 	if (*tc->fd == fd)
+ 		cleanup_queue(fd);
+ 
+-	if (TEST_RETURN < 0) {
+-		if (tc->err != TEST_ERRNO) {
++	if (TST_RET < 0) {
++		if (tc->err != TST_ERR) {
+ 			tst_res(TFAIL | TTERRNO,
+ 				"mq_timedreceive failed unexpectedly, expected %s",
+ 				tst_strerrno(tc->err));
+@@ -190,14 +190,14 @@ static void do_test(unsigned int i)
+ 
+ 		if (tc->ret >= 0) {
+ 			tst_res(TFAIL | TTERRNO, "mq_timedreceive returned %ld, expected %d",
+-					TEST_RETURN, tc->ret);
++					TST_RET, tc->ret);
+ 			return;
+ 		}
+ 	}
+ 
+-	if (tc->len != TEST_RETURN) {
++	if (tc->len != TST_RET) {
+ 		tst_res(TFAIL, "mq_timedreceive wrong length %ld, expected %d",
+-			TEST_RETURN, tc->len);
++			TST_RET, tc->len);
+ 		return;
+ 	}
+ 
+@@ -217,7 +217,7 @@ static void do_test(unsigned int i)
+ 	}
+ 
+ 	tst_res(TPASS, "mq_timedreceive returned %ld, priority %u, length: %zu",
+-			TEST_RETURN, prio, len);
++			TST_RET, prio, len);
+ }
+ 
+ static struct tst_test test = {
+diff --git a/testcases/kernel/syscalls/mq_unlink/mq_unlink01.c b/testcases/kernel/syscalls/mq_unlink/mq_unlink01.c
+index 6e271c5d1..8c9126de5 100644
+--- a/testcases/kernel/syscalls/mq_unlink/mq_unlink01.c
++++ b/testcases/kernel/syscalls/mq_unlink/mq_unlink01.c
+@@ -104,12 +104,12 @@ static void do_test(unsigned int i)
+ 
+ 	/* test */
+ 	TEST(mq_unlink(tc->qname));
+-	if (TEST_ERRNO != tc->err || TEST_RETURN != tc->ret) {
++	if (TST_ERR != tc->err || TST_RET != tc->ret) {
+ 		tst_res(TFAIL | TTERRNO, "mq_unlink returned %ld, expected %d,"
+-			" expected errno %s (%d)", TEST_RETURN,
++			" expected errno %s (%d)", TST_RET,
+ 			tc->ret, tst_strerrno(tc->err), tc->err);
+ 	} else {
+-		tst_res(TPASS | TTERRNO, "mq_unlink returned %ld", TEST_RETURN);
++		tst_res(TPASS | TTERRNO, "mq_unlink returned %ld", TST_RET);
+ 	}
+ 
+ EXIT:
+diff --git a/testcases/kernel/syscalls/nanosleep/nanosleep01.c b/testcases/kernel/syscalls/nanosleep/nanosleep01.c
+index bcec1f8f6..96e1cf1b4 100644
+--- a/testcases/kernel/syscalls/nanosleep/nanosleep01.c
++++ b/testcases/kernel/syscalls/nanosleep/nanosleep01.c
+@@ -37,9 +37,9 @@ int sample_fn(int clk_id, long long usec)
+ 	tst_timer_stop();
+ 	tst_timer_sample();
+ 
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_res(TFAIL | TERRNO,
+-			"nanosleep() returned %li", TEST_RETURN);
++			"nanosleep() returned %li", TST_RET);
+ 		return 1;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/nice/nice01.c b/testcases/kernel/syscalls/nice/nice01.c
+index fede2c79f..82791a52a 100644
+--- a/testcases/kernel/syscalls/nice/nice01.c
++++ b/testcases/kernel/syscalls/nice/nice01.c
+@@ -39,13 +39,13 @@ static void verify_nice(void)
+ 
+ 	TEST(nice(NICEINC));
+ 
+-	if (TEST_RETURN != (orig_nice + NICEINC)) {
++	if (TST_RET != (orig_nice + NICEINC)) {
+ 		tst_res(TFAIL | TTERRNO, "nice(%d) returned %li, expected %i",
+-		        NICEINC, TEST_RETURN, orig_nice + NICEINC);
++			NICEINC, TST_RET, orig_nice + NICEINC);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO) {
++	if (TST_ERR) {
+ 		tst_res(TFAIL | TTERRNO, "nice(%d) failed", NICEINC);
+ 		return;
+ 	}
+@@ -61,7 +61,7 @@ static void verify_nice(void)
+ 	tst_res(TPASS, "nice(%d) passed", NICEINC);
+ 
+ 	TEST(nice(-NICEINC));
+-	if (TEST_ERRNO)
++	if (TST_ERR)
+ 		tst_brk(TBROK | TERRNO, "nice(-NICEINC) failed");
+ }
+ 
+diff --git a/testcases/kernel/syscalls/nice/nice02.c b/testcases/kernel/syscalls/nice/nice02.c
+index 6ae70f8f1..03fd17182 100644
+--- a/testcases/kernel/syscalls/nice/nice02.c
++++ b/testcases/kernel/syscalls/nice/nice02.c
+@@ -38,12 +38,12 @@ static void verify_nice(void)
+ 
+ 	TEST(nice(NICEINC));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "nice(%d) returned -1", NICEINC);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO) {
++	if (TST_ERR) {
+ 		tst_res(TFAIL | TTERRNO, "nice(%d) failed", NICEINC);
+ 		return;
+ 	}
+@@ -59,7 +59,7 @@ static void verify_nice(void)
+ 	tst_res(TPASS, "nice(%d) passed", NICEINC);
+ 
+ 	TEST(nice(DEFAULT_PRIO));
+-	if (TEST_ERRNO)
++	if (TST_ERR)
+ 		tst_brk(TBROK | TERRNO, "nice(-NICEINC) failed");
+ }
+ 
+diff --git a/testcases/kernel/syscalls/nice/nice03.c b/testcases/kernel/syscalls/nice/nice03.c
+index 7c41e2856..17200179a 100644
+--- a/testcases/kernel/syscalls/nice/nice03.c
++++ b/testcases/kernel/syscalls/nice/nice03.c
+@@ -39,12 +39,12 @@ static void nice_test(void)
+ 
+ 	TEST(nice(NICEINC));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "nice(%d) returned -1", NICEINC);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO) {
++	if (TST_ERR) {
+ 		tst_res(TFAIL | TTERRNO, "nice(%d) failed", NICEINC);
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/nice/nice04.c b/testcases/kernel/syscalls/nice/nice04.c
+index 07ad21e66..56d76f8c6 100644
+--- a/testcases/kernel/syscalls/nice/nice04.c
++++ b/testcases/kernel/syscalls/nice/nice04.c
+@@ -32,13 +32,13 @@ static void verify_nice(void)
+ {
+ 	TEST(nice(NICEINC));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "nice(%i) succeded unexpectedly (returned %li)",
+-			NICEINC, TEST_RETURN);
++			NICEINC, TST_RET);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != EPERM) {
++	if (TST_ERR != EPERM) {
+ 		tst_res(TFAIL | TTERRNO, "nice(%i) should fail with EPERM",
+ 			NICEINC);
+ 		return;
+diff --git a/testcases/kernel/syscalls/open/open01.c b/testcases/kernel/syscalls/open/open01.c
+index 43305b2ef..cecb77e0b 100644
+--- a/testcases/kernel/syscalls/open/open01.c
++++ b/testcases/kernel/syscalls/open/open01.c
+@@ -59,7 +59,7 @@ static void verify_open(unsigned int n)
+ 	struct stat buf;
+ 
+ 	TEST(open(tc->filename, tc->flag, tc->mode));
+-	fd = TEST_RETURN;
++	fd = TST_RET;
+ 	if (fd == -1) {
+ 		tst_res(TFAIL, "Cannot open a file");
+ 		return;
+diff --git a/testcases/kernel/syscalls/open/open02.c b/testcases/kernel/syscalls/open/open02.c
+index f09bfe03d..4b1f5b4db 100644
+--- a/testcases/kernel/syscalls/open/open02.c
++++ b/testcases/kernel/syscalls/open/open02.c
+@@ -63,13 +63,13 @@ static void verify_open(unsigned int n)
+ 
+ 	TEST(open(tc->filename, tc->flag, 0444));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "open(%s) succeeded unexpectedly",
+ 			tc->filename);
+ 		return;
+ 	}
+ 
+-	if (tc->exp_errno != TEST_ERRNO) {
++	if (tc->exp_errno != TST_ERR) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"open() should fail with %s",
+ 			tst_strerrno(tc->exp_errno));
+diff --git a/testcases/kernel/syscalls/open/open08.c b/testcases/kernel/syscalls/open/open08.c
+index 0a06d3afe..fb19a805d 100644
+--- a/testcases/kernel/syscalls/open/open08.c
++++ b/testcases/kernel/syscalls/open/open08.c
+@@ -86,19 +86,19 @@ void verify_open(unsigned int i)
+ 	TEST(open(*tcases[i].fname, tcases[i].flags,
+ 		S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "call succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tcases[i].error) {
++	if (TST_ERR == tcases[i].error) {
+ 		tst_res(TPASS, "expected failure - "
+-				"errno = %d : %s", TEST_ERRNO,
+-				strerror(TEST_ERRNO));
++				"errno = %d : %s", TST_ERR,
++				strerror(TST_ERR));
+ 	} else {
+ 		tst_res(TFAIL, "unexpected error - %d : %s - "
+-				"expected %d", TEST_ERRNO,
+-				strerror(TEST_ERRNO), tcases[i].error);
++				"expected %d", TST_ERR,
++				strerror(TST_ERR), tcases[i].error);
+ 	}
+ }
+ 
+diff --git a/testcases/kernel/syscalls/pause/pause01.c b/testcases/kernel/syscalls/pause/pause01.c
+index 1c5585535..3afa78927 100644
+--- a/testcases/kernel/syscalls/pause/pause01.c
++++ b/testcases/kernel/syscalls/pause/pause01.c
+@@ -29,9 +29,9 @@ static void do_child(void)
+ 	TST_CHECKPOINT_WAKE(0);
+ 
+ 	TEST(pause());
+-	if (TEST_RETURN != -1)
++	if (TST_RET != -1)
+ 		tst_res(TFAIL, "pause() succeeded unexpectedly");
+-	else if (TEST_ERRNO == EINTR)
++	else if (TST_ERR == EINTR)
+ 		tst_res(TPASS, "pause() interrupted with EINTR");
+ 	else
+ 		tst_res(TFAIL | TTERRNO, "pause() unexpected errno");
+diff --git a/testcases/kernel/syscalls/pipe/pipe01.c b/testcases/kernel/syscalls/pipe/pipe01.c
+index 8f71460c4..0c681b300 100644
+--- a/testcases/kernel/syscalls/pipe/pipe01.c
++++ b/testcases/kernel/syscalls/pipe/pipe01.c
+@@ -35,7 +35,7 @@ static void verify_pipe(void)
+ 
+ 	TEST(pipe(fds));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "pipe()");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/pipe/pipe02.c b/testcases/kernel/syscalls/pipe/pipe02.c
+index 8defa5eb2..9afb8f8a7 100644
+--- a/testcases/kernel/syscalls/pipe/pipe02.c
++++ b/testcases/kernel/syscalls/pipe/pipe02.c
+@@ -58,7 +58,7 @@ static void verify_pipe(void)
+ #endif
+ 
+ 	TEST(pipe(fd));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL|TERRNO, "pipe() failed");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/pipe/pipe03.c b/testcases/kernel/syscalls/pipe/pipe03.c
+index 267cf88cc..77496b615 100644
+--- a/testcases/kernel/syscalls/pipe/pipe03.c
++++ b/testcases/kernel/syscalls/pipe/pipe03.c
+@@ -31,13 +31,13 @@ static void verify_pipe(void)
+ 	char buf[2];
+ 
+ 	TEST(pipe(fd));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "pipe() failed unexpectedly");
+ 		return;
+ 	}
+ 
+ 	TEST(write(fd[0], "A", 1));
+-	if (TEST_RETURN == -1 && errno == EBADF) {
++	if (TST_RET == -1 && errno == EBADF) {
+ 		tst_res(TPASS | TTERRNO, "expected failure writing "
+ 			"to read end of pipe");
+ 	} else {
+@@ -46,7 +46,7 @@ static void verify_pipe(void)
+ 	}
+ 
+ 	TEST(read(fd[1], buf, 1));
+-	if (TEST_RETURN == -1 && errno == EBADF) {
++	if (TST_RET == -1 && errno == EBADF) {
+ 		tst_res(TPASS | TTERRNO, "expected failure reading "
+ 			"from write end of pipe");
+ 	} else {
+diff --git a/testcases/kernel/syscalls/poll/poll01.c b/testcases/kernel/syscalls/poll/poll01.c
+index f11022b19..4e82d0323 100644
+--- a/testcases/kernel/syscalls/poll/poll01.c
++++ b/testcases/kernel/syscalls/poll/poll01.c
+@@ -42,7 +42,7 @@ static void verify_pollout(void)
+ 
+ 	TEST(poll(outfds, 1, -1));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "poll() POLLOUT failed");
+ 		return;
+ 	}
+@@ -68,7 +68,7 @@ static void verify_pollin(void)
+ 
+ 	TEST(poll(infds, 1, -1));
+ 
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "poll() POLLIN failed");
+ 		goto end;
+ 	}
+diff --git a/testcases/kernel/syscalls/poll/poll02.c b/testcases/kernel/syscalls/poll/poll02.c
+index b85df2926..98f0c89d5 100644
+--- a/testcases/kernel/syscalls/poll/poll02.c
++++ b/testcases/kernel/syscalls/poll/poll02.c
+@@ -41,8 +41,8 @@ int sample_fn(int clk_id, long long usec)
+ 	tst_timer_stop();
+ 	tst_timer_sample();
+ 
+-	if (TEST_RETURN != 0) {
+-		tst_res(TFAIL | TTERRNO, "poll() returned %li", TEST_RETURN);
++	if (TST_RET != 0) {
++		tst_res(TFAIL | TTERRNO, "poll() returned %li", TST_RET);
+ 		return 1;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/prctl/prctl01.c b/testcases/kernel/syscalls/prctl/prctl01.c
+index b235981e6..6ec41f143 100644
+--- a/testcases/kernel/syscalls/prctl/prctl01.c
++++ b/testcases/kernel/syscalls/prctl/prctl01.c
+@@ -17,7 +17,7 @@ static void verify_prctl(void)
+ 	int get_sig = 0;
+ 
+ 	TEST(prctl(PR_SET_PDEATHSIG, SIGUSR2));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "prctl(PR_SET_PDEATHSIG) failed");
+ 		return;
+ 	}
+@@ -25,7 +25,7 @@ static void verify_prctl(void)
+ 	tst_res(TPASS, "prctl(PR_SET_PDEATHSIG) succeeded");
+ 
+ 	TEST(prctl(PR_GET_PDEATHSIG, &get_sig));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "prctl(PR_GET_PDEATHSIG) failed");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/prctl/prctl02.c b/testcases/kernel/syscalls/prctl/prctl02.c
+index ee4a6afe4..a6a852011 100644
+--- a/testcases/kernel/syscalls/prctl/prctl02.c
++++ b/testcases/kernel/syscalls/prctl/prctl02.c
+@@ -30,12 +30,12 @@ static void verify_prctl(unsigned int n)
+ 	struct tcase *tc = &tcases[n];
+ 
+ 	TEST(prctl(tc->option, tc->arg2));
+-	if (TEST_RETURN == 0) {
++	if (TST_RET == 0) {
+ 		tst_res(TFAIL, "prctl() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (tc->exp_errno == TEST_ERRNO) {
++	if (tc->exp_errno == TST_ERR) {
+ 		tst_res(TPASS | TTERRNO, "prctl() failed as expected");
+ 	} else {
+ 		tst_res(TPASS | TTERRNO, "prctl() failed unexpectedly, expected %s",
+diff --git a/testcases/kernel/syscalls/preadv/preadv01.c b/testcases/kernel/syscalls/preadv/preadv01.c
+index 5ee27fbdb..0565a086b 100644
+--- a/testcases/kernel/syscalls/preadv/preadv01.c
++++ b/testcases/kernel/syscalls/preadv/preadv01.c
+@@ -62,14 +62,14 @@ void verify_preadv(unsigned int n)
+ 	SAFE_LSEEK(fd, 0, SEEK_SET);
+ 
+ 	TEST(preadv(fd, rd_iovec, tc->count, tc->offset));
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_res(TFAIL | TTERRNO, "Preadv(2) failed");
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN != tc->size) {
++	if (TST_RET != tc->size) {
+ 		tst_res(TFAIL, "Preadv(2) read %li bytes, expected %zi",
+-			 TEST_RETURN, tc->size);
++			 TST_RET, tc->size);
+ 		return;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/preadv/preadv02.c b/testcases/kernel/syscalls/preadv/preadv02.c
+index c171d8358..af1c3b0c4 100644
+--- a/testcases/kernel/syscalls/preadv/preadv02.c
++++ b/testcases/kernel/syscalls/preadv/preadv02.c
+@@ -88,12 +88,12 @@ static void verify_preadv(unsigned int n)
+ 
+ 	TEST(preadv(*tc->fd, tc->name, tc->count, tc->offset));
+ 
+-	if (TEST_RETURN == 0) {
++	if (TST_RET == 0) {
+ 		tst_res(TFAIL, "preadv() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_err) {
++	if (TST_ERR == tc->exp_err) {
+ 		tst_res(TPASS | TTERRNO, "preadv() failed as expected");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/preadv/preadv03.c b/testcases/kernel/syscalls/preadv/preadv03.c
+index 2f23ff31f..f09325df5 100644
+--- a/testcases/kernel/syscalls/preadv/preadv03.c
++++ b/testcases/kernel/syscalls/preadv/preadv03.c
+@@ -69,14 +69,14 @@ static void verify_direct_preadv(unsigned int n)
+ 	SAFE_LSEEK(fd, 0, SEEK_SET);
+ 
+ 	TEST(preadv(fd, rd_iovec, tc->count, *tc->offset));
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_res(TFAIL | TTERRNO, "preadv(O_DIRECT) fails");
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN != *tc->size) {
++	if (TST_RET != *tc->size) {
+ 		tst_res(TFAIL, "preadv(O_DIRECT) read %li bytes, expected %zi",
+-			 TEST_RETURN, *tc->size);
++			 TST_RET, *tc->size);
+ 		return;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/pselect/pselect01.c b/testcases/kernel/syscalls/pselect/pselect01.c
+index 139268925..0052b97ab 100644
+--- a/testcases/kernel/syscalls/pselect/pselect01.c
++++ b/testcases/kernel/syscalls/pselect/pselect01.c
+@@ -34,9 +34,9 @@ int sample_fn(int clk_id, long long usec)
+ 	tst_timer_stop();
+ 	tst_timer_sample();
+ 
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_res(TFAIL | TTERRNO,
+-			"pselect() returned %li on timeout", TEST_RETURN);
++			"pselect() returned %li on timeout", TST_RET);
+ 		return 1;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/pselect/pselect03.c b/testcases/kernel/syscalls/pselect/pselect03.c
+index 4a2b849d8..d93ee5dd2 100644
+--- a/testcases/kernel/syscalls/pselect/pselect03.c
++++ b/testcases/kernel/syscalls/pselect/pselect03.c
+@@ -39,8 +39,8 @@ static void verify_pselect(void)
+ 	FD_SET(fd, &readfds);
+ 
+ 	TEST(pselect(fd, &readfds, 0, 0, &tv, NULL));
+-	if (TEST_RETURN >= 0)
+-		tst_res(TPASS, "pselect() succeeded retval=%li", TEST_RETURN);
++	if (TST_RET >= 0)
++		tst_res(TPASS, "pselect() succeeded retval=%li", TST_RET);
+ 	else
+ 		tst_res(TFAIL | TTERRNO, "pselect() failed unexpectedly");
+ }
+diff --git a/testcases/kernel/syscalls/ptrace/ptrace07.c b/testcases/kernel/syscalls/ptrace/ptrace07.c
+index 82698a4ca..46ae59a10 100644
+--- a/testcases/kernel/syscalls/ptrace/ptrace07.c
++++ b/testcases/kernel/syscalls/ptrace/ptrace07.c
+@@ -113,19 +113,19 @@ static void do_test(void)
+ 	sched_yield();
+ 
+ 	TEST(ptrace(PTRACE_ATTACH, pid, 0, 0));
+-	if (TEST_RETURN != 0)
++	if (TST_RET != 0)
+ 		tst_brk(TBROK | TTERRNO, "PTRACE_ATTACH failed");
+ 
+ 	SAFE_WAITPID(pid, NULL, 0);
+ 	TEST(ptrace(PTRACE_GETREGSET, pid, NT_X86_XSTATE, &iov));
+-	if (TEST_RETURN != 0) {
+-		if (TEST_ERRNO == EIO)
++	if (TST_RET != 0) {
++		if (TST_ERR == EIO)
+ 			tst_brk(TCONF, "GETREGSET/SETREGSET is unsupported");
+ 
+-		if (TEST_ERRNO == EINVAL)
++		if (TST_ERR == EINVAL)
+ 			tst_brk(TCONF, "NT_X86_XSTATE is unsupported");
+ 
+-		if (TEST_ERRNO == ENODEV)
++		if (TST_ERR == ENODEV)
+ 			tst_brk(TCONF, "CPU doesn't support XSAVE instruction");
+ 
+ 		tst_brk(TBROK | TTERRNO,
+@@ -143,9 +143,9 @@ static void do_test(void)
+ 	 * below in either case) is present.
+ 	 */
+ 	TEST(ptrace(PTRACE_SETREGSET, pid, NT_X86_XSTATE, &iov));
+-	if (TEST_RETURN == 0) {
++	if (TST_RET == 0) {
+ 		tst_res(TINFO, "PTRACE_SETREGSET with reserved bits succeeded");
+-	} else if (TEST_ERRNO == EINVAL) {
++	} else if (TST_ERR == EINVAL) {
+ 		tst_res(TINFO,
+ 			"PTRACE_SETREGSET with reserved bits failed with EINVAL");
+ 	} else {
+@@ -154,7 +154,7 @@ static void do_test(void)
+ 	}
+ 
+ 	TEST(ptrace(PTRACE_CONT, pid, 0, 0));
+-	if (TEST_RETURN != 0)
++	if (TST_RET != 0)
+ 		tst_brk(TBROK | TTERRNO, "PTRACE_CONT failed");
+ 
+ 	okay = true;
+diff --git a/testcases/kernel/syscalls/pwrite/pwrite02.c b/testcases/kernel/syscalls/pwrite/pwrite02.c
+index df506afd6..57aba4346 100644
+--- a/testcases/kernel/syscalls/pwrite/pwrite02.c
++++ b/testcases/kernel/syscalls/pwrite/pwrite02.c
+@@ -90,12 +90,12 @@ static void verify_pwrite(unsigned int i)
+ 
+ 	TEST(pwrite(*tc->fd, tc->buf, BS, tc->off));
+ 
+-	if (TEST_RETURN >= 0) {
++	if (TST_RET >= 0) {
+ 		tst_res(TFAIL, "call succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->exp_errno) {
++	if (TST_ERR != tc->exp_errno) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"pwrite failed unexpectedly, expected %s",
+ 			tst_strerrno(tc->exp_errno));
+diff --git a/testcases/kernel/syscalls/pwrite/pwrite03.c b/testcases/kernel/syscalls/pwrite/pwrite03.c
+index ef99de49b..efc7747b7 100644
+--- a/testcases/kernel/syscalls/pwrite/pwrite03.c
++++ b/testcases/kernel/syscalls/pwrite/pwrite03.c
+@@ -28,7 +28,7 @@ static void verify_pwrite(void)
+ {
+ 	TEST(pwrite(fd, NULL, 0, 0));
+ 
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"pwrite() should have succeeded with ret=0");
+ 		return;
+diff --git a/testcases/kernel/syscalls/pwritev/pwritev01.c b/testcases/kernel/syscalls/pwritev/pwritev01.c
+index 7c97f7227..76fcc6e66 100644
+--- a/testcases/kernel/syscalls/pwritev/pwritev01.c
++++ b/testcases/kernel/syscalls/pwritev/pwritev01.c
+@@ -62,14 +62,14 @@ static void verify_pwritev(unsigned int n)
+ 	SAFE_LSEEK(fd, 0, SEEK_SET);
+ 
+ 	TEST(pwritev(fd, wr_iovec, tc->count, tc->offset));
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_res(TFAIL | TTERRNO, "pwritev() failed");
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN != tc->size) {
++	if (TST_RET != tc->size) {
+ 		tst_res(TFAIL, "pwritev() wrote %li bytes, expected %zi",
+-			 TEST_RETURN, tc->size);
++			 TST_RET, tc->size);
+ 		return;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/pwritev/pwritev02.c b/testcases/kernel/syscalls/pwritev/pwritev02.c
+index 76b722b21..2e6dbab57 100644
+--- a/testcases/kernel/syscalls/pwritev/pwritev02.c
++++ b/testcases/kernel/syscalls/pwritev/pwritev02.c
+@@ -83,12 +83,12 @@ static void verify_pwritev(unsigned int n)
+ 	struct tcase *tc = &tcases[n];
+ 
+ 	TEST(pwritev(*tc->fd, tc->name, tc->count, tc->offset));
+-	if (TEST_RETURN == 0) {
++	if (TST_RET == 0) {
+ 		tst_res(TFAIL, "pwritev() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_err) {
++	if (TST_ERR == tc->exp_err) {
+ 		tst_res(TPASS | TTERRNO, "pwritev() failed as expected");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/pwritev/pwritev03.c b/testcases/kernel/syscalls/pwritev/pwritev03.c
+index a2ad01fb1..ad24124c2 100644
+--- a/testcases/kernel/syscalls/pwritev/pwritev03.c
++++ b/testcases/kernel/syscalls/pwritev/pwritev03.c
+@@ -65,14 +65,14 @@ static void verify_direct_pwritev(unsigned int n)
+ 	SAFE_PWRITE(1, fd, initbuf, blksz * 2, 0);
+ 
+ 	TEST(pwritev(fd, wr_iovec, tc->count, *tc->offset));
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_res(TFAIL | TTERRNO, "pwritev(O_DIRECT) fails");
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN != *tc->size) {
++	if (TST_RET != *tc->size) {
+ 		tst_res(TFAIL, "pwritev(O_DIRECT) wrote %li bytes, expected %zi",
+-			 TEST_RETURN, *tc->size);
++			 TST_RET, *tc->size);
+ 		return;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/quotactl/quotactl01.c b/testcases/kernel/syscalls/quotactl/quotactl01.c
+index 0173ed4f3..92b654eba 100644
+--- a/testcases/kernel/syscalls/quotactl/quotactl01.c
++++ b/testcases/kernel/syscalls/quotactl/quotactl01.c
+@@ -191,7 +191,7 @@ static void verify_quota(unsigned int n)
+ 	fmt_buf = 0;
+ 
+ 	TEST(quotactl(tc->cmd, tst_device->dev, *tc->id, tc->addr));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "quotactl failed to %s", tc->des);
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/quotactl/quotactl02.c b/testcases/kernel/syscalls/quotactl/quotactl02.c
+index 9e6408a70..d8b1784de 100644
+--- a/testcases/kernel/syscalls/quotactl/quotactl02.c
++++ b/testcases/kernel/syscalls/quotactl/quotactl02.c
+@@ -163,7 +163,7 @@ static void verify_quota(unsigned int n)
+ 	struct t_case *tc = &tcases[n];
+ 
+ 	TEST(quotactl(tc->cmd, tst_device->dev, test_id, tc->addr));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "quotactl() failed to %s", tc->des);
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/quotactl/quotactl03.c b/testcases/kernel/syscalls/quotactl/quotactl03.c
+index 64caac304..376fee546 100644
+--- a/testcases/kernel/syscalls/quotactl/quotactl03.c
++++ b/testcases/kernel/syscalls/quotactl/quotactl03.c
+@@ -66,20 +66,20 @@ static void verify_quota(void)
+ 
+ 	TEST(quotactl(QCMD(Q_XGETNEXTQUOTA, USRQUOTA), tst_device->dev,
+ 		test_id, (void *)&res_dquota));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "quotactl() found the next active ID:"
+ 			" %u unexpectedly", res_dquota.d_id);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == EINVAL) {
++	if (TST_ERR == EINVAL) {
+ 		tst_brk(TCONF | TTERRNO,
+ 			"Q_XGETNEXTQUOTA wasn't supported in quotactl()");
+ 	}
+ 
+-	if (TEST_ERRNO != ENOENT) {
++	if (TST_ERR != ENOENT) {
+ 		tst_res(TFAIL | TTERRNO, "quotaclt() failed unexpectedly with"
+-			" %s expected ENOENT", tst_strerrno(TEST_ERRNO));
++			" %s expected ENOENT", tst_strerrno(TST_ERR));
+ 	} else {
+ 		tst_res(TPASS, "quotaclt() failed with ENOENT as expected");
+ 	}
+diff --git a/testcases/kernel/syscalls/read/read01.c b/testcases/kernel/syscalls/read/read01.c
+index 855a3a18c..68aea0917 100644
+--- a/testcases/kernel/syscalls/read/read01.c
++++ b/testcases/kernel/syscalls/read/read01.c
+@@ -45,10 +45,10 @@ static void verify_read(void)
+ 
+ 	TEST(read(fd, buf, SIZE));
+ 
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_res(TFAIL | TTERRNO, "read(2) failed");
+ 	else
+-		tst_res(TPASS, "read(2) returned %ld", TEST_RETURN);
++		tst_res(TPASS, "read(2) returned %ld", TST_RET);
+ }
+ 
+ static void setup(void)
+diff --git a/testcases/kernel/syscalls/read/read02.c b/testcases/kernel/syscalls/read/read02.c
+index dae2385aa..a92f95786 100644
+--- a/testcases/kernel/syscalls/read/read02.c
++++ b/testcases/kernel/syscalls/read/read02.c
+@@ -84,18 +84,18 @@ static void verify_read(unsigned int n)
+ 
+ 	TEST(read(*tc->fd, *tc->buf, tc->count));
+ 
+-	if (*tc->fd == fd4 && TEST_RETURN >= 0) {
++	if (*tc->fd == fd4 && TST_RET >= 0) {
+ 		tst_res(TPASS,
+ 			"O_DIRECT unaligned reads fallbacks to buffered I/O");
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "read() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_error) {
++	if (TST_ERR == tc->exp_error) {
+ 		tst_res(TPASS | TTERRNO, "read() failed as expected");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO, "read() failed unexpectedly, "
+diff --git a/testcases/kernel/syscalls/readlink/readlink01.c b/testcases/kernel/syscalls/readlink/readlink01.c
+index 4207c8cde..0b7f52f29 100644
+--- a/testcases/kernel/syscalls/readlink/readlink01.c
++++ b/testcases/kernel/syscalls/readlink/readlink01.c
+@@ -36,14 +36,14 @@ static void test_readlink(void)
+ 	int exp_val = strlen(TESTFILE);
+ 
+ 	TEST(readlink(SYMFILE, buffer, sizeof(buffer)));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "readlink() on %s failed", SYMFILE);
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN != exp_val) {
++	if (TST_RET != exp_val) {
+ 		tst_res(TFAIL, "readlink() returned value %ld "
+-			"did't match, Expected %d", TEST_RETURN, exp_val);
++			"did't match, Expected %d", TST_RET, exp_val);
+ 		return;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/readlink/readlink03.c b/testcases/kernel/syscalls/readlink/readlink03.c
+index 1c1f7f3c1..d757cf7fc 100644
+--- a/testcases/kernel/syscalls/readlink/readlink03.c
++++ b/testcases/kernel/syscalls/readlink/readlink03.c
+@@ -76,17 +76,17 @@ static void verify_readlink(unsigned int n)
+ 	struct tcase *tc = &tcases[n];
+ 
+ 	TEST(readlink(tc->link, tc->buf, tc->buf_size));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "readlink() sueeeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->exp_errno) {
++	if (TST_ERR != tc->exp_errno) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"readlink() failed unexpectedly; expected: %d - %s, got",
+ 			tc->exp_errno, tst_strerrno(tc->exp_errno));
+ 
+-		if (tc->exp_errno == ENOENT && TEST_ERRNO == EINVAL) {
++		if (tc->exp_errno == ENOENT && TST_ERR == EINVAL) {
+ 			tst_res(TWARN | TTERRNO,
+ 				"It may be a Kernel Bug, see the patch:"
+ 				"http://git.kernel.org/linus/1fa1e7f6");
+diff --git a/testcases/kernel/syscalls/request_key/request_key01.c b/testcases/kernel/syscalls/request_key/request_key01.c
+index d290a0de7..db7ff1537 100644
+--- a/testcases/kernel/syscalls/request_key/request_key01.c
++++ b/testcases/kernel/syscalls/request_key/request_key01.c
+@@ -38,12 +38,12 @@ static void verify_request_key(void)
+ {
+ 
+ 	TEST(request_key("keyring", "ltp", NULL, KEY_REQKEY_DEFL_DEFAULT));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "request_key() failed");
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN != key)
++	if (TST_RET != key)
+ 		tst_res(TFAIL, "serial number mismatched");
+ 	else
+ 		tst_res(TPASS, "request_key() succeed");
+diff --git a/testcases/kernel/syscalls/request_key/request_key02.c b/testcases/kernel/syscalls/request_key/request_key02.c
+index bde74c492..e6123018e 100644
+--- a/testcases/kernel/syscalls/request_key/request_key02.c
++++ b/testcases/kernel/syscalls/request_key/request_key02.c
+@@ -54,12 +54,12 @@ static void verify_request_key(unsigned int n)
+ 	struct test_case *tc = tcases + n;
+ 
+ 	TEST(request_key("keyring", tc->des, NULL, *tc->id));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "request_key() succeed unexpectly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_err) {
++	if (TST_ERR == tc->exp_err) {
+ 		tst_res(TPASS | TTERRNO, "request_key() failed expectly");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/request_key/request_key03.c b/testcases/kernel/syscalls/request_key/request_key03.c
+index 8711b1250..9996a6f87 100644
+--- a/testcases/kernel/syscalls/request_key/request_key03.c
++++ b/testcases/kernel/syscalls/request_key/request_key03.c
+@@ -66,13 +66,13 @@ static void test_with_key_type(const char *type, const char *payload,
+ 	bool info_only;
+ 
+ 	TEST(keyctl(KEYCTL_JOIN_SESSION_KEYRING, NULL));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_brk(TBROK | TTERRNO, "failed to join new session keyring");
+ 
+ 	TEST(add_key(type, "desc", payload, strlen(payload),
+ 		     KEY_SPEC_SESSION_KEYRING));
+-	if (TEST_RETURN < 0 && TEST_ERRNO != EINVAL) {
+-		if (TEST_ERRNO == ENODEV) {
++	if (TST_RET < 0 && TST_ERR != EINVAL) {
++		if (TST_ERR == ENODEV) {
+ 			tst_res(TCONF, "kernel doesn't support key type '%s'",
+ 				type);
+ 			return;
+@@ -108,14 +108,14 @@ static void test_with_key_type(const char *type, const char *payload,
+ 			usleep(rand() % 1024);
+ 			TEST(add_key(type, "desc", payload, strlen(payload),
+ 				     KEY_SPEC_SESSION_KEYRING));
+-			if (TEST_RETURN < 0 && TEST_ERRNO != EINVAL &&
+-			    TEST_ERRNO != ENOKEY && TEST_ERRNO != EDQUOT) {
++			if (TST_RET < 0 && TST_ERR != EINVAL &&
++			    TST_ERR != ENOKEY && TST_ERR != EDQUOT) {
+ 				tst_brk(TBROK | TTERRNO,
+ 					"unexpected error adding key of type '%s'",
+ 					type);
+ 			}
+ 			TEST(keyctl(KEYCTL_CLEAR, KEY_SPEC_SESSION_KEYRING));
+-			if (TEST_RETURN < 0) {
++			if (TST_RET < 0) {
+ 				tst_brk(TBROK | TTERRNO,
+ 					"unable to clear keyring");
+ 			}
+@@ -128,8 +128,8 @@ static void test_with_key_type(const char *type, const char *payload,
+ 		for (i = 0; i < 5000 * effort; i++) {
+ 			TEST(request_key(type, "desc", "callout_info",
+ 					 KEY_SPEC_SESSION_KEYRING));
+-			if (TEST_RETURN < 0 && TEST_ERRNO != ENOKEY &&
+-			    TEST_ERRNO != ENOENT && TEST_ERRNO != EDQUOT) {
++			if (TST_RET < 0 && TST_ERR != ENOKEY &&
++			    TST_ERR != ENOENT && TST_ERR != EDQUOT) {
+ 				tst_brk(TBROK | TTERRNO,
+ 					"unexpected error requesting key of type '%s'",
+ 					type);
+diff --git a/testcases/kernel/syscalls/request_key/request_key04.c b/testcases/kernel/syscalls/request_key/request_key04.c
+index 878b0de00..9e4c0bfac 100644
+--- a/testcases/kernel/syscalls/request_key/request_key04.c
++++ b/testcases/kernel/syscalls/request_key/request_key04.c
+@@ -37,44 +37,44 @@ static void do_test(void)
+ 	int saved_errno;
+ 
+ 	TEST(keyctl(KEYCTL_JOIN_SESSION_KEYRING, NULL));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_brk(TBROK | TTERRNO, "failed to join new session keyring");
+ 
+ 	TEST(keyctl(KEYCTL_SETPERM, KEY_SPEC_SESSION_KEYRING,
+ 		    KEY_POS_SEARCH|KEY_POS_READ|KEY_POS_VIEW));
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_brk(TBROK | TTERRNO,
+ 			"failed to set permissions on session keyring");
+ 	}
+ 
+ 	TEST(keyctl(KEYCTL_SET_REQKEY_KEYRING,
+ 		    KEY_REQKEY_DEFL_SESSION_KEYRING));
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_brk(TBROK | TTERRNO,
+ 			"failed to set request-key default keyring");
+ 	}
+ 
+ 	TEST(keyctl(KEYCTL_READ, KEY_SPEC_SESSION_KEYRING,
+ 		    &keyid, sizeof(keyid)));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_brk(TBROK | TTERRNO, "failed to read from session keyring");
+-	if (TEST_RETURN != 0)
++	if (TST_RET != 0)
+ 		tst_brk(TBROK, "session keyring is not empty");
+ 
+ 	TEST(request_key("user", "desc", "callout_info", 0));
+-	if (TEST_RETURN != -1)
++	if (TST_RET != -1)
+ 		tst_brk(TBROK, "request_key() unexpectedly succeeded");
+-	saved_errno = TEST_ERRNO;
++	saved_errno = TST_ERR;
+ 
+ 	TEST(keyctl(KEYCTL_READ, KEY_SPEC_SESSION_KEYRING,
+ 		    &keyid, sizeof(keyid)));
+-	if (TEST_RETURN < 0)
++	if (TST_RET < 0)
+ 		tst_brk(TBROK | TTERRNO, "failed to read from session keyring");
+-	if (TEST_RETURN != 0)
++	if (TST_RET != 0)
+ 		tst_brk(TFAIL, "added key to keyring without permission");
+ 
+-	TEST_ERRNO = saved_errno;
+-	if (TEST_ERRNO == EACCES) {
++	TST_ERR = saved_errno;
++	if (TST_ERR == EACCES) {
+ 		tst_res(TPASS, "request_key() failed with EACCES as expected");
+ 	} else {
+ 		tst_res(TBROK | TTERRNO,
+diff --git a/testcases/kernel/syscalls/rmdir/rmdir01.c b/testcases/kernel/syscalls/rmdir/rmdir01.c
+index 9f911ecf9..c8544b76f 100644
+--- a/testcases/kernel/syscalls/rmdir/rmdir01.c
++++ b/testcases/kernel/syscalls/rmdir/rmdir01.c
+@@ -34,7 +34,7 @@ static void verify_rmdir(void)
+ 	SAFE_MKDIR(TESTDIR, 0777);
+ 
+ 	TEST(rmdir(TESTDIR));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "rmdir(%s) failed", TESTDIR);
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/rmdir/rmdir02.c b/testcases/kernel/syscalls/rmdir/rmdir02.c
+index d7cec8d4e..3f3669213 100644
+--- a/testcases/kernel/syscalls/rmdir/rmdir02.c
++++ b/testcases/kernel/syscalls/rmdir/rmdir02.c
+@@ -94,13 +94,13 @@ static void verify_rmdir(unsigned int n)
+ 
+ 	TEST(rmdir(tc->dir));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "rmdir() succeeded unexpectedly (%li)",
+-			TEST_RETURN);
++			TST_RET);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_errno) {
++	if (TST_ERR == tc->exp_errno) {
+ 		tst_res(TPASS | TTERRNO, "rmdir() failed as expected");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/rmdir/rmdir03.c b/testcases/kernel/syscalls/rmdir/rmdir03.c
+index 9ea107ce8..d3ad5b5ef 100644
+--- a/testcases/kernel/syscalls/rmdir/rmdir03.c
++++ b/testcases/kernel/syscalls/rmdir/rmdir03.c
+@@ -57,13 +57,13 @@ static void do_rmdir(unsigned int n)
+ 	struct testcase *tc = &tcases[n];
+ 
+ 	TEST(rmdir(tc->subdir));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "rmdir() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != EACCES) {
+-		if (tc->dir_mode & S_ISVTX && TEST_ERRNO == EPERM)
++	if (TST_ERR != EACCES) {
++		if (tc->dir_mode & S_ISVTX && TST_ERR == EPERM)
+ 			tst_res(TPASS | TTERRNO, "rmdir() got expected errno");
+ 		else
+ 			tst_res(TFAIL | TTERRNO, "expected EPERM, but got");
+diff --git a/testcases/kernel/syscalls/sched_setscheduler/sched_setscheduler03.c b/testcases/kernel/syscalls/sched_setscheduler/sched_setscheduler03.c
+index a51310656..dd3853b1e 100644
+--- a/testcases/kernel/syscalls/sched_setscheduler/sched_setscheduler03.c
++++ b/testcases/kernel/syscalls/sched_setscheduler/sched_setscheduler03.c
+@@ -110,7 +110,7 @@ static void verify_fn(unsigned int i)
+ 
+ 	TEST(sched_setscheduler(*cases[i].pid, cases[i].policy,
+ 					cases[i].sched_param));
+-	if (TEST_RETURN)
++	if (TST_RET)
+ 		tst_res(TFAIL | TTERRNO, "case[%d] expected: %d, got: ",
+ 			i + 1, cases[i].error);
+ 	else
+diff --git a/testcases/kernel/syscalls/select/select04.c b/testcases/kernel/syscalls/select/select04.c
+index 4ca7a3174..86bdffcdf 100644
+--- a/testcases/kernel/syscalls/select/select04.c
++++ b/testcases/kernel/syscalls/select/select04.c
+@@ -43,8 +43,8 @@ static int sample_fn(int clk_id, long long usec)
+ 	tst_timer_stop();
+ 	tst_timer_sample();
+ 
+-	if (TEST_RETURN != 0) {
+-		tst_res(TFAIL | TTERRNO, "select() returned %li", TEST_RETURN);
++	if (TST_RET != 0) {
++		tst_res(TFAIL | TTERRNO, "select() returned %li", TST_RET);
+ 		return 1;
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/sendto/sendto02.c b/testcases/kernel/syscalls/sendto/sendto02.c
+index c8c2979ff..5c272d144 100644
+--- a/testcases/kernel/syscalls/sendto/sendto02.c
++++ b/testcases/kernel/syscalls/sendto/sendto02.c
+@@ -68,12 +68,12 @@ static void cleanup(void)
+ static void verify_sendto(void)
+ {
+ 	TEST(sendto(sockfd, NULL, 1, 0, (struct sockaddr *) &sa, sizeof(sa)));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "sendto(fd, NULL, ...) succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == EFAULT) {
++	if (TST_ERR == EFAULT) {
+ 		tst_res(TPASS | TTERRNO,
+ 			"sendto(fd, NULL, ...) failed expectedly");
+ 		return;
+diff --git a/testcases/kernel/syscalls/setpriority/setpriority01.c b/testcases/kernel/syscalls/setpriority/setpriority01.c
+index d6cc79e5a..38b77b77f 100644
+--- a/testcases/kernel/syscalls/setpriority/setpriority01.c
++++ b/testcases/kernel/syscalls/setpriority/setpriority01.c
+@@ -64,7 +64,7 @@ static void setpriority_test(struct tcase *tc)
+ 	for (new_prio = -20; new_prio < 20; new_prio++) {
+ 		TEST(setpriority(tc->which, *tc->who, new_prio));
+ 
+-		if (TEST_RETURN != 0) {
++		if (TST_RET != 0) {
+ 			tst_res(TFAIL | TTERRNO,
+ 				"setpriority(%d, %d, %d) failed",
+ 				tc->which, *tc->who, new_prio);
+diff --git a/testcases/kernel/syscalls/setpriority/setpriority02.c b/testcases/kernel/syscalls/setpriority/setpriority02.c
+index 0f61fcae8..01a4c8108 100644
+--- a/testcases/kernel/syscalls/setpriority/setpriority02.c
++++ b/testcases/kernel/syscalls/setpriority/setpriority02.c
+@@ -73,15 +73,15 @@ static void setpriority_test(struct tcase *tc)
+ 
+ 	TEST(setpriority(tc->which, tc->who, tc->prio));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL,
+ 			"setpriority(%d, %d, %d) %ssucceeds unexpectedly "
+ 			"returned %ld", tc->which, tc->who, tc->prio, desc,
+-			TEST_RETURN);
++			TST_RET);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->exp_errno) {
++	if (TST_ERR != tc->exp_errno) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"setpriority(%d, %d, %d) %sshould fail with %s",
+ 			tc->which, tc->who, tc->prio, desc,
+diff --git a/testcases/kernel/syscalls/setrlimit/setrlimit02.c b/testcases/kernel/syscalls/setrlimit/setrlimit02.c
+index 633279c6c..77adaf082 100644
+--- a/testcases/kernel/syscalls/setrlimit/setrlimit02.c
++++ b/testcases/kernel/syscalls/setrlimit/setrlimit02.c
+@@ -42,12 +42,12 @@ static void verify_setrlimit(unsigned int n)
+ 
+ 	TEST(setrlimit(tc->resource, tc->rlim));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "call succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->exp_errno) {
++	if (TST_ERR != tc->exp_errno) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"setrlimit() should fail with %s got",
+ 			tst_strerrno(tc->exp_errno));
+diff --git a/testcases/kernel/syscalls/setrlimit/setrlimit03.c b/testcases/kernel/syscalls/setrlimit/setrlimit03.c
+index d551c90ac..29b52aa7f 100644
+--- a/testcases/kernel/syscalls/setrlimit/setrlimit03.c
++++ b/testcases/kernel/syscalls/setrlimit/setrlimit03.c
+@@ -50,12 +50,12 @@ static void verify_setrlimit(unsigned int n)
+ 	struct tcase *tc = &tcases[n];
+ 
+ 	TEST(setrlimit(RLIMIT_NOFILE, tc->rlimt));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "call succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->exp_err) {
++	if (TST_ERR != tc->exp_err) {
+ 		tst_res(TFAIL | TTERRNO, "setrlimit() should fail with %s, got",
+ 			tst_strerrno(tc->exp_err));
+ 	} else {
+diff --git a/testcases/kernel/syscalls/setrlimit/setrlimit05.c b/testcases/kernel/syscalls/setrlimit/setrlimit05.c
+index 7ea7d629f..e7167229b 100644
+--- a/testcases/kernel/syscalls/setrlimit/setrlimit05.c
++++ b/testcases/kernel/syscalls/setrlimit/setrlimit05.c
+@@ -34,13 +34,13 @@ static void verify_setrlimit(void)
+ 	pid = SAFE_FORK();
+ 	if (!pid) {
+ 		TEST(setrlimit(RLIMIT_NOFILE, (void *) -1));
+-		if (TEST_RETURN != -1) {
++		if (TST_RET != -1) {
+ 			tst_res(TFAIL, "setrlimit()  succeeded unexpectedly");
+ 			exit(0);
+ 		}
+ 
+ 		/* Usually, setrlimit() should return EFAULT */
+-		if (TEST_ERRNO == EFAULT) {
++		if (TST_ERR == EFAULT) {
+ 			tst_res(TPASS | TTERRNO,
+ 				"setrlimit() failed as expected");
+ 		} else {
+diff --git a/testcases/kernel/syscalls/setsockopt/setsockopt02.c b/testcases/kernel/syscalls/setsockopt/setsockopt02.c
+index 22dc43ade..474df245f 100644
+--- a/testcases/kernel/syscalls/setsockopt/setsockopt02.c
++++ b/testcases/kernel/syscalls/setsockopt/setsockopt02.c
+@@ -97,9 +97,9 @@ static int create_skbuf(unsigned int sizeof_priv)
+ 
+ 	sk = SAFE_SOCKET(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+ 	TEST(setsockopt(sk, SOL_PACKET, PACKET_VERSION, &ver, sizeof(ver)));
+-	if (TEST_RETURN && TEST_ERRNO == EINVAL)
++	if (TST_RET && TST_ERR == EINVAL)
+ 		tst_brk(TCONF | TTERRNO, "TPACKET_V3 not supported");
+-	if (TEST_RETURN)
++	if (TST_RET)
+ 		tst_brk(TBROK | TTERRNO, "setsockopt(sk, SOL_PACKET, PACKET_VERSION, TPACKET_V3)");
+ 
+ 	return setsockopt(sk, SOL_PACKET, PACKET_RX_RING, &req, sizeof(req));
+@@ -108,7 +108,7 @@ static int create_skbuf(unsigned int sizeof_priv)
+ static void good_size(void)
+ {
+ 	TEST(create_skbuf(512));
+-	if (TEST_RETURN)
++	if (TST_RET)
+ 		tst_brk(TBROK | TTERRNO, "Can't create ring buffer with good settings");
+ 
+ 	tst_res(TPASS, "Can create ring buffer with good settinegs");
+@@ -117,9 +117,9 @@ static void good_size(void)
+ static void bad_size(void)
+ {
+ 	TEST(create_skbuf(3U << 30));
+-	if (TEST_RETURN && TEST_ERRNO != EINVAL)
++	if (TST_RET && TST_ERR != EINVAL)
+ 		tst_brk(TBROK | TTERRNO, "Unexpected setsockopt() error");
+-	if (TEST_RETURN)
++	if (TST_RET)
+ 		tst_res(TPASS | TTERRNO, "Refused bad tp_sizeof_priv value");
+ 	else
+ 		tst_res(TFAIL, "Allowed bad tp_sizeof_priv value");
+diff --git a/testcases/kernel/syscalls/setuid/setuid01.c b/testcases/kernel/syscalls/setuid/setuid01.c
+index 4eb8414ad..1b866a5e8 100644
+--- a/testcases/kernel/syscalls/setuid/setuid01.c
++++ b/testcases/kernel/syscalls/setuid/setuid01.c
+@@ -36,7 +36,7 @@ static void verify_setuid(void)
+ 	UID16_CHECK(uid, setuid);
+ 
+ 	TEST(SETUID(uid));
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_res(TFAIL | TTERRNO, "setuid(%d) failed", uid);
+ 	else
+ 		tst_res(TPASS, "setuid(%d) successfully", uid);
+diff --git a/testcases/kernel/syscalls/setuid/setuid03.c b/testcases/kernel/syscalls/setuid/setuid03.c
+index c8ae64ade..8e1bf7d56 100644
+--- a/testcases/kernel/syscalls/setuid/setuid03.c
++++ b/testcases/kernel/syscalls/setuid/setuid03.c
+@@ -32,12 +32,12 @@
+ static void verify_setuid(void)
+ {
+ 	TEST(SETUID(ROOT_USER));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL | TTERRNO, "setuid() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == EPERM)
++	if (TST_ERR == EPERM)
+ 		tst_res(TPASS, "setuid() returned errno EPERM");
+ 	else
+ 		tst_res(TFAIL | TTERRNO, "setuid() returned unexpected errno");
+diff --git a/testcases/kernel/syscalls/setuid/setuid04.c b/testcases/kernel/syscalls/setuid/setuid04.c
+index 2f2244fde..c37fac847 100644
+--- a/testcases/kernel/syscalls/setuid/setuid04.c
++++ b/testcases/kernel/syscalls/setuid/setuid04.c
+@@ -51,13 +51,13 @@ static void dosetuid(void)
+ 	int tst_fd;
+ 
+ 	TEST(tst_fd = open(FILENAME, O_RDWR));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "open() succeeded unexpectedly");
+ 		close(tst_fd);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == EACCES)
++	if (TST_ERR == EACCES)
+ 		tst_res(TPASS, "open() returned errno EACCES");
+ 	else
+ 		tst_res(TFAIL | TTERRNO, "open() returned unexpected errno");
+diff --git a/testcases/kernel/syscalls/setxattr/setxattr01.c b/testcases/kernel/syscalls/setxattr/setxattr01.c
+index 4db56123a..b9797df2c 100644
+--- a/testcases/kernel/syscalls/setxattr/setxattr01.c
++++ b/testcases/kernel/syscalls/setxattr/setxattr01.c
+@@ -136,13 +136,13 @@ static void verify_setxattr(unsigned int i)
+ {
+ 	TEST(setxattr(FNAME, tc[i].key, *tc[i].value, tc[i].size, tc[i].flags));
+ 
+-	if (TEST_RETURN == -1 && TEST_ERRNO == EOPNOTSUPP)
++	if (TST_RET == -1 && TST_ERR == EOPNOTSUPP)
+ 		tst_brk(TCONF, "setxattr() not supported");
+ 
+ 	if (!tc[i].exp_err) {
+-		if (TEST_RETURN) {
++		if (TST_RET) {
+ 			tst_res(TFAIL | TTERRNO,
+-				"setxattr() failed with %li", TEST_RETURN);
++				"setxattr() failed with %li", TST_RET);
+ 			return;
+ 		}
+ 
+@@ -150,12 +150,12 @@ static void verify_setxattr(unsigned int i)
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN == 0) {
++	if (TST_RET == 0) {
+ 		tst_res(TFAIL, "setxattr() passed unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc[i].exp_err) {
++	if (TST_ERR != tc[i].exp_err) {
+ 		tst_res(TFAIL | TTERRNO, "setxattr() should fail with %s",
+ 			tst_strerrno(tc[i].exp_err));
+ 		return;
+diff --git a/testcases/kernel/syscalls/setxattr/setxattr02.c b/testcases/kernel/syscalls/setxattr/setxattr02.c
+index 0b6ecb3fa..aa80c1e5e 100644
+--- a/testcases/kernel/syscalls/setxattr/setxattr02.c
++++ b/testcases/kernel/syscalls/setxattr/setxattr02.c
+@@ -143,13 +143,13 @@ static void verify_setxattr(unsigned int i)
+ {
+ 	TEST(setxattr(tc[i].fname, tc[i].key, tc[i].value, tc[i].size, tc[i].flags));
+ 
+-	if (TEST_RETURN == -1 && TEST_ERRNO == EOPNOTSUPP)
++	if (TST_RET == -1 && TST_ERR == EOPNOTSUPP)
+ 		tst_brk(TCONF, "setxattr() not supported");
+ 
+ 	if (!tc[i].exp_err) {
+-		if (TEST_RETURN) {
++		if (TST_RET) {
+ 			tst_res(TFAIL | TTERRNO,
+-				"setxattr() failed with %li", TEST_RETURN);
++				"setxattr() failed with %li", TST_RET);
+ 			return;
+ 		}
+ 
+@@ -157,12 +157,12 @@ static void verify_setxattr(unsigned int i)
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN == 0) {
++	if (TST_RET == 0) {
+ 		tst_res(TFAIL, "setxattr() passed unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc[i].exp_err) {
++	if (TST_ERR != tc[i].exp_err) {
+ 		tst_res(TFAIL | TTERRNO, "setxattr() should fail with %s",
+ 			tst_strerrno(tc[i].exp_err));
+ 		return;
+diff --git a/testcases/kernel/syscalls/socket/socket01.c b/testcases/kernel/syscalls/socket/socket01.c
+index 9d2fe4f7c..6107274cb 100644
+--- a/testcases/kernel/syscalls/socket/socket01.c
++++ b/testcases/kernel/syscalls/socket/socket01.c
+@@ -57,19 +57,19 @@ static void verify_socket(unsigned int n)
+ 	struct test_case_t *tc = &tdat[n];
+ 
+ 	TEST(fd = socket(tc->domain, tc->type, tc->proto));
+-	if (TEST_RETURN >= 0)
+-		TEST_RETURN = 0;
++	if (TST_RET >= 0)
++		TST_RET = 0;
+ 
+ 	if (fd > 0)
+ 		SAFE_CLOSE(fd);
+ 
+-	if (TEST_RETURN != tc->retval) {
++	if (TST_RET != tc->retval) {
+ 		tst_res(TFAIL, "%s returned %d (expected %d)",
+ 			tc->desc, fd, tc->retval);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->experrno) {
++	if (TST_ERR != tc->experrno) {
+ 		tst_res(TFAIL | TTERRNO, "expected %s(%d)",
+ 		        tst_strerrno(tc->experrno), tc->experrno);
+ 		return;
+diff --git a/testcases/kernel/syscalls/socketcall/socketcall01.c b/testcases/kernel/syscalls/socketcall/socketcall01.c
+index 7fe5cbe80..f7128a734 100644
+--- a/testcases/kernel/syscalls/socketcall/socketcall01.c
++++ b/testcases/kernel/syscalls/socketcall/socketcall01.c
+@@ -49,15 +49,15 @@ void verify_socketcall(unsigned int i)
+ {
+ 	TEST(socketcall(TC[i].call, TC[i].args));
+ 
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_res(TFAIL | TTERRNO, "socketcall() for %s failed with %li",
+-			TC[i].desc, TEST_RETURN);
++			TC[i].desc, TST_RET);
+ 		return;
+ 	}
+ 
+ 	tst_res(TPASS, "socketcall() for %s", TC[i].desc);
+ 
+-	SAFE_CLOSE(TEST_RETURN);
++	SAFE_CLOSE(TST_RET);
+ }
+ 
+ static struct tst_test test = {
+diff --git a/testcases/kernel/syscalls/socketpair/socketpair01.c b/testcases/kernel/syscalls/socketpair/socketpair01.c
+index 67290750d..a61f268cc 100644
+--- a/testcases/kernel/syscalls/socketpair/socketpair01.c
++++ b/testcases/kernel/syscalls/socketpair/socketpair01.c
+@@ -62,18 +62,18 @@ static void verify_socketpair(unsigned int n)
+ 
+ 	TEST(socketpair(tc->domain, tc->type, tc->proto, tc->sv));
+ 
+-	if (TEST_RETURN == 0) {
++	if (TST_RET == 0) {
+ 		SAFE_CLOSE(fds[0]);
+ 		SAFE_CLOSE(fds[1]);
+ 	}
+ 
+-	if (TEST_RETURN != tc->retval) {
++	if (TST_RET != tc->retval) {
+ 		tst_res(TFAIL, "%s returned %ld (expected %d)",
+-		        tc->desc, TEST_RETURN, tc->retval);
++			tc->desc, TST_RET, tc->retval);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->experrno) {
++	if (TST_ERR != tc->experrno) {
+ 		tst_res(TFAIL | TTERRNO, "expected %s(%d)",
+ 		        tst_strerrno(tc->experrno), tc->experrno);
+ 		return;
+diff --git a/testcases/kernel/syscalls/socketpair/socketpair02.c b/testcases/kernel/syscalls/socketpair/socketpair02.c
+index f8057ce5f..ca24915ee 100644
+--- a/testcases/kernel/syscalls/socketpair/socketpair02.c
++++ b/testcases/kernel/syscalls/socketpair/socketpair02.c
+@@ -56,7 +56,7 @@ static void verify_socketpair(unsigned int n)
+ 
+ 	TEST(socketpair(PF_UNIX, tc->type, 0, fds));
+ 
+-	if (TEST_RETURN == -1)
++	if (TST_RET == -1)
+ 		tst_brk(TFAIL | TTERRNO, "socketpair() failed");
+ 
+ 	for (i = 0; i < 2; i++) {
+diff --git a/testcases/kernel/syscalls/splice/splice02.c b/testcases/kernel/syscalls/splice/splice02.c
+index a9ca51539..a59703e76 100644
+--- a/testcases/kernel/syscalls/splice/splice02.c
++++ b/testcases/kernel/syscalls/splice/splice02.c
+@@ -40,9 +40,9 @@ static void splice_test(void)
+ 	fd = SAFE_OPEN("splice02-temp", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+ 
+ 	TEST(splice(STDIN_FILENO, NULL, fd, NULL, SPLICE_SIZE, 0));
+-	if (TEST_RETURN < 0) {
++	if (TST_RET < 0) {
+ 		tst_res(TFAIL, "splice failed - errno = %d : %s",
+-			TEST_ERRNO, strerror(TEST_ERRNO));
++			TST_ERR, strerror(TST_ERR));
+ 	} else {
+ 		tst_res(TPASS, "splice() system call Passed");
+ 	}
+diff --git a/testcases/kernel/syscalls/splice/splice03.c b/testcases/kernel/syscalls/splice/splice03.c
+index 86363dd96..12326d2a2 100644
+--- a/testcases/kernel/syscalls/splice/splice03.c
++++ b/testcases/kernel/syscalls/splice/splice03.c
+@@ -94,13 +94,13 @@ static void splice_verify(unsigned int n)
+ 	TEST(splice(*(tc->fdin), tc->offin, *(tc->fdout),
+ 		tc->offout, SPLICE_TEST_LEN, 0));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "splice() returned %ld expected %s",
+-			TEST_RETURN, tst_strerrno(tc->exp_errno));
++			TST_RET, tst_strerrno(tc->exp_errno));
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->exp_errno) {
++	if (TST_ERR != tc->exp_errno) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"splice() failed unexpectedly; expected: %d - %s",
+ 			tc->exp_errno, tst_strerrno(tc->exp_errno));
+diff --git a/testcases/kernel/syscalls/sysctl/sysctl01.c b/testcases/kernel/syscalls/sysctl/sysctl01.c
+index 68fa44a3b..70905d806 100644
+--- a/testcases/kernel/syscalls/sysctl/sysctl01.c
++++ b/testcases/kernel/syscalls/sysctl/sysctl01.c
+@@ -59,7 +59,7 @@ static void verify_sysctl(unsigned int n)
+ 	};
+ 
+ 	TEST(tst_syscall(__NR__sysctl, &args));
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_res(TFAIL | TTERRNO, "sysctl() failed unexpectedly");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/sysctl/sysctl03.c b/testcases/kernel/syscalls/sysctl/sysctl03.c
+index cc126c0ed..820ab0bfe 100644
+--- a/testcases/kernel/syscalls/sysctl/sysctl03.c
++++ b/testcases/kernel/syscalls/sysctl/sysctl03.c
+@@ -62,12 +62,12 @@ static void verify_sysctl(void)
+ 	};
+ 
+ 	TEST(tst_syscall(__NR__sysctl, &args));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "sysctl(2) succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == exp_eno) {
++	if (TST_ERR == exp_eno) {
+ 		tst_res(TPASS | TTERRNO, "Got expected error");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO, "Got unexpected error, expected %s",
+diff --git a/testcases/kernel/syscalls/sysctl/sysctl04.c b/testcases/kernel/syscalls/sysctl/sysctl04.c
+index 36b25cff0..059307082 100644
+--- a/testcases/kernel/syscalls/sysctl/sysctl04.c
++++ b/testcases/kernel/syscalls/sysctl/sysctl04.c
+@@ -59,12 +59,12 @@ static void verify_sysctl(unsigned int n)
+ 	};
+ 
+ 	TEST(tst_syscall(__NR__sysctl, &args));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "sysctl(2) succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_err) {
++	if (TST_ERR == tc->exp_err) {
+ 		tst_res(TPASS | TTERRNO, "Got expected error");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO, "Got unexpected error, expected %s",
+diff --git a/testcases/kernel/syscalls/tee/tee02.c b/testcases/kernel/syscalls/tee/tee02.c
+index d454f4adb..744d51a87 100644
+--- a/testcases/kernel/syscalls/tee/tee02.c
++++ b/testcases/kernel/syscalls/tee/tee02.c
+@@ -66,14 +66,14 @@ static void tee_verify(unsigned int n)
+ 
+ 	TEST(tee(*(tc->fdin), *(tc->fdout), TEE_TEST_LEN, 0));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "tee() returned %ld, "
+-			"expected -1, errno:%d", TEST_RETURN,
++			"expected -1, errno:%d", TST_RET,
+ 			tc->exp_errno);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->exp_errno) {
++	if (TST_ERR != tc->exp_errno) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"tee() failed unexpectedly; expected: %d - %s",
+ 			tc->exp_errno, tst_strerrno(tc->exp_errno));
+diff --git a/testcases/kernel/syscalls/umask/umask01.c b/testcases/kernel/syscalls/umask/umask01.c
+index ee8062498..87bfcdcf8 100644
+--- a/testcases/kernel/syscalls/umask/umask01.c
++++ b/testcases/kernel/syscalls/umask/umask01.c
+@@ -39,15 +39,15 @@ static void verify_umask(void)
+ 
+ 	for (mskval = 0000; mskval < 01000; mskval++) {
+ 		TEST(umask(mskval));
+-		if (TEST_RETURN < 0 || TEST_RETURN > 0777) {
++		if (TST_RET < 0 || TST_RET > 0777) {
+ 			tst_brk(TFAIL, "umask(%o) result outside range %ld",
+-				mskval, TEST_RETURN);
++				mskval, TST_RET);
+ 		}
+ 
+-		if (mskval > 0000 && TEST_RETURN != mskval - 1) {
++		if (mskval > 0000 && TST_RET != mskval - 1) {
+ 			failflag = 1;
+ 			tst_res(TFAIL, "umask(%o) returned %ld, expected %d",
+-				mskval, TEST_RETURN, mskval - 1);
++				mskval, TST_RET, mskval - 1);
+ 		}
+ 
+ 		fd = SAFE_CREAT("testfile", 0777);
+diff --git a/testcases/kernel/syscalls/umount/umount01.c b/testcases/kernel/syscalls/umount/umount01.c
+index 80a80c9ac..b959356fb 100644
+--- a/testcases/kernel/syscalls/umount/umount01.c
++++ b/testcases/kernel/syscalls/umount/umount01.c
+@@ -38,13 +38,13 @@ static void verify_umount(void)
+ 
+ 	TEST(umount(MNTPOINT));
+ 
+-	if (TEST_RETURN != 0 && TEST_ERRNO == EBUSY) {
++	if (TST_RET != 0 && TST_ERR == EBUSY) {
+ 		tst_res(TINFO, "umount() Failed with EBUSY "
+ 			"possibly some daemon (gvfsd-trash) "
+ 			"is probing newly mounted dirs");
+ 	}
+ 
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_res(TFAIL | TTERRNO, "umount() Failed");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/umount/umount02.c b/testcases/kernel/syscalls/umount/umount02.c
+index 5bcd17d9e..ad8783e29 100644
+--- a/testcases/kernel/syscalls/umount/umount02.c
++++ b/testcases/kernel/syscalls/umount/umount02.c
+@@ -57,12 +57,12 @@ static void verify_umount(unsigned int n)
+ 
+ 	TEST(umount(tc->mntpoint));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "umount() succeeds unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (tc->exp_errno != TEST_ERRNO) {
++	if (tc->exp_errno != TST_ERR) {
+ 		tst_res(TFAIL | TTERRNO, "umount() should fail with %s",
+ 			tst_strerrno(tc->exp_errno));
+ 		return;
+diff --git a/testcases/kernel/syscalls/umount/umount03.c b/testcases/kernel/syscalls/umount/umount03.c
+index abff0ce86..3042aeac2 100644
+--- a/testcases/kernel/syscalls/umount/umount03.c
++++ b/testcases/kernel/syscalls/umount/umount03.c
+@@ -35,12 +35,12 @@ static void verify_umount(void)
+ {
+ 	TEST(umount(MNTPOINT));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "umount() succeeds unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != EPERM) {
++	if (TST_ERR != EPERM) {
+ 		tst_res(TFAIL | TTERRNO, "umount() should fail with EPERM");
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/unlink/unlink05.c b/testcases/kernel/syscalls/unlink/unlink05.c
+index 5305e9421..8d10052ce 100644
+--- a/testcases/kernel/syscalls/unlink/unlink05.c
++++ b/testcases/kernel/syscalls/unlink/unlink05.c
+@@ -59,7 +59,7 @@ static void verify_unlink(unsigned int n)
+ 	tc->setupfunc(fname);
+ 
+ 	TEST(unlink(fname));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TTERRNO, "unlink(%s) failed", tc->desc);
+ 		return;
+ 	}
+diff --git a/testcases/kernel/syscalls/unlink/unlink07.c b/testcases/kernel/syscalls/unlink/unlink07.c
+index e521b6409..04cd78342 100644
+--- a/testcases/kernel/syscalls/unlink/unlink07.c
++++ b/testcases/kernel/syscalls/unlink/unlink07.c
+@@ -52,13 +52,13 @@ static void verify_unlink(unsigned int n)
+ 	struct test_case_t *tc = &tcases[n];
+ 
+ 	TEST(unlink(tc->name));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "unlink(<%s>) succeeded unexpectedly",
+ 			tc->desc);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_errno) {
++	if (TST_ERR == tc->exp_errno) {
+ 		tst_res(TPASS | TTERRNO, "unlink(<%s>) failed as expected",
+ 			tc->desc);
+ 	} else {
+diff --git a/testcases/kernel/syscalls/unlink/unlink08.c b/testcases/kernel/syscalls/unlink/unlink08.c
+index ba435ee49..f1a778f9e 100644
+--- a/testcases/kernel/syscalls/unlink/unlink08.c
++++ b/testcases/kernel/syscalls/unlink/unlink08.c
+@@ -49,13 +49,13 @@ static struct test_case_t {
+ static void verify_unlink(struct test_case_t *tc)
+ {
+ 	TEST(unlink(tc->name));
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "unlink(<%s>) succeeded unexpectedly",
+ 			tc->desc);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO == tc->exp_errno) {
++	if (TST_ERR == tc->exp_errno) {
+ 		tst_res(TPASS | TTERRNO, "unlink(<%s>) failed as expected",
+ 			tc->desc);
+ 	} else {
+diff --git a/testcases/kernel/syscalls/utimes/utimes01.c b/testcases/kernel/syscalls/utimes/utimes01.c
+index b67543b09..c6ee75c59 100644
+--- a/testcases/kernel/syscalls/utimes/utimes01.c
++++ b/testcases/kernel/syscalls/utimes/utimes01.c
+@@ -93,7 +93,7 @@ static void utimes_verify(unsigned int i)
+ 
+ 	TEST(utimes(tc->pathname, tc->times));
+ 
+-	if (TEST_ERRNO == tc->exp_errno) {
++	if (TST_ERR == tc->exp_errno) {
+ 		tst_res(TPASS | TTERRNO, "utimes() worked as expected");
+ 	} else {
+ 		tst_res(TFAIL | TTERRNO,
+@@ -101,7 +101,7 @@ static void utimes_verify(unsigned int i)
+ 			tc->exp_errno, tst_strerrno(tc->exp_errno));
+ 	}
+ 
+-	if (TEST_ERRNO == 0 && utimes(tc->pathname, tmp_tv) == -1)
++	if (TST_ERR == 0 && utimes(tc->pathname, tmp_tv) == -1)
+ 		tst_brk(TBROK | TERRNO, "utimes() failed.");
+ }
+ 
+diff --git a/testcases/kernel/syscalls/vmsplice/vmsplice02.c b/testcases/kernel/syscalls/vmsplice/vmsplice02.c
+index 1e100a143..ec9fb8239 100644
+--- a/testcases/kernel/syscalls/vmsplice/vmsplice02.c
++++ b/testcases/kernel/syscalls/vmsplice/vmsplice02.c
+@@ -82,14 +82,14 @@ static void vmsplice_verify(unsigned int n)
+ 
+ 	TEST(vmsplice(*(tc->fd), tc->iov, tc->nr_segs, 0));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "vmsplice() returned %ld, "
+-			"expected -1, errno:%d", TEST_RETURN,
++			"expected -1, errno:%d", TST_RET,
+ 			tc->exp_errno);
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->exp_errno) {
++	if (TST_ERR != tc->exp_errno) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"vmsplice() failed unexpectedly; expected: %d - %s",
+ 			tc->exp_errno, tst_strerrno(tc->exp_errno));
+diff --git a/testcases/kernel/syscalls/wait4/wait401.c b/testcases/kernel/syscalls/wait4/wait401.c
+index 418abb993..77151ea85 100644
+--- a/testcases/kernel/syscalls/wait4/wait401.c
++++ b/testcases/kernel/syscalls/wait4/wait401.c
+@@ -43,14 +43,14 @@ static void run(void)
+ 	}
+ 
+ 	TEST(wait4(pid, &status, 0, &rusage));
+-	if (TEST_RETURN == -1) {
++	if (TST_RET == -1) {
+ 		tst_res(TFAIL | TERRNO, "wait4() failed");
+ 		return;
+ 	}
+ 
+-	if (TEST_RETURN != pid) {
++	if (TST_RET != pid) {
+ 		tst_res(TFAIL, "waitpid() returned wrong pid %li, expected %i",
+-		        TEST_RETURN, pid);
++			TST_RET, pid);
+ 	} else {
+ 		tst_res(TPASS, "waitpid() returned correct pid %i", pid);
+ 	}
+diff --git a/testcases/kernel/syscalls/write/write01.c b/testcases/kernel/syscalls/write/write01.c
+index c6c8fa8ca..592920b6d 100644
+--- a/testcases/kernel/syscalls/write/write01.c
++++ b/testcases/kernel/syscalls/write/write01.c
+@@ -40,15 +40,15 @@ static void verify_write(void)
+ 
+ 	for (i = BUFSIZ; i > 0; i--) {
+ 		TEST(write(fd, buf, i));
+-		if (TEST_RETURN == -1) {
++		if (TST_RET == -1) {
+ 			tst_res(TFAIL | TTERRNO, "write failed");
+ 			return;
+ 		}
+ 
+-		if (TEST_RETURN != i) {
++		if (TST_RET != i) {
+ 			badcount++;
+ 			tst_res(TINFO, "write() returned %ld, expected %d",
+-				TEST_RETURN, i);
++				TST_RET, i);
+ 		}
+ 	}
+ 
+diff --git a/testcases/kernel/syscalls/write/write02.c b/testcases/kernel/syscalls/write/write02.c
+index 3cec43d5f..34b9ae089 100644
+--- a/testcases/kernel/syscalls/write/write02.c
++++ b/testcases/kernel/syscalls/write/write02.c
+@@ -28,7 +28,7 @@ static void verify_write(void)
+ {
+ 	TEST(write(fd, NULL, 0));
+ 
+-	if (TEST_RETURN != 0) {
++	if (TST_RET != 0) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"write() should have succeeded with ret=0");
+ 		return;
+diff --git a/testcases/kernel/syscalls/write/write04.c b/testcases/kernel/syscalls/write/write04.c
+index 36ef97e8a..4ca8eca88 100644
+--- a/testcases/kernel/syscalls/write/write04.c
++++ b/testcases/kernel/syscalls/write/write04.c
+@@ -45,12 +45,12 @@ static void verify_write(void)
+ 
+ 	TEST(write(wfd, wbuf, sizeof(wbuf)));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "write() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != EAGAIN) {
++	if (TST_ERR != EAGAIN) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"write() failed unexpectedly, expected EAGAIN");
+ 		return;
+diff --git a/testcases/kernel/syscalls/write/write05.c b/testcases/kernel/syscalls/write/write05.c
+index ec157ae28..023b04a68 100644
+--- a/testcases/kernel/syscalls/write/write05.c
++++ b/testcases/kernel/syscalls/write/write05.c
+@@ -71,12 +71,12 @@ static void verify_write(unsigned int i)
+ 
+ 	TEST(write(*tc->fd, *tc->buf, tc->size));
+ 
+-	if (TEST_RETURN != -1) {
++	if (TST_RET != -1) {
+ 		tst_res(TFAIL, "write() succeeded unexpectedly");
+ 		return;
+ 	}
+ 
+-	if (TEST_ERRNO != tc->exp_errno) {
++	if (TST_ERR != tc->exp_errno) {
+ 		tst_res(TFAIL | TTERRNO,
+ 			"write() failed unexpectedly, expected %s",
+ 			tst_strerrno(tc->exp_errno));
+diff --git a/testcases/kernel/syscalls/writev/writev01.c b/testcases/kernel/syscalls/writev/writev01.c
+index 7753db4ac..539b529b8 100644
+--- a/testcases/kernel/syscalls/writev/writev01.c
++++ b/testcases/kernel/syscalls/writev/writev01.c
+@@ -130,17 +130,17 @@ static void test_writev(unsigned int i)
+ 
+ 	TEST(writev(*(tcase->pfd), *(tcase->piovec), tcase->iovcnt));
+ 
+-	ret = (TEST_RETURN == tcase->exp_ret);
+-	if (TEST_RETURN < 0 || tcase->exp_ret < 0) {
+-		ret &= (TEST_ERRNO == tcase->exp_errno);
++	ret = (TST_RET == tcase->exp_ret);
++	if (TST_RET < 0 || tcase->exp_ret < 0) {
++		ret &= (TST_ERR == tcase->exp_errno);
+ 		tst_res((ret ? TPASS : TFAIL),
+ 			"%s, expected: %d (%s), got: %ld (%s)", tcase->desc,
+ 			tcase->exp_ret, tst_strerrno(tcase->exp_errno),
+-			TEST_RETURN, tst_strerrno(TEST_ERRNO));
++			TST_RET, tst_strerrno(TST_ERR));
+ 	} else {
+ 		tst_res((ret ? TPASS : TFAIL),
+ 			"%s, expected: %d, got: %ld", tcase->desc,
+-			tcase->exp_ret, TEST_RETURN);
++			tcase->exp_ret, TST_RET);
+ 	}
+ }
+ 
+diff --git a/testcases/kernel/syscalls/writev/writev07.c b/testcases/kernel/syscalls/writev/writev07.c
+index 732218942..ec883ed15 100644
+--- a/testcases/kernel/syscalls/writev/writev07.c
++++ b/testcases/kernel/syscalls/writev/writev07.c
+@@ -71,14 +71,14 @@ static void test_partially_valid_iovec(int initial_file_offset)
+ 	off_after = (long) SAFE_LSEEK(fd, 0, SEEK_CUR);
+ 
+ 	/* bad errno */
+-	if (TEST_RETURN == -1 && TEST_ERRNO != EFAULT) {
++	if (TST_RET == -1 && TST_ERR != EFAULT) {
+ 		tst_res(TFAIL | TTERRNO, "unexpected errno");
+ 		SAFE_CLOSE(fd);
+ 		return;
+ 	}
+ 
+ 	/* nothing has been written */
+-	if (TEST_RETURN == -1 && TEST_ERRNO == EFAULT) {
++	if (TST_RET == -1 && TST_ERR == EFAULT) {
+ 		tst_res(TINFO, "got EFAULT");
+ 		/* initial file content remains untouched */
+ 		SAFE_LSEEK(fd, 0, SEEK_SET);
+@@ -100,8 +100,8 @@ static void test_partially_valid_iovec(int initial_file_offset)
+ 	}
+ 
+ 	/* writev() wrote more bytes than bytes preceding invalid iovec */
+-	tst_res(TINFO, "writev() has written %ld bytes", TEST_RETURN);
+-	if (TEST_RETURN > (long) wr_iovec[0].iov_len) {
++	tst_res(TINFO, "writev() has written %ld bytes", TST_RET);
++	if (TST_RET > (long) wr_iovec[0].iov_len) {
+ 		tst_res(TFAIL, "writev wrote more than expected");
+ 		SAFE_CLOSE(fd);
+ 		return;
+@@ -109,19 +109,19 @@ static void test_partially_valid_iovec(int initial_file_offset)
+ 
+ 	/* file content matches written bytes */
+ 	SAFE_LSEEK(fd, initial_file_offset, SEEK_SET);
+-	SAFE_READ(1, fd, tmp, TEST_RETURN);
+-	if (memcmp(tmp, wr_iovec[0].iov_base, TEST_RETURN) == 0) {
++	SAFE_READ(1, fd, tmp, TST_RET);
++	if (memcmp(tmp, wr_iovec[0].iov_base, TST_RET) == 0) {
+ 		tst_res(TPASS, "file has expected content");
+ 	} else {
+ 		tst_res(TFAIL, "file has unexpected content");
+-		tst_res_hexd(TFAIL, wr_iovec[0].iov_base, TEST_RETURN,
++		tst_res_hexd(TFAIL, wr_iovec[0].iov_base, TST_RET,
+ 				"expected:");
+-		tst_res_hexd(TFAIL, tmp, TEST_RETURN,
++		tst_res_hexd(TFAIL, tmp, TST_RET,
+ 				"actual file content:");
+ 	}
+ 
+ 	/* file offset has been updated according to written bytes */
+-	if (off_after == initial_file_offset + TEST_RETURN)
++	if (off_after == initial_file_offset + TST_RET)
+ 		tst_res(TPASS, "offset at %ld as expected", off_after);
+ 	else
+ 		tst_res(TFAIL, "offset unexpected %ld", off_after);
+diff --git a/testcases/network/lib6/in6_01.c b/testcases/network/lib6/in6_01.c
+index dc1461735..cb1801191 100644
+--- a/testcases/network/lib6/in6_01.c
++++ b/testcases/network/lib6/in6_01.c
+@@ -147,12 +147,12 @@ static void test_in6_is_addr_v4mapped(void)
+ 				"\"%s\" is not a valid IPv6 address",
+ 				maptab[i].addr);
+ 		TEST(IN6_IS_ADDR_V4MAPPED(in6.s6_addr));
+-		if (maptab[i].ismap == TEST_RETURN)
++		if (maptab[i].ismap == TST_RET)
+ 			tst_res(TINFO, "IN6_IS_ADDR_V4MAPPED(\"%s\") %ld",
+-				maptab[i].addr, TEST_RETURN);
++				maptab[i].addr, TST_RET);
+ 		else {
+ 			tst_res(TFAIL, "IN6_IS_ADDR_V4MAPPED(\"%s\") %ld",
+-				maptab[i].addr, TEST_RETURN);
++				maptab[i].addr, TST_RET);
+ 			return;
+ 		}
+ 	}
+diff --git a/testcases/network/lib6/in6_02.c b/testcases/network/lib6/in6_02.c
+index d5fa74996..6cc0242f9 100644
+--- a/testcases/network/lib6/in6_02.c
++++ b/testcases/network/lib6/in6_02.c
+@@ -66,24 +66,24 @@ static void if_nametoindex_test(void)
+ 		}
+ 
+ 		TEST(if_nametoindex(test_case[i].name));
+-		if (!TEST_RETURN != !test_case[i].nonzero) {
++		if (!TST_RET != !test_case[i].nonzero) {
+ 			tst_res(TFAIL, "if_nametoindex(%s) %ld [should be %szero]",
+-					test_case[i].name, TEST_RETURN,
++					test_case[i].name, TST_RET,
+ 					test_case[i].nonzero ? "non" : "");
+ 			return;
+ 		}
+-		if (TEST_RETURN) {
+-			pifn = if_indextoname(TEST_RETURN, ifname);
++		if (TST_RET) {
++			pifn = if_indextoname(TST_RET, ifname);
+ 			if (!pifn || strcmp(test_case[i].name, pifn)) {
+ 				tst_res(TFAIL,
+ 					"if_nametoindex(%s) %ld doesn't match if_indextoname(%ld) '%s'",
+-					test_case[i].name, TEST_RETURN,
+-					TEST_RETURN, pifn ? pifn : "");
++					test_case[i].name, TST_RET,
++					TST_RET, pifn ? pifn : "");
+ 				return;
+ 			}
+ 		}
+ 		tst_res(TINFO, "if_nametoindex(%s) %ld",
+-			test_case[i].name, TEST_RETURN);
++			test_case[i].name, TST_RET);
+ 	}
+ 
+ 	tst_res(TPASS, "if_nametoindex() test succeeded");
+@@ -95,11 +95,11 @@ static int sub_if_indextoname_test(unsigned int if_index)
+ 	unsigned int idx;
+ 
+ 	TEST((ifname == if_indextoname(if_index, ifname)));
+-	if (!TEST_RETURN) {
+-		if (TEST_ERRNO != ENXIO) {
++	if (!TST_RET) {
++		if (TST_ERR != ENXIO) {
+ 			tst_res(TFAIL,
+ 				"if_indextoname(%d) returns %ld but errno %d != ENXIO",
+-				if_index, TEST_RETURN, TEST_ERRNO);
++				if_index, TST_RET, TST_ERR);
+ 			return 0;
+ 		}
+ 		tst_res(TINFO, "if_indextoname(%d) returns NULL", if_index);
+@@ -176,7 +176,7 @@ static void if_nameindex_test(void)
+ 	pini = if_nameindex();
+ 	if (pini == NULL) {
+ 		tst_res(TFAIL, "if_nameindex() returns NULL, errno %d (%s)",
+-			TEST_ERRNO, strerror(TEST_ERRNO));
++			TST_ERR, strerror(TST_ERR));
+ 		return;
+ 	}
+ 	for (i = 0; pini[i].if_index; ++i) {
+-- 
+2.18.0
+

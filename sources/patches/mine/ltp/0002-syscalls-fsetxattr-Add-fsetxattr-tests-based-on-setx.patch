@@ -1,7 +1,7 @@
 From 0576232be2180670ae18e3c2f20d0721162938fc Mon Sep 17 00:00:00 2001
 From: Rafael David Tinoco <rafael.tinoco@linaro.org>
 Date: Wed, 25 Jul 2018 17:19:33 -0300
-Subject: [PATCH 1/2] syscalls/fsetxattr: Add fsetxattr() tests based on
+Subject: [PATCH 2/3] syscalls/fsetxattr: Add fsetxattr() tests based on
  setxattr() ones
 
 Fixes: #274
