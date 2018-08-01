@@ -26,3 +26,4 @@ ovs https://github.com/openvswitch/ovs.git
 apr https://github.com/apache/apr.git
 open-isns git@github.com:open-iscsi/open-isns.git
 bionic https://android.googlesource.com/platform/bionic/
+libhugetlbfs git@github.com:libhugetlbfs/libhugetlbfs.git

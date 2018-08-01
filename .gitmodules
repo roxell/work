@@ -167,3 +167,6 @@
 [submodule "sources/trees/kexec-takahiro"]
 	path = sources/trees/kexec-takahiro
 	url = https://git.linaro.org/people/takahiro.akashi/kexec-tools.git
+[submodule "sources/trees/libhugetlbfs"]
+	path = sources/trees/libhugetlbfs
+	url = git@github.com:libhugetlbfs/libhugetlbfs.git

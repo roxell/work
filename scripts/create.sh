@@ -34,7 +34,7 @@ while read name url
 do
     [ -d $name ] && continue
     gitclone $name $url
-    
+
 done < $FILE
 
 cd $OLDDIR
