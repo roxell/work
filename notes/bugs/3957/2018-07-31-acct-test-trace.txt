@@ -17237,7 +17237,7 @@
             acct-16955 [001] 13230.494474: funcgraph_entry:                   |                __d_lookup_rcu() {
             acct-16955 [001] 13230.494475: funcgraph_exit:         0.182 us   |                }
             acct-16955 [001] 13230.494476: funcgraph_exit:       + 19.994 us  |              }
-            acct-16955 [001] 13230.494477: funcgraph_entry:                   |              ext4_lookup() {          => d_lookup_rcu()        
+            acct-16955 [001] 13230.494477: funcgraph_entry:                   |              ext4_lookup() {          => do_filp_open() -> path_openat() -> do_last() -> lookup_open()       
             acct-16955 [001] 13230.494478: funcgraph_entry:                   |                ext4_find_entry() {
             acct-16955 [001] 13230.494479: funcgraph_entry:                   |                  fscrypt_setup_filename() {
             acct-16955 [001] 13230.494479: funcgraph_exit:         0.215 us   |                  }
