@@ -139,8 +139,8 @@ elif [ x$ARG0 == x"qcowhostname.sh" ]; then
 elif [ x$ARG0 == x"qcowvmlinuz.sh" ]; then
     # bring kernel image + ramdisk to host
 
-    VMLINUZ=$(ls -1 $TARGET/boot/vmlinuz* | tail -1)
-    INITRD=$(ls -1 $TARGET/boot/initrd* | tail -1)
+    VMLINUZ=$(ls -tr $TARGET/boot/vmlinuz* | tail -1)
+    INITRD=$(ls -tr $TARGET/boot/initrd* | tail -1)
 
     if [ -d $MACHINEDIR ]; then
         echo "bringing lxc$$ ($MACHINE) kernel/ramdisk to host"
