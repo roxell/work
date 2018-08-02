@@ -1,1 +1,6 @@
+*
+!master
+!next
+!stable
+!stable-rc
 !.gitignore
