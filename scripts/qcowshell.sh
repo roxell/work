@@ -148,6 +148,28 @@ elif [ x$ARG0 == x"qcowvmlinuz.sh" ]; then
         sudo cp $INITRD $MACHINEDIR/initrd.img
     fi
 
+elif [ x$ARG0 == x"qcowkerninst.sh" ]; then
+    # install kernel pkgs into qcow2 image
+
+    cd $OLDDIR
+
+    ls -1 *.deb 2>&1 > /dev/null 2>&1
+    if [ $? != 0 ]; then
+        echo "no .deb pkgs found in $(pwd)"
+    else
+        $SUDO -- lxc-start -n lxc$$
+        sleep 1
+
+        for pkg in *.deb; do
+            $SUDO lxc-attach -n lxc$$ -- dpkg -i /mnt/$(pwd)/$pkg
+        done
+
+        sleep 1
+        $SUDO -- lxc-stop -n lxc$$
+    fi
+
+    cd $MAINDIR
+
 fi
 
 set -e
