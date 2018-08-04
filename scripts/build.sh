@@ -15,23 +15,26 @@ MAINDIR=$(dirname $0)
 NUMCPU=`cat /proc/cpuinfo | grep proce | wc -l`
 NCPU=$(($NUMCPU - 1))
 
-KCROSS=0        # are you cross compiling ? (default: 0)
-KCLEAN=1        # want to run make clean ? (default: 1)
+KCROSS=1        # are you cross compiling ? (default: 0)
 GCLEAN=1        # want to run git reset ? (default: 1)
+KCLEAN=1        # want to run make clean ? (default: 1)
 KCONFIG=1       # want to copy and process conf file ? (default: 1)
 KPREPARE=1      # want to prepare ? (default: 1)
 KBUILD=1        # want to build ? :o) (default: 1)
-KSELFTESTS=1    # want to build and generate kselftests .tar.gz ? (default: 0)
+KSELFTESTS=0    # want to build and generate kselftests .tar.gz ? (default: 0)
 KDEBUG=1        # want your kernel to have debug symbols ? (default: 0)
 KVERBOSE=1      # want it to shut up ? (default: 1)
 
 MYARCH="amd64"  # (amd64|arm64|armhf|armel)
-TOARCH="amd64"  # (amd64|arm64|armhf|armel)
+TOARCH="armhf"  # (amd64|arm64|armhf|armel)
 
 FILEDIR=$(pwd | sed 's:work/sources/.*:work/sources/../files/:g')
 MAINDIR=$(pwd | sed 's:work/sources/.*:work/sources/../sources/linux:g')
 TARGET=$(pwd | sed 's:work/sources/.*:work/sources/../build/linux:g')
 KERNELS=$(pwd | sed 's:work/sources/.*:work/sources/../kernels:g')
+
+KRAMFS=1        # TARGET will be a KRAMFSSIZE GB tmpfs
+KRAMFSSIZE=12   # TARGET dir size in GB
 
 ARMHFCONFIG="$FILEDIR/config-armhf"
 ARM64CONFIG="$FILEDIR/config-arm64"
@@ -48,6 +51,12 @@ BEAGLECONFIG="$FILEDIR/config-dragon"
 OTHERCONFIG="$FILEDIR/config-other"
 
 # FUNCTIONS
+
+ctrlc() {
+    if [ $KRAMFS != 0 ]; then
+        sudo umount $TARGET/$dir
+    fi
+}
 
 getout() {
     echo ERROR: $@
@@ -221,6 +230,17 @@ for dir in $DIRS; do
 
     DESCRIBE=$(git describe)
 
+    if [ $KRAMFS != 0 ]; then
+        # target dir in a ramdisk for faster compilation
+
+        trap "ctrlc" 2
+
+        set -e
+        sudo mount -t tmpfs -o size=${KRAMFSSIZE}g tmpfs $TARGET/$dir
+        sudo chown -R $USER:$USER $TARGET/$dir
+        set +e
+    fi
+
     if [ $KCLEAN != 0 ]; then
 
         if [ $GCLEAN != 0 ]; then gitclean; fi
@@ -230,11 +250,6 @@ for dir in $DIRS; do
     fi
 
     if [ $KCONFIG != 0 ]; then
-
-        # if [ -d $TARGET/$dir/kernel ]; then
-        #     rm -rf $TARGET/$dir/*
-        #     rm  -f $TARGET/$dir/.config*
-        # fi
 
         cp $CONFIG $TARGET/$dir/.config
         fixconfig $TARGET/$dir/.config
@@ -288,6 +303,11 @@ for dir in $DIRS; do
     fi
 
     # if [ $KCLEAN != 0 ] && [ $GCLEAN != 0 ]; then gitclean; fi
+
+    if [ $KRAMFS != 0 ]; then
+        sudo umount $TARGET/$dir
+    fi
+
 
     echo -------- CLOSING $dir
 
