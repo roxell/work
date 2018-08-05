@@ -49,7 +49,7 @@ for dir in $DIRS; do
 
     git branch | grep -q "HEAD detached" && {
         echo CHECK THIS MANUALLY
-        cd $MAINDIR
+        cd $OLDDIR
         continue
     }
 
