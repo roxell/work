@@ -14,6 +14,7 @@ MAINDIR=$(dirname $0)
 
 NUMCPU=`cat /proc/cpuinfo | grep proce | wc -l`
 NCPU=$(($NUMCPU - 1))
+# NCPU=1
 
 KCROSS=0        # are you cross compiling ? (default: 0)
 GCLEAN=1        # want to run git reset ? (default: 1)
@@ -21,7 +22,7 @@ KCLEAN=1        # want to run make clean ? (default: 1)
 KCONFIG=1       # want to copy and process conf file ? (default: 1)
 KPREPARE=1      # want to prepare ? (default: 1)
 KBUILD=1        # want to build ? :o) (default: 1)
-KSELFTESTS=0    # want to build and generate kselftests .tar.gz ? (default: 0)
+KSELFTESTS=1    # want to build and generate kselftests .tar.gz ? (default: 0)
 KDEBUG=1        # want your kernel to have debug symbols ? (default: 0)
 KVERBOSE=1      # want it to shut up ? (default: 1)
 
@@ -47,8 +48,8 @@ BEAGLE=0        # beable board config file (default: 0)
 OTHER=0         # some other config file (default: 0)
 
 DRAGONCONFIG="$FILEDIR/config-dragon"
-HIKEYCONFIG="$FILEDIR/config-dragon"
-BEAGLECONFIG="$FILEDIR/config-dragon"
+HIKEYCONFIG="$FILEDIR/config-hikey"
+BEAGLECONFIG="$FILEDIR/config-beagle"
 OTHERCONFIG="$FILEDIR/config-other"
 
 # FUNCTIONS
@@ -162,6 +163,8 @@ if [ $KCROSS == 0 ]; then
     CROSS=""
 fi
 
+# ARCH TYPE
+
 if [ "$TOARCH" == "armhf" ]; then
     CONFIG=$ARMHFCONFIG
 elif [ "$TOARCH" == "arm64" ]; then
@@ -172,11 +175,20 @@ else
     getout "TOARCH: error"
 fi
 
+# BOARD
+
 if [ $DRAGON == 1 ]; then
     CONFIG=$DRAGONCONFIG
     if [ "$TOARCH" != "arm64" ]; then
-        getout "TOARCH: variable should be arm64 for dragonboards"
+        getout "TOARCH: variable should be arm64 for dragonboard"
     fi
+
+elif [ $BEAGLE == 1 ]; then
+    CONFIG=$BEAGLECONFIG
+    if [ "$TOARCH" != "armhf" ]; then
+        getout "TOARCH: variable should be armhf for beagleboard"
+    fi
+
 elif [ $OTHER == 1 ]; then
     CONFIG=$OTHERCONFIG
 fi
@@ -194,6 +206,8 @@ if [ $KCROSS != 0 ]; then
         getout "TOARCH: wrong arch"
     fi
 fi
+
+# COMPILE FLAGS
 
 COMPILE="make ARCH=$TOARCH V=$KVERBOSE -j$NCPU"
 
