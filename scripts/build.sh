@@ -16,27 +16,29 @@ NUMCPU=`cat /proc/cpuinfo | grep proce | wc -l`
 NCPU=$(($NUMCPU - 1))
 # NCPU=1
 
+MYARCH="amd64"  # (amd64|arm64|armhf|armel)
+TOARCH="amd64"  # (amd64|arm64|armhf|armel)
+
 KCROSS=0        # are you cross compiling ? (default: 0)
 GCLEAN=1        # want to run git reset ? (default: 1)
 KCLEAN=1        # want to run make clean ? (default: 1)
 KCONFIG=1       # want to copy and process conf file ? (default: 1)
+KMCONFIG=0      # want a menu to add/remove stuff from .config ? (default: 0)
+KLCONFIG=0      # want to merge a lsmod file into .config ? (default: 0)
 KPREPARE=1      # want to prepare ? (default: 1)
 KBUILD=1        # want to build ? :o) (default: 1)
-KSELFTESTS=1    # want to build and generate kselftests .tar.gz ? (default: 0)
-KDEBUG=1        # want your kernel to have debug symbols ? (default: 0)
+KSELFTESTS=0    # want to build and generate kselftests .tar.gz ? (default: 0)
+KDEBUG=1        # want your kernel to have debug symbols ? (default: 1)
 KVERBOSE=1      # want it to shut up ? (default: 1)
-
-MYARCH="amd64"  # (amd64|arm64|armhf|armel)
-TOARCH="amd64"  # (amd64|arm64|armhf|armel)
 
 FILEDIR=$(pwd | sed 's:work/sources/.*:work/sources/../files/:g')
 MAINDIR=$(pwd | sed 's:work/sources/.*:work/sources/../sources/linux:g')
 TARGET=$(pwd | sed 's:work/sources/.*:work/sources/../build/linux:g')
 KERNELS=$(pwd | sed 's:work/sources/.*:work/sources/../kernels:g')
 
-KRAMFS=0        # TARGET will be a KRAMFSSIZE GB tmpfs
+KRAMFS=1        # TARGET will be a KRAMFSSIZE GB tmpfs
 KRAMFSSIZE=12   # TARGET dir size in GB
-KRAMFSUMNT=0    # TARGET will be unmounted
+KRAMFSUMNT=1    # TARGET will be unmounted
 
 ARMHFCONFIG="$FILEDIR/config-armhf"
 ARM64CONFIG="$FILEDIR/config-arm64"
@@ -50,6 +52,7 @@ OTHER=0         # some other config file (default: 0)
 DRAGONCONFIG="$FILEDIR/config-dragon"
 HIKEYCONFIG="$FILEDIR/config-hikey"
 BEAGLECONFIG="$FILEDIR/config-beagle"
+BEAGLELCONFIG="$FILEDIR/lsmod-beagle"
 OTHERCONFIG="$FILEDIR/config-other"
 
 # FUNCTIONS
@@ -179,18 +182,23 @@ fi
 
 if [ $DRAGON == 1 ]; then
     CONFIG=$DRAGONCONFIG
+    CONFIG=$DRAGONLCONFIG
+
     if [ "$TOARCH" != "arm64" ]; then
         getout "TOARCH: variable should be arm64 for dragonboard"
     fi
 
 elif [ $BEAGLE == 1 ]; then
     CONFIG=$BEAGLECONFIG
+    LCONFIG=$BEAGLELCONFIG
+
     if [ "$TOARCH" != "armhf" ]; then
         getout "TOARCH: variable should be armhf for beagleboard"
     fi
 
 elif [ $OTHER == 1 ]; then
     CONFIG=$OTHERCONFIG
+    CONFIG=$OTHERLCONFIG
 fi
 
 if [ $KCROSS != 0 ]; then
@@ -245,6 +253,8 @@ for dir in $DIRS; do
 
     DESCRIBE=$(git describe)
 
+    ## kernel target ramdisk
+
     if [ $KRAMFS != 0 ]; then
         # target dir in a ramdisk for faster compilation
 
@@ -256,6 +266,8 @@ for dir in $DIRS; do
         set +e
     fi
 
+    ## kernel cleanup
+
     if [ $KCLEAN != 0 ]; then
 
         if [ $GCLEAN != 0 ]; then gitclean; fi
@@ -264,19 +276,38 @@ for dir in $DIRS; do
         $COMPILE O=$TARGET/$dir clean
     fi
 
+    ## kernel config
+
     if [ $KCONFIG != 0 ]; then
+
+        [ ! -f $CONFIG ] && getout "$CONFIG is not a valid config file"
 
         cp $CONFIG $TARGET/$dir/.config
         fixconfig $TARGET/$dir/.config
-        # $COMPILE O=$TARGET/$dir menuconfig
-        $COMPILE O=$TARGET/$dir olddefconfig
+
+        CONFIGOPTION="olddefconfig"
+
+        if [ $KMCONFIG != 0 ]; then
+            CONFIGOPTION="menuconfig"
+        fi
+
+        $COMPILE O=$TARGET/$dir $CONFIGOPTION
+
+        if [ $KLCONFIG != 0 ]; then
+            [ ! -f $LCONFIG ] && getout "$LCONFIG is not a valid local config file"
+            $COMPILE LSMOD=$LCONFIG O=$TARGET/$dir localmodconfig
+        fi
     fi
+
+    ## kernel prepare
 
     if [ $KPREPARE != 0 ]; then
 
         $COMPILE O=$TARGET/$dir prepare
         $COMPILE O=$TARGET/$dir scripts
     fi
+
+    ## kernel build
 
     if [ $KBUILD != 0 ]; then
         true
@@ -290,6 +321,8 @@ for dir in $DIRS; do
         [ ! -d $KERNELS/$dir/$DESCRIBE ] && getout "kernels directory could not be created"
         mv $TARGET/$dir/../*.deb $KERNELS/$dir/$DESCRIBE
     fi
+
+    ## kernel selftests
 
     if [ $KSELFTESTS != 0 ]; then
 
@@ -317,7 +350,7 @@ for dir in $DIRS; do
         mv $TARGET/$dir/tools.tar.gz $KERNELS/$dir/$DESCRIBE
     fi
 
-    # if [ $KCLEAN != 0 ] && [ $GCLEAN != 0 ]; then gitclean; fi
+    ## kernel target ramdisk cleanup
 
     if [ $KRAMFS != 0 ]; then
         if [ $KRAMFSUMNT != 0 ]; then

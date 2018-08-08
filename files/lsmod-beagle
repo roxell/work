@@ -1,0 +1,98 @@
+Module                  Size  Used by
+dm_mod                118784  0
+dax                    20480  1 dm_mod
+devlink                45056  0
+ebtable_filter         16384  0
+ebtables               28672  1 ebtable_filter
+ip6table_filter        16384  0
+ip6_tables             24576  1 ip6table_filter
+cpufreq_powersave      16384  0
+cpufreq_userspace      16384  0
+cpufreq_ondemand       16384  0
+cpufreq_conservative    16384  0
+iptable_filter         16384  0
+fuse                   98304  3
+bridge                151552  0
+stp                    16384  1 bridge
+llc                    16384  2 bridge,stp
+omapdrm                69632  0
+drm_kms_helper        139264  1 omapdrm
+drm                   335872  3 omapdrm,drm_kms_helper
+sd_mod                 45056  2
+sg                     32768  0
+omapdss               229376  1
+cec                    49152  1 omapdss
+omap_wdt               16384  0
+ax88179_178a           24576  0
+usbnet                 32768  1 ax88179_178a
+mii                    16384  2 usbnet,ax88179_178a
+bq27xxx_battery_hdq    16384  0
+bq27xxx_battery        24576  1 bq27xxx_battery_hdq
+ti_soc_thermal         32768  0
+snd_soc_davinci_mcasp    24576  0
+snd_soc_omap           16384  1 snd_soc_davinci_mcasp
+extcon_palmas          16384  0
+omap_hdq               20480  0
+omap_rng               16384  0
+snd_soc_tlv320aic3x    49152  0
+at24                   20480  0
+rng_core               16384  1 omap_rng
+wire                   36864  2 bq27xxx_battery_hdq,omap_hdq
+tmp102                 16384  0
+snd_soc_simple_card    16384  0
+snd_soc_simple_card_utils    16384  1 snd_soc_simple_card
+snd_soc_core          163840  5 snd_soc_davinci_mcasp,snd_soc_simple_card_utils,snd_soc_omap,snd_soc_tlv320aic3x,snd_soc_simple_card
+snd_pcm_dmaengine      16384  2 snd_soc_omap,snd_soc_core
+snd_pcm                90112  5 snd_soc_davinci_mcasp,snd_pcm_dmaengine,snd_soc_omap,snd_soc_core,snd_soc_tlv320aic3x
+snd_timer              28672  1 snd_pcm
+snd                    61440  3 snd_timer,snd_soc_core,snd_pcm
+uas                    20480  0
+soundcore              16384  1 snd
+leds_gpio              16384  0
+connector_hdmi         16384  1
+encoder_tpd12s015      16384  1
+omapdss_base           16384  4 omapdrm,omapdss,encoder_tpd12s015,connector_hdmi
+gpio_fan               16384  0
+usb_storage            53248  2 uas
+pwm_tiehrpwm           16384  0
+ip_tables              24576  1 iptable_filter
+x_tables               28672  5 ip_tables,ebtables,iptable_filter,ip6table_filter,ip6_tables
+autofs4                40960  2
+ext4                  593920  2
+crc16                  16384  1 ext4
+mbcache                16384  1 ext4
+jbd2                  102400  1 ext4
+fscrypto               24576  1 ext4
+ecb                    16384  0
+btrfs                1212416  0
+crc32c_generic         16384  5
+xor                    16384  1 btrfs
+zstd_decompress        69632  1 btrfs
+zstd_compress         167936  1 btrfs
+xxhash                 20480  2 zstd_compress,zstd_decompress
+zlib_deflate           28672  1 btrfs
+raid6_pq               98304  1 btrfs
+xhci_plat_hcd          16384  0
+xhci_hcd              188416  1 xhci_plat_hcd
+usbcore               204800  6 usbnet,usb_storage,ax88179_178a,xhci_plat_hcd,uas,xhci_hcd
+micrel                 16384  0
+phy_omap_usb2          16384  2
+phy_ti_pipe3           16384  2
+phy_omap_control       16384  2 phy_omap_usb2,phy_ti_pipe3
+dwc3                  106496  0
+davinci_mdio           16384  0
+udc_core               36864  1 dwc3
+ahci_platform          16384  0
+libahci_platform       16384  1 ahci_platform
+libahci                32768  2 ahci_platform,libahci_platform
+libata                204800  3 ahci_platform,libahci_platform,libahci
+ti_abb_regulator       20480  0
+scsi_mod              196608  5 sd_mod,usb_storage,libata,uas,sg
+omap_ocp2scp           16384  0
+dwc3_omap              16384  0
+ti_cpsw                36864  0
+cpsw_ale               20480  1 ti_cpsw
+cpsw_common            16384  1 ti_cpsw
+davinci_cpdma          20480  1 ti_cpsw
+omap_hsmmc             28672  0
+pbias_regulator        16384  1
