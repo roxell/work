@@ -14,7 +14,7 @@ MAINDIR=$(dirname $0)
 
 NUMCPU=`cat /proc/cpuinfo | grep proce | wc -l`
 NCPU=$(($NUMCPU - 1))
-# NCPU=1
+#NCPU=1
 
 MYARCH="amd64"  # (amd64|arm64|armhf|armel)
 TOARCH="amd64"  # (amd64|arm64|armhf|armel)
@@ -36,9 +36,9 @@ MAINDIR=$(pwd | sed 's:work/sources/.*:work/sources/../sources/linux:g')
 TARGET=$(pwd | sed 's:work/sources/.*:work/sources/../build/linux:g')
 KERNELS=$(pwd | sed 's:work/sources/.*:work/sources/../kernels:g')
 
-KRAMFS=1        # TARGET will be a KRAMFSSIZE GB tmpfs
+KRAMFS=0        # TARGET will be a KRAMFSSIZE GB tmpfs (default: 0)
 KRAMFSSIZE=12   # TARGET dir size in GB
-KRAMFSUMNT=1    # TARGET will be unmounted
+KRAMFSUMNT=0    # TARGET will be unmounted (default: 0)
 
 ARMHFCONFIG="$FILEDIR/config-armhf"
 ARM64CONFIG="$FILEDIR/config-arm64"
@@ -203,6 +203,7 @@ fi
 
 if [ $KCROSS != 0 ]; then
     if [ "$TOARCH" == "armhf" ]; then
+        CC="gcc-6"
         CROSS="arm-linux-gnueabihf-"
         TOARCH="arm"
     elif [ "$TOARCH" == "armel" ]; then
