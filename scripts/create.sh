@@ -21,12 +21,12 @@ gitclone() {
 
     echo ====
     echo CLONING: $1
-    git submodule add -f $url $name
+    git clone $url $name
 }
 
 cd $MAINDIR
 
-FILE=$(ls -1 1_* | head -1)
+FILE=$(ls -1 0_* | head -1)
 
 [ ! -f $FILE ] && getout no trees file found
 

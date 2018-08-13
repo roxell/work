@@ -1,4 +1,0 @@
-ltp git@github.com:linux-test-project/ltp.git
-ltp-android https://android.googlesource.com/platform/external/ltp
-lkft-tools https://github.com/Linaro/lkft-tools.git
-lkft-website git@github.com:rafaeldtinoco/lkft-website.git
