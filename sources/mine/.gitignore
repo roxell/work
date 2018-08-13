@@ -1,7 +1,0 @@
-lkft-website
-ltp
-meta-96boards
-random
-scripts
-*.deb
-!.gitignore
