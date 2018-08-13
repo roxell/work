@@ -25,7 +25,7 @@ gitclone() {
     echo ====
     echo CLONING: $1
 
-    git submodule add -b $branch -f $url $name
+    git clone -f $url -b $branch $name --single-branch
 }
 
 cd $MAINDIR
@@ -38,7 +38,7 @@ while read name url branch
 do
     [ -d $name ] && continue
     gitclone $name $url $branch
-    
+
 done < $FILE
 
 cd $OLDDIR

@@ -26,7 +26,7 @@ gitclone() {
 
 cd $MAINDIR
 
-FILE=$(ls -1 0_* | head -1)
+FILE=$(ls -1 1_* | head -1)
 
 [ ! -f $FILE ] && getout no trees file found
 
