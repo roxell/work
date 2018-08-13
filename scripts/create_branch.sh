@@ -25,7 +25,7 @@ gitclone() {
     echo ====
     echo CLONING: $1
 
-    git clone -f $url -b $branch $name --single-branch
+    git clone $url -b $branch $name --single-branch
 }
 
 cd $MAINDIR
