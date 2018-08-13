@@ -28,6 +28,7 @@ KLCONFIG=0      # want to merge a lsmod file into .config ? (default: 0)
 KPREPARE=1      # want to prepare ? (default: 1)
 KBUILD=1        # want to build ? :o) (default: 1)
 KSELFTESTS=0    # want to build and generate kselftests .tar.gz ? (default: 0)
+KSELFTESTSCL=1  # want to clean kselftests tree before building ? (default: 1)
 KDEBUG=1        # want your kernel to have debug symbols ? (default: 1)
 KVERBOSE=1      # want it to shut up ? (default: 1)
 
@@ -339,7 +340,11 @@ for dir in $DIRS; do
         # $COMPILE -C tools selftests
         # $COMPILE -C tools/testing/selftests TARGETS=gpio all
         # $COMPILE -C tools/testing/selftests TARGETS=zram all
-        $COMPILE -C tools/testing/selftests clean
+
+        if [ $KSELFTESTSCL != 0 ]; then
+            $COMPILE -C tools/testing/selftests clean
+        fi
+
         $COMPILE -C tools/testing/selftests all
 
         tar cfz $TARGET/$dir/tools.tar.gz ./tools
