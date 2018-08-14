@@ -4,7 +4,7 @@
 # this script builds a debian package from upstream code
 #
 
-CHOICE=$1
+CHOICE=$(basename $1)
 MAINDIR=$(dirname $0)/$CHOICE
 OLDDIR=$PWD
 DESTDIR="$HOME/work/pkgs"
