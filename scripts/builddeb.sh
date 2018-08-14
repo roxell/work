@@ -8,7 +8,13 @@ CHOICE=$(basename $1)
 MAINDIR=$(dirname $0)/$CHOICE
 OLDDIR=$PWD
 DESTDIR="$HOME/work/pkgs"
-ARCH=$(arch)
+DEBIANIZER="$HOME/work/sources/debianizer/"
+NCPU=$(nproc)
+DEBARCH=$(dpkg-architecture -qDEB_BUILD_ARCH)
+
+export DEBFULLNAME="Rafael David Tinoco"
+export DEBEMAIL="rafael.tinoco@linaro.org"
+export DEB_BUILD_OPTIONS="parallel=$NCPU nostrip noopt nocheck debug"
 
 getout() {
     echo ERROR: $@
@@ -22,7 +28,7 @@ cleanout() {
 
 cd $MAINDIR
 
-[ ! -s debian ] && getout "no debian dir found"
+[ ! -s debian ] && ln -s $DEBIANIZER/$(basename $PWD) ./debian
 [ ! -f debian/changelog.initial ] && getout "no initial changelog"
 
 # check if a new build is needed
@@ -30,13 +36,14 @@ cd $MAINDIR
 GITDESC=$(git describe --long)
 [ $? != 0 ] && getout "git describe error"
 
-[ -f $DESTDIR/$ARCH/$(basename $PWD)/.gitdesc ] && \
-    OLDGITDESC=$(cat $DESTDIR/$ARCH/$(basename $PWD)/.gitdesc) || \
+[ -f $DESTDIR/$DEBARCH/$(basename $PWD)/.gitdesc ] && \
+    OLDGITDESC=$(cat $DESTDIR/$DEBARCH/$(basename $PWD)/.gitdesc) || \
     OLDGITDESC=""
 
 [ "$OLDGITDESC" == "$GITDESC" ] && cleanout "already built"
 
-dch -p -v "$(date +%Y%m%d%H%M)-$(git describe --long)" -D unstable "Upstream commit $(git describe --long)"
+#dch -p -v "$(date +%Y%m%d%H%M)-$(git describe --long)" -D unstable "Upstream commit $(git describe --long)"
+dch -p -v "$(git describe --long)" -D unstable "Upstream commit $(git describe --long)"
 
 fakeroot debian/rules clean
 fakeroot debian/rules build
@@ -45,11 +52,11 @@ fakeroot debian/rules binary
 cp debian/changelog.initial debian/changelog
 fakeroot debian/rules clean
 
-PACKAGE=$(ls -1atr ../*.deb | tail -1)
-ls $PACKAGE
-mkdir -p $DESTDIR/$(arch)/$(basename $PWD)
-cp $PACKAGE $DESTDIR/$(arch)/$(basename $PWD)/
-[ $? == 0 ] && echo $GITDESC > $DESTDIR/$ARCH/$(basename $PWD)/.gitdesc
+PACKAGE=$(ls -1atr ../*_$DEBARCH.deb | tail -1)
+[ ! -f $PACKAGE ] && getout "package generation error"
+mkdir -p $DESTDIR/$DEBARCH/$(basename $PWD)
+cp $PACKAGE $DESTDIR/$DEBARCH/$(basename $PWD)/
+[ $? == 0 ] && echo $GITDESC > $DESTDIR/$DEBARCH/$(basename $PWD)/.gitdesc
 rm $PACKAGE
 
 cd $OLDDIR
