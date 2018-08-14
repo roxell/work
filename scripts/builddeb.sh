@@ -11,6 +11,10 @@ DESTDIR="$HOME/work/pkgs"
 DEBIANIZER="$HOME/work/sources/debianizer/"
 NCPU=$(nproc)
 DEBARCH=$(dpkg-architecture -qDEB_BUILD_ARCH)
+LOCKFILE=$MAINDIR/.lockfile
+
+[ ! $(which lockfile-create) ] && getout "no lockfile-create"
+[ ! $(which lockfile-remove) ] && getout "no lockfile-remove"
 
 export DEBFULLNAME="Rafael David Tinoco"
 export DEBEMAIL="rafael.tinoco@linaro.org"
@@ -26,6 +30,7 @@ cleanout() {
     exit 0
 }
 
+lockfile-create $LOCKFILE
 cd $MAINDIR
 
 [ ! -s debian ] && ln -s $DEBIANIZER/$(basename $PWD) ./debian
@@ -60,3 +65,4 @@ cp $PACKAGE $DESTDIR/$DEBARCH/$(basename $PWD)/
 rm $PACKAGE
 
 cd $OLDDIR
+lockfile-remove $LOCKFILE
