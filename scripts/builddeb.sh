@@ -53,8 +53,8 @@ lockdown() {
 lockup() {
     lockfile-remove --lock-name $LOCKFILE
     lockfile-remove --lock-name $GLOBALLOCK
-    rm $LOCKFILE
-    rm $GLOBALLOCK
+    #rm -f $LOCKFILE
+    #rm -f $GLOBALLOCK
 }
 
 trap "ctrlc" 2
