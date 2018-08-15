@@ -4,14 +4,17 @@
 # this script builds a debian package from upstream code
 #
 
-CHOICE=$(basename $1)
-CHOICE2=$2
-MAINDIR=$(dirname $0)/$CHOICE
-OLDDIR=$PWD
-DESTDIR="$HOME/work/pkgs"
-DEBIANIZER="$HOME/work/sources/debianizer/"
 NCPU=$(nproc)
 DEBARCH=$(dpkg-architecture -qDEB_BUILD_ARCH)
+
+CHOICE=$(basename $1)
+CHOICE2=$2
+
+OLDDIR=$PWD
+MAINDIR=$HOME/work/sources/trees/$CHOICE
+DEBIANIZER="$HOME/work/sources/debianizer/"
+DESTDIR="$HOME/work/pkgs"
+
 GLOBALLOCK=$MAINDIR/../.lockfile
 LOCKFILE=$MAINDIR/.lockfile
 
@@ -43,13 +46,15 @@ ctrlc() {
 }
 
 lockdown() {
-    lockfile-create --use-pid --lock-name $GLOBALLOCK
-    lockfile-create --use-pid --lock-name $LOCKFILE
+    lockfile-create --lock-name $GLOBALLOCK
+    lockfile-create --lock-name $LOCKFILE
 }
 
 lockup() {
     lockfile-remove --lock-name $LOCKFILE
     lockfile-remove --lock-name $GLOBALLOCK
+    rm $LOCKFILE
+    rm $GLOBALLOCK
 }
 
 trap "ctrlc" 2
