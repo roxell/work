@@ -30,11 +30,26 @@ cleanout() {
     exit 0
 }
 
+gitcleanup() {
+    git reset --hard
+    git clean -f
+}
+
+ctrlc() {
+    gitcleanup
+    lockfile-remove $LOCKFILE
+    cd $OLDDIR
+}
+
+trap "ctrlc" 2
 lockfile-create $LOCKFILE
 cd $MAINDIR
 
+[ ! -d .git ] && getout "not a git repo"
 [ ! -s debian ] && ln -s $DEBIANIZER/$(basename $PWD) ./debian
 [ ! -f debian/changelog.initial ] && getout "no initial changelog"
+
+gitcleanup
 
 # check if a new build is needed
 
@@ -63,6 +78,8 @@ mkdir -p $DESTDIR/$DEBARCH/$(basename $PWD)
 cp $PACKAGE $DESTDIR/$DEBARCH/$(basename $PWD)/
 [ $? == 0 ] && echo $GITDESC > $DESTDIR/$DEBARCH/$(basename $PWD)/.gitdesc
 rm $PACKAGE
+
+gitcleanup
 
 cd $OLDDIR
 lockfile-remove $LOCKFILE
