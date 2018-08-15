@@ -47,7 +47,7 @@ cd /tmp/$$
 
 for arch in $(ls -1 $MAINDIR); do
     for pkg in $(ls -1 $MAINDIR/$arch); do
-        for deb in $(ls -1 $MAINDIR/$arch/$pkg/*.deb); do
+        for deb in $(ls -1 $MAINDIR/$arch/$pkg/*.deb 2> /dev/null); do
 
             filename=${deb/\.deb}
             rpm=$filename.rpm
