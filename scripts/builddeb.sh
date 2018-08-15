@@ -37,6 +37,7 @@ cleanout() {
 }
 
 gitcleanup() {
+    cd $MAINDIR
     git reset --hard
     git clean -fd
 }
@@ -79,7 +80,14 @@ GITDESC=$(git describe --long)
 
 [ "$OLDGITDESC" == "$GITDESC" ] && [ "$CHOICE2" != "force" ] && cleanout "already built"
 
+WHERETO=$DESTDIR/$DEBARCH/$(basename $PWD)
+[ ! -d $WHERETO ] && getout "dir where to place not found"
+
+# debian generic changelog file
+
 dch -p -v "$(git describe --long)" -D unstable "Upstream commit $(git describe --long)"
+
+# build debian package
 
 fakeroot debian/rules clean
 fakeroot debian/rules build
@@ -88,12 +96,33 @@ fakeroot debian/rules binary
 cp debian/changelog.initial debian/changelog
 fakeroot debian/rules clean
 
+# generate debian package
+
+mkdir /tmp/$$
+mkdir -p $WHERETO
+
 PACKAGE=$(ls -1atr ../*_$DEBARCH.deb | tail -1)
 [ ! -f $PACKAGE ] && getout "package generation error"
-mkdir -p $DESTDIR/$DEBARCH/$(basename $PWD)
-cp $PACKAGE $DESTDIR/$DEBARCH/$(basename $PWD)/
-[ $? == 0 ] && echo $GITDESC > $DESTDIR/$DEBARCH/$(basename $PWD)/.gitdesc
-rm $PACKAGE
+mv $PACKAGE /tmp/$$
+[ $? == 0 ] && echo $GITDESC > $WHERETO/.gitdesc
+
+# generate rpm and tgz from deb package
+
+cd /tmp/$$
+DEBFILE=$(ls -1 *.deb | tail -1)
+[ ! -f $DEBFILE ] && getout "tmp debian package not found"
+sudo alien --to-tgz --to-rpm $DEBFILE
+sleep 5
+RPMFILE=$(ls -1 *.rpm | tail -1)
+TGZFILE=$(ls -1 *.tgz | tail -1)
+mv $RPMFILE ${DEBFILE/\.deb}.rpm
+mv $TGZFILE ${DEBFILE/\.deb}.tgz
+mv *.deb $WHERETO
+mv *.rpm $WHERETO
+mv *.tgz $WHERETO
+
+cd $MAINDIR
+rmdir /tmp/$$
 
 gitcleanup
 
