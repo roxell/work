@@ -25,6 +25,7 @@ lockdown() {
             break
         fi
         sleep 3
+        # TODO: add a limit and exit
     done
 }
 
