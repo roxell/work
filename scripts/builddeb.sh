@@ -113,6 +113,7 @@ PACKAGE=$(ls -1atr ../*_$DEBARCH.deb | tail -1)
 mv $PACKAGE $WHERETO
 [ $? == 0 ] && echo $GITDESC > $WHERETO/.gitdesc
 
+cp debian/changelog.initial debian/changelog
 gitcleanup
 
 cd $OLDDIR
