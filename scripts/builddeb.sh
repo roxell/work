@@ -98,31 +98,12 @@ fakeroot debian/rules clean
 
 # generate debian package
 
-mkdir /tmp/$$
 mkdir -p $WHERETO
 
 PACKAGE=$(ls -1atr ../*_$DEBARCH.deb | tail -1)
 [ ! -f $PACKAGE ] && getout "package generation error"
-mv $PACKAGE /tmp/$$
+mv $PACKAGE $WHERETO
 [ $? == 0 ] && echo $GITDESC > $WHERETO/.gitdesc
-
-# generate rpm and tgz from deb package
-
-cd /tmp/$$
-DEBFILE=$(ls -1 *.deb | tail -1)
-[ ! -f $DEBFILE ] && getout "tmp debian package not found"
-sudo alien --to-tgz --to-rpm $DEBFILE
-sleep 5
-RPMFILE=$(ls -1 *.rpm | tail -1)
-TGZFILE=$(ls -1 *.tgz | tail -1)
-mv $RPMFILE ${DEBFILE/\.deb}.rpm
-mv $TGZFILE ${DEBFILE/\.deb}.tgz
-mv *.deb $WHERETO
-mv *.rpm $WHERETO
-mv *.tgz $WHERETO
-
-cd $MAINDIR
-rmdir /tmp/$$
 
 gitcleanup
 
