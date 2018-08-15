@@ -74,6 +74,7 @@ cd $MAINDIR
 [ ! -d .git ] && getout "not a git repo"
 [ ! -s debian ] && ln -s $DEBIANIZER/$(basename $PWD) ./debian
 [ ! -f debian/changelog.initial ] && getout "no initial changelog"
+cp debian/changelog.initial debian/changelog
 
 gitcleanup
 
@@ -101,7 +102,6 @@ fakeroot debian/rules clean
 fakeroot debian/rules build
 fakeroot debian/rules install
 fakeroot debian/rules binary
-cp debian/changelog.initial debian/changelog
 fakeroot debian/rules clean
 
 # generate debian package
