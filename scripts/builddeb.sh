@@ -11,6 +11,7 @@ DESTDIR="$HOME/work/pkgs"
 DEBIANIZER="$HOME/work/sources/debianizer/"
 NCPU=$(nproc)
 DEBARCH=$(dpkg-architecture -qDEB_BUILD_ARCH)
+GLOBALLOCK=$MAINDIR/../.lockfile
 LOCKFILE=$MAINDIR/.lockfile
 
 [ ! $(which lockfile-create) ] && getout "no lockfile-create"
@@ -32,17 +33,19 @@ cleanout() {
 
 gitcleanup() {
     git reset --hard
-    git clean -f
+    git clean -fd
 }
 
 ctrlc() {
     gitcleanup
     lockfile-remove $LOCKFILE
+    lockfile-remove $GLOBALLOCK
     cd $OLDDIR
 }
 
 trap "ctrlc" 2
-lockfile-create $LOCKFILE
+lockfile-create -r20 $GLOBALLOCK
+lockfile-create -r20 $LOCKFILE
 cd $MAINDIR
 
 [ ! -d .git ] && getout "not a git repo"
@@ -62,7 +65,6 @@ GITDESC=$(git describe --long)
 
 [ "$OLDGITDESC" == "$GITDESC" ] && cleanout "already built"
 
-#dch -p -v "$(date +%Y%m%d%H%M)-$(git describe --long)" -D unstable "Upstream commit $(git describe --long)"
 dch -p -v "$(git describe --long)" -D unstable "Upstream commit $(git describe --long)"
 
 fakeroot debian/rules clean
@@ -82,4 +84,6 @@ rm $PACKAGE
 gitcleanup
 
 cd $OLDDIR
+
 lockfile-remove $LOCKFILE
+lockfile-remove $GLOBALLOCK
