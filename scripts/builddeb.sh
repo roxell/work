@@ -15,8 +15,7 @@ MAINDIR=$HOME/work/sources/trees/$CHOICE
 DEBIANIZER="$HOME/work/sources/debianizer/"
 DESTDIR="$HOME/work/pkgs"
 
-GLOBALLOCK=$MAINDIR/../.lockfile
-LOCKFILE=$MAINDIR/.lockfile
+LOCKFILE=$MAINDIR/../.lockfile
 
 [ ! $(which lockfile-create) ] && getout "no lockfile-create"
 [ ! $(which lockfile-remove) ] && getout "no lockfile-remove"
@@ -46,16 +45,25 @@ ctrlc() {
     lockup
 }
 
+# this is stupid, i know. will fix later
+# for this a total racy impl just for testing
+
 lockdown() {
-    lockfile-create --lock-name $GLOBALLOCK
-    lockfile-create --lock-name $LOCKFILE
+    while true; do
+        if [ ! -f $LOCKFILE ]; then
+            touch $LOCKFILE
+            break
+        fi
+        sleep 3
+    done
 }
 
 lockup() {
-    lockfile-remove --lock-name $LOCKFILE
-    lockfile-remove --lock-name $GLOBALLOCK
-    #rm -f $LOCKFILE
-    #rm -f $GLOBALLOCK
+    if [ -f $LOCKFILE ]; then
+        rm $LOCKFILE
+    else
+        getout "my lock disappeared =)"
+    fi
 }
 
 trap "ctrlc" 2
