@@ -5,6 +5,7 @@
 #
 
 CHOICE=$(basename $1)
+CHOICE2=$2
 MAINDIR=$(dirname $0)/$CHOICE
 OLDDIR=$PWD
 DESTDIR="$HOME/work/pkgs"
@@ -16,7 +17,6 @@ LOCKFILE=$MAINDIR/.lockfile
 
 [ ! $(which lockfile-create) ] && getout "no lockfile-create"
 [ ! $(which lockfile-remove) ] && getout "no lockfile-remove"
-
 export DEBFULLNAME="Rafael David Tinoco"
 export DEBEMAIL="rafael.tinoco@linaro.org"
 export DEB_BUILD_OPTIONS="parallel=$NCPU nostrip noopt nocheck debug"
@@ -40,18 +40,16 @@ gitcleanup() {
 
 ctrlc() {
     lockup
-    gitcleanup
-    cd $OLDDIR
 }
 
 lockdown() {
-    lockfile-create -r20 $GLOBALLOCK
-    lockfile-create -r20 $LOCKFILE
+    lockfile-create --use-pid --lock-name $GLOBALLOCK
+    lockfile-create --use-pid --lock-name $LOCKFILE
 }
 
 lockup() {
-    lockfile-remove $LOCKFILE
-    lockfile-remove $GLOBALLOCK
+    lockfile-remove --lock-name $LOCKFILE
+    lockfile-remove --lock-name $GLOBALLOCK
 }
 
 trap "ctrlc" 2
@@ -74,7 +72,7 @@ GITDESC=$(git describe --long)
     OLDGITDESC=$(cat $DESTDIR/$DEBARCH/$(basename $PWD)/.gitdesc) || \
     OLDGITDESC=""
 
-[ "$OLDGITDESC" == "$GITDESC" ] && cleanout "already built"
+[ "$OLDGITDESC" == "$GITDESC" ] && [ "$CHOICE2" != "force" ] && cleanout "already built"
 
 dch -p -v "$(git describe --long)" -D unstable "Upstream commit $(git describe --long)"
 
