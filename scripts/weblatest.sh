@@ -22,9 +22,9 @@ for arch in $(ls -1 | grep -v latest); do
 
         mkdir -p latest/$pkg/$arch/
 
-        deb=$(ls -t1 $arch/$pkg/*.deb 2> /dev/null | tail -1)
-        rpm=$(ls -t1 $arch/$pkg/*.rpm 2> /dev/null | tail -1)
-        tgz=$(ls -t1 $arch/$pkg/*.tgz 2> /dev/null | tail -1)
+        deb=$(ls -t1 $arch/$pkg/*.deb 2> /dev/null | head -1)
+        rpm=$(ls -t1 $arch/$pkg/*.rpm 2> /dev/null | head -1)
+        tgz=$(ls -t1 $arch/$pkg/*.tgz 2> /dev/null | head -1)
 
         [ $deb ] && ln -s ../../../$deb ./latest/$pkg/$arch/$(basename $deb)
         [ $rpm ] && ln -s ../../../$rpm ./latest/$pkg/$arch/$(basename $rpm)
