@@ -47,9 +47,9 @@ endif
 	find tests -type f -maxdepth 1 -regex .*sh -exec cp {} $(CURDIR)/debian/hugetlbfs/opt/libhugetlbfs/tests \;
 	find tests -type f -maxdepth 1 -regex .*py -exec cp {} $(CURDIR)/debian/hugetlbfs/opt/libhugetlbfs/tests \;
 ifeq ($(DEB_HOST_ARCH_BITS),64)
-	find tests/obj64 -type f -perm -u=x -exec cp {} $(CURDIR)/debian/hugetlbfs/opt/libhugetlbfs/tests/obj64 \;
+	find tests/obj64 -type f -not -name \*.o -exec cp {} $(CURDIR)/debian/hugetlbfs/opt/libhugetlbfs/tests/obj64 \;
 else
-	find tests/obj32 -type f -perm -u=x -exec cp {} $(CURDIR)/debian/hugetlbfs/opt/libhugetlbfs/tests/obj32 \;
+	find tests/obj32 -type f -not -name \*.o -exec cp {} $(CURDIR)/debian/hugetlbfs/opt/libhugetlbfs/tests/obj32 \;
 endif
 	#
 	# tools
