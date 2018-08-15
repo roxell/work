@@ -22,11 +22,13 @@ export DEBEMAIL="rafael.tinoco@linaro.org"
 export DEB_BUILD_OPTIONS="parallel=$NCPU nostrip noopt nocheck debug"
 
 getout() {
+    lockup
     echo ERROR: $@
     exit 1
 }
 
 cleanout() {
+    lockup
     echo EXIT: $@
     exit 0
 }
@@ -37,15 +39,24 @@ gitcleanup() {
 }
 
 ctrlc() {
+    lockup
     gitcleanup
-    lockfile-remove $LOCKFILE
-    lockfile-remove $GLOBALLOCK
     cd $OLDDIR
 }
 
+lockdown() {
+    lockfile-create -r20 $GLOBALLOCK
+    lockfile-create -r20 $LOCKFILE
+}
+
+lockup() {
+    lockfile-remove $LOCKFILE
+    lockfile-remove $GLOBALLOCK
+}
+
 trap "ctrlc" 2
-lockfile-create -r20 $GLOBALLOCK
-lockfile-create -r20 $LOCKFILE
+lockdown
+
 cd $MAINDIR
 
 [ ! -d .git ] && getout "not a git repo"
@@ -85,5 +96,4 @@ gitcleanup
 
 cd $OLDDIR
 
-lockfile-remove $LOCKFILE
-lockfile-remove $GLOBALLOCK
+lockup
