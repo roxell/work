@@ -2,7 +2,13 @@
 
 MAINDIR="/var/www/html"
 
-[ ! -d $MAINDIR ] && { echo "no maindir found" ; exit 1 }
+
+getout() {
+    echo ERROR: $@
+    exit 1
+}
+
+[ ! -d $MAINDIR ] && getout "no maindir found"
 
 OLDDIR=$PWD
 cd $MAINDIR
@@ -20,6 +26,7 @@ for arch in $(ls -1 | grep -v latest); do
         [ $deb ] && ln -s ../$deb ./latest/$(basename $deb)
         [ $rpm ] && ln -s ../$rpm ./latest/$(basename $rpm)
         [ $tgz ] && ln -s ../$tgz ./latest/$(basename $tgz)
+
     done
 done
 
