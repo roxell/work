@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 #
 # this script generates rpm and tgz pkgs from deb ones
