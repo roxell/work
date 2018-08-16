@@ -56,8 +56,8 @@ lockdown() {
 
         echo "trying to acquire the lock..."
 
-        # wait a bit for the lock
-        # WARN: cron should not be less than 900 sec
+        # WARN: wait for the lock
+        # WARN: 900 second is the min cron interval
 
         sleep 15
         i=$((i+15))
@@ -116,14 +116,11 @@ fakeroot debian/rules clean
 # generate debian package
 
 mkdir -p $WHERETO
-
 PACKAGE=$(ls -1atr ../*_$DEBARCH.deb | tail -1)
-[ ! -f $PACKAGE ] && getout "package generation error"
-mv $PACKAGE $WHERETO
+[ ! -f $PACKAGE ] && echo "package generation error" || echo $PACKAGE generated
+mv $PACKAGE $WHERETO 2> /dev/null
 [ $? == 0 ] && echo $GITDESC > $WHERETO/.gitdesc
 
-cp debian/changelog.initial debian/changelog
-
+gitcleanup
 cd $OLDDIR
-
 lockup
