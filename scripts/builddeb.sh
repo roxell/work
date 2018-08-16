@@ -96,7 +96,7 @@ GITDESC=$(git describe --long)
     OLDGITDESC=$(cat $DESTDIR/$DEBARCH/$(basename $PWD)/.gitdesc) || \
     OLDGITDESC=""
 
-[ "$OLDGITDESC" == "$GITDESC" ] && [ "$CHOICE2" != "force" ] && cleanout "already built"
+[ "$OLDGITDESC" == "$GITDESC" ] && [ "$CHOICE2" != "force" ] && { lockup ; cleanout "already built" }
 
 WHERETO=$DESTDIR/$DEBARCH/$(basename $PWD)
 [ ! -d $WHERETO ] && getout "dir where to place not found"
