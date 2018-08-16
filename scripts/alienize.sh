@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 #
 # this script generates rpm and tgz pkgs from deb ones
@@ -61,16 +61,31 @@ lockdown
 OLDDIR=$PWD
 MAINDIR="$HOME/work/pkgs"
 
-mkdir /tmp/$$
-cd /tmp/$$
+TEMPDIR="/tmp/$$"
+mkdir $TEMPDIR
+cd $TEMPDIR
 
 # check existing .deb files and see if associated .tgz and .rpm exist
 # if not, convert .deb files using alien tool
 
 for arch in $(ls -1 $MAINDIR); do
+
+    # redhat architecture logic
+
+    if [ "$arch" == "amd64" ]; then
+        altarch="x86_64"
+    elif [ "$arch" == "arm64" ]; then
+        altarch="aarch64"
+    elif [ "$arch" == "armhf" ]; then
+        altarch="armhfp"
+    elif [ "$arch" == "i386" ]; then
+        altarch="i386"
+    fi
+
     for pkg in $(ls -1 $MAINDIR/$arch); do
         for deb in $(ls -1 $MAINDIR/$arch/$pkg/*.deb 2> /dev/null); do
 
+            echo $filename
             filename=${deb/\.deb}
             rpm=$filename.rpm
             tgz=$filename.tgz
@@ -79,7 +94,7 @@ for arch in $(ls -1 $MAINDIR); do
 
             if [ ! -f $rpm ]; then
                 echo generating $rpm
-                sudo alien --to-rpm $deb 2>&1 > /dev/null 2>&1
+                sudo alien --target=$altarch --to-rpm $deb 2>&1 > /dev/null 2>&1
                 tempfile=$(ls -1 *.rpm 2>/dev/null)
                 if [ -f $tempfile ]; then
                     mv $tempfile $filename.rpm
@@ -110,6 +125,8 @@ for arch in $(ls -1 $MAINDIR); do
 done
 
 cd $OLDDIR
-rmdir /tmp/$$
+if [ "$TEMPDIR" != "/tmp" ] && [ "$TEMPDIR" != "/tmp/" ]; then
+    sudo rm -f $TEMPDIR
+fi
 
 lockup
