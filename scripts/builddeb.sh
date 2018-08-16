@@ -15,23 +15,23 @@ MAINDIR=$HOME/work/sources/trees/$CHOICE
 DEBIANIZER="$HOME/work/sources/debianizer/"
 DESTDIR="$HOME/work/pkgs"
 
+# global (to machine) lock since this runs inside containers
+# only one build (1 container) at a time, it uses all ncpu
+# WARN: ONLY ONE BUILD at a time
+
 LOCKFILE=$MAINDIR/../.lockfile
 
-[ ! $(which lockfile-create) ] && getout "no lockfile-create"
-[ ! $(which lockfile-remove) ] && getout "no lockfile-remove"
 export DEBFULLNAME="Rafael David Tinoco"
 export DEBEMAIL="rafael.tinoco@linaro.org"
 export DEB_BUILD_OPTIONS="parallel=$NCPU nostrip noopt nocheck debug"
 
 getout() {
-    lockup
     gitcleanup
     echo ERROR: $@
     exit 1
 }
 
 cleanout() {
-    lockup
     echo EXIT: $@
     exit 0
 }
@@ -43,10 +43,6 @@ gitcleanup() {
     cp debian/changelog.initial debian/changelog
 }
 
-ctrlc() {
-    lockup
-}
-
 # this is stupid, i know. will fix later
 # for this a total racy impl just for testing
 
@@ -54,7 +50,7 @@ lockdown() {
 
     while true; do
         if [ ! -f $LOCKFILE ]; then
-            touch $LOCKFILE
+            echo $$ > $LOCKFILE
             break
         fi
 
@@ -81,7 +77,6 @@ lockup() {
     fi
 }
 
-trap "ctrlc" 2
 lockdown
 
 cd $MAINDIR

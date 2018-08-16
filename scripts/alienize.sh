@@ -4,6 +4,9 @@
 # this script generates rpm and tgz pkgs from deb ones
 #
 
+# global to host since only host should run this script
+# WARN: dont run this script inside containers
+
 LOCKFILE=/tmp/alienize.lock
 
 getout() {
@@ -18,8 +21,6 @@ ctrlc() {
         rm -rf /tmp/$$/*
         rmdir /tmp/$$
     fi
-
-    lockup
 }
 
 
@@ -29,7 +30,7 @@ lockdown() {
 
     while true; do
         if [ ! -f $LOCKFILE ]; then
-            touch $LOCKFILE
+            echo $$ > $LOCKFILE
             break
         fi
 
