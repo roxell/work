@@ -51,6 +51,7 @@ lockdown() {
     while true; do
         if [ ! -f $LOCKFILE ]; then
             echo $$ > $LOCKFILE
+            sync
             break
         fi
 
@@ -70,11 +71,8 @@ lockdown() {
 }
 
 lockup() {
-    if [ -f $LOCKFILE ]; then
-        rm $LOCKFILE
-    else
-        getout "my lock disappeared =)"
-    fi
+    rm -f $LOCKFILE
+    sync
 }
 
 lockdown
@@ -96,7 +94,7 @@ GITDESC=$(git describe --long)
     OLDGITDESC=$(cat $DESTDIR/$DEBARCH/$(basename $PWD)/.gitdesc) || \
     OLDGITDESC=""
 
-[ "$OLDGITDESC" == "$GITDESC" ] && [ "$CHOICE2" != "force" ] && { lockup ; cleanout "already built" }
+[ "$OLDGITDESC" == "$GITDESC" ] && [ "$CHOICE2" != "force" ] && { lockup ; sync; cleanout "already built"; }
 
 WHERETO=$DESTDIR/$DEBARCH/$(basename $PWD)
 [ ! -d $WHERETO ] && getout "dir where to place not found"

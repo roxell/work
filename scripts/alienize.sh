@@ -31,6 +31,7 @@ lockdown() {
     while true; do
         if [ ! -f $LOCKFILE ]; then
             echo $$ > $LOCKFILE
+            sync
             break
         fi
 
@@ -50,7 +51,8 @@ lockdown() {
 }
 
 lockup() {
-    rm $LOCKFILE
+    rm -f $LOCKFILE
+    sync
 }
 
 trap "ctrlc" 2
