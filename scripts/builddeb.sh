@@ -51,12 +51,25 @@ ctrlc() {
 # for this a total racy impl just for testing
 
 lockdown() {
+
     while true; do
         if [ ! -f $LOCKFILE ]; then
             touch $LOCKFILE
             break
         fi
-        sleep 3
+
+        echo "trying to acquire the lock..."
+
+        # wait a bit for the lock
+        # WARN: cron should not be less than 900 sec
+
+        sleep 15
+        i=$((i+15))
+        if [ $i -eq 900 ]; then
+            echo "could not obtain the lock, exiting"
+            exit 1
+        fi
+
     done
 }
 

@@ -33,6 +33,8 @@ lockdown() {
             break
         fi
 
+        echo "trying to acquire the lock"
+
         # wait a bit for the lock
         # WARN: cron should not be less than 120 sec
 
