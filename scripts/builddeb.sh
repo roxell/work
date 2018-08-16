@@ -25,6 +25,7 @@ export DEB_BUILD_OPTIONS="parallel=$NCPU nostrip noopt nocheck debug"
 
 getout() {
     lockup
+    gitcleanup
     echo ERROR: $@
     exit 1
 }
@@ -39,6 +40,7 @@ gitcleanup() {
     cd $MAINDIR
     git reset --hard
     git clean -fd
+    cp debian/changelog.initial debian/changelog
 }
 
 ctrlc() {
@@ -74,7 +76,6 @@ cd $MAINDIR
 [ ! -d .git ] && getout "not a git repo"
 [ ! -s debian ] && ln -s $DEBIANIZER/$(basename $PWD) ./debian
 [ ! -f debian/changelog.initial ] && getout "no initial changelog"
-cp debian/changelog.initial debian/changelog
 
 gitcleanup
 
@@ -114,7 +115,6 @@ mv $PACKAGE $WHERETO
 [ $? == 0 ] && echo $GITDESC > $WHERETO/.gitdesc
 
 cp debian/changelog.initial debian/changelog
-gitcleanup
 
 cd $OLDDIR
 

@@ -12,29 +12,42 @@ getout() {
 }
 
 ctrlc() {
+    # cleanup
+
+    if [ -d /tmp/$$ ]; then
+        rm -rf /tmp/$$/*
+        rmdir /tmp/$$
+    fi
+
     lockup
 }
 
-# this is stupid, i know. will fix later
-# for this a total racy impl just for testing
 
+i=0
 lockdown() {
+    # totally racy locking function
+
     while true; do
         if [ ! -f $LOCKFILE ]; then
             touch $LOCKFILE
             break
         fi
-        sleep 3
-        # TODO: add a limit and exit
+
+        # wait a bit for the lock
+        # WARN: cron should not be less than 120 sec
+
+        sleep 5
+        i=$((i+5))
+        if [ $i -eq 60 ]; then
+            echo "could not obtain the lock, exiting"
+            exit 1
+        fi
+
     done
 }
 
 lockup() {
-    if [ -f $LOCKFILE ]; then
-        rm $LOCKFILE
-    else
-        getout "my lock disappeared =)"
-    fi
+    rm $LOCKFILE
 }
 
 trap "ctrlc" 2
@@ -45,6 +58,9 @@ MAINDIR="$HOME/work/pkgs"
 
 mkdir /tmp/$$
 cd /tmp/$$
+
+# check existing .deb files and see if associated .tgz and .rpm exist
+# if not, convert .deb files using alien tool
 
 for arch in $(ls -1 $MAINDIR); do
     for pkg in $(ls -1 $MAINDIR/$arch); do
