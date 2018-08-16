@@ -7,22 +7,46 @@
 # global to host since only host should run this script
 # WARN: dont run this script inside containers
 
-LOCKFILE=/tmp/alienize.lock
+OLDDIR=$PWD
+MAINDIR="$HOME/work/pkgs"
+LOCKFILE=/tmp/.alienize.lock
+TEMPDIR="/tmp/$$"
+
+#
+# functions
+#
 
 getout() {
     echo ERROR: $@
     exit 1
 }
 
-ctrlc() {
-    # cleanup
-
-    if [ -d /tmp/$$ ]; then
-        rm -rf /tmp/$$/*
-        rmdir /tmp/$$
-    fi
+destroytmp() {
+    [ -d $TEMPDIR ] && sudo umount $TEMPDIR && sudo rmdir $TEMPDIR || \
+        { rm $LOCKFILE ; getout "could not umount temp dir"; }
 }
 
+createtmp() {
+    sudo mkdir $TEMPDIR || { rm $LOCKFILE ; getout "could not create temp dir"; }
+    sudo mount -t tmpfs -o size=3G tmpfs $TEMPDIR || { rm $LOCKFILE ; getout "could not mount temp dir"; }
+    sudo chown -R $USER $TEMPDIR
+    sync
+}
+
+cleantmp() {
+    WHEREAMI=$PWD
+    cd $OLDDIR
+    destroytmp
+    createtmp
+    cd $WHEREAMI
+    sync
+}
+
+ctrlc() {
+    [ -d $TEMPDIR ] && sudo umount $TEMPDIR 2>&1 > /dev/null 2>&1
+    lockup
+    exit 1
+}
 
 i=0
 lockdown() {
@@ -55,69 +79,85 @@ lockup() {
     sync
 }
 
-trap "ctrlc" 2
+#
+# begin
+#
+
 lockdown
-
-OLDDIR=$PWD
-MAINDIR="$HOME/work/pkgs"
-
-TEMPDIR="/tmp/$$"
-mkdir $TEMPDIR
-cd $TEMPDIR
+trap "ctrlc" 2
 
 # check existing .deb files and see if associated .tgz and .rpm exist
 # if not, convert .deb files using alien tool
 
+createtmp
+cd $TEMPDIR
+
 for arch in $(ls -1 $MAINDIR); do
 
-    # redhat architecture logic
-
-    if [ "$arch" == "amd64" ]; then
-        altarch="x86_64"
-    elif [ "$arch" == "arm64" ]; then
-        altarch="aarch64"
-    elif [ "$arch" == "armhf" ]; then
-        altarch="armhfp"
-    elif [ "$arch" == "i386" ]; then
-        altarch="i386"
-    fi
-
     for pkg in $(ls -1 $MAINDIR/$arch); do
+
+        #
+        # for each existing .deb package
+        #
+
         for deb in $(ls -1 $MAINDIR/$arch/$pkg/*.deb 2> /dev/null); do
 
-            echo $filename
             filename=${deb/\.deb}
             rpm=$filename.rpm
-            tgz=$filename.tgz
+            tar=$filename.tar
+
+            #
+            # query info from .deb package
+            #
+
+            package=$(dpkg-deb -f $deb Package)
+            version=$(dpkg-deb -f $deb Version)
+            architecture=$(dpkg-deb -f $deb Architecture)
+
+            if [ "$architecture" == "amd64" ]; then
+                altarch="x86_64"
+            elif [ "$architecture" == "arm64" ]; then
+                altarch="aarch64"
+            elif [ "$architecture" == "armhf" ]; then
+                altarch="armhfp"
+            elif [ "$architecture" == "i386" ]; then
+                altarch="i386"
+            fi
+
+            # debug:
+            #
+            # echo $filename
+            # echo $package
+            # echo $version
+            # echo $architecture
+
+            echo $deb being checked...
 
             # rpm
 
             if [ ! -f $rpm ]; then
-                echo generating $rpm
-                sudo alien --target=$altarch --to-rpm $deb 2>&1 > /dev/null 2>&1
-                tempfile=$(ls -1 *.rpm 2>/dev/null)
-                if [ -f $tempfile ]; then
-                    mv $tempfile $filename.rpm
-                else
-                    getout "does $tempfile exist ?"
-                fi
+                echo $rpm being generated...
+                dpkg -x $deb .
+                fpm -C $TEMPDIR -s dir -t rpm -n $package --rpm-compression gzip -v $version -a $altarch .
+                tempfile=$(ls -1 *.rpm 2>/dev/null) && { mv $tempfile $filename.rpm; }
+
+                cleantmp
             else
-                echo $rpm already exists
+                echo $rpm already generated!
             fi
 
-            # tgz
 
-            if [ ! -f $tgz ]; then
-                echo generating $tgz
-                sudo alien --to-tgz $deb 2>&1 > /dev/null 2>&1
-                tempfile=$(ls -1 *.tgz 2>/dev/null)
-                if [ -f $tempfile ]; then
-                    mv $tempfile $filename.tgz
-                else
-                    getout "does $tempfile exist ?"
-                fi
+            # tar
+
+            if [ ! -f $tar ]; then
+                echo $tar being generated...
+                dpkg -x $deb .
+                fpm -C $TEMPDIR -s dir -t tar -n $package .
+                tempfile=$(ls -1 *.tar 2>/dev/null) && { mv $tempfile $filename.tar; }
+
+                cleantmp
             else
-                echo $tgz already exists
+                echo $tar already generated!
             fi
 
         done
@@ -125,8 +165,6 @@ for arch in $(ls -1 $MAINDIR); do
 done
 
 cd $OLDDIR
-if [ "$TEMPDIR" != "/tmp" ] && [ "$TEMPDIR" != "/tmp/" ]; then
-    sudo rm -f $TEMPDIR
-fi
-
+destroytmp
 lockup
+exit 0
