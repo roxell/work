@@ -26,9 +26,7 @@ KCONFIG=1       # want to copy and process conf file ? (default: 1)
 KMCONFIG=0      # want a menu to add/remove stuff from .config ? (default: 0)
 KLCONFIG=0      # want to merge a lsmod file into .config ? (default: 0)
 KPREPARE=1      # want to prepare ? (default: 1)
-KBUILD=0        # want to build ? :o) (default: 1)
-KSELFTESTS=0    # want to build and generate kselftests .tar.gz ? (default: 0)
-KSELFTESTSCL=1  # want to clean kselftests tree before building ? (default: 1)
+KBUILD=1        # want to build ? :o) (default: 1)
 KDEBUG=1        # want your kernel to have debug symbols ? (default: 1)
 KVERBOSE=1      # want it to shut up ? (default: 1)
 
@@ -39,8 +37,8 @@ KERNELS="$HOME/work/kernels"
 
 LOCKFILE="$MAINDIR/.global.lock"
 
-KRAMFS=0        # TARGET will be a KRAMFSSIZE GB tmpfs (default: 0)
-KRAMFSSIZE=12   # TARGET dir size in GB
+KRAMFS=1        # TARGET will be a KRAMFSSIZE GB tmpfs (default: 0)
+KRAMFSSIZE=20   # TARGET dir size in GB
 KRAMFSUMNT=0    # TARGET will be unmounted (default: 0)
 
 ARMHFCONFIG="$FILEDIR/config-armhf"
@@ -57,7 +55,6 @@ HIKEYCONFIG="$FILEDIR/config-hikey"
 BEAGLECONFIG="$FILEDIR/config-beagle"
 BEAGLELCONFIG="$FILEDIR/lsmod-beagle"
 OTHERCONFIG="$FILEDIR/config-other"
-
 
 # FUNCTIONS
 
@@ -197,11 +194,6 @@ fixconfig()
 
 # PREPARE
 
-if [ "$KSELFTESTS" != 0 ]; then
-    echo -n "kselftests require userland libs/headers! press any key..."
-    read
-fi
-
 if [ ! $TOARCH ] && [ $KCROSS != 0 ]; then
     getout "TOARCH: variable not set for CROSS"
 fi
@@ -300,6 +292,15 @@ for dir in $DIRS; do
 
     DESCRIBE=$(git describe --long)
 
+    if [ -d $KERNELS/$dir/$DESCRIBE ]; then
+
+        echo "kernel $DESCRIBE already packaged"
+        echo -------- CLOSING $dir
+        cd $OLDDIR
+        continue;
+
+    fi
+
     ## kernel target ramdisk
 
     if [ $KRAMFS != 0 ]; then
@@ -357,48 +358,29 @@ for dir in $DIRS; do
     ## kernel build
 
     if [ $KBUILD != 0 ]; then
-        true
         # $COMPILE O=$TARGET/$dir zImage
         # $COMPILE O=$TARGET/$dir modules
         # $COMPILE O=$TARGET/$dir modules_install INSTALL_MOD_PATH=$TARGET/$dir/modinstall
-        $COMPILE O=$TARGET/$dir bindeb-pkg
 
-        # move
-        mkdir -p $KERNELS/$dir/$DESCRIBE
-        [ ! -d $KERNELS/$dir/$DESCRIBE ] && getout "kernels directory could not be created"
-        mv $TARGET/$dir/../*.deb $KERNELS/$dir/$DESCRIBE
-    fi
+        if [ ! -d $KERNELS/$dir/$DESCRIBE ]; then
 
-    ## kernel selftests
+            # compile if there is no .deb for this kernel
 
-    if [ $KSELFTESTS != 0 ]; then
+            $COMPILE O=$TARGET/$dir bindeb-pkg ; sync
+            DEBS=$(ls -1 $TARGET/$dir/../*.deb | xargs 2>&1 > /dev/null)
 
-        if [ $KCROSS != 0 ]; then
-            echo "kselftests can't cross-compile. do it in a lxc container!"
-            exit 1
+            # move .deb packages into proper place
+
+            if [ "$DEBS" != "" ]; then
+                mkdir -p "$KERNELS/$dir/$DESCRIBE"
+                [ ! -d "$KERNELS/$dir/$DESCRIBE" ] && getout "kernels directory could not be created"
+                mv "$TARGET/$dir/../*.deb" "$KERNELS/$dir/$DESCRIBE"
+                rm "$TARGET/$dir/../*.{changes,build}"
+            fi
+
+        else
+            echo "kernel $DESCRIBE already packaged"
         fi
-
-        # kselftests generation
-
-        # $COMPILE -C tools clean
-        # $COMPILE -C tools gpio
-        # $COMPILE -C tools selftests
-        # $COMPILE -C tools/testing/selftests TARGETS=gpio all
-        # $COMPILE -C tools/testing/selftests TARGETS=zram all
-
-        if [ $KSELFTESTSCL != 0 ]; then
-            $COMPILE -C tools/testing/selftests clean
-        fi
-
-        $COMPILE -C tools/testing/selftests all
-
-        tar cfz $TARGET/$dir/tools.tar.gz ./tools
-
-        # move
-        mkdir -p $KERNELS/$dir/$DESCRIBE
-        [ ! -f $TARGET/$dir/tools.tar.gz ] && getout "tools not created"
-        [ ! -d $KERNELS/$dir/$DESCRIBE ] && getout "kernels directory could not be created"
-        mv $TARGET/$dir/tools.tar.gz $KERNELS/$dir/$DESCRIBE
     fi
 
     ## kernel target ramdisk cleanup
