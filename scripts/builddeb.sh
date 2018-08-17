@@ -25,6 +25,11 @@ export DEBFULLNAME="Rafael David Tinoco"
 export DEBEMAIL="rafael.tinoco@linaro.org"
 export DEB_BUILD_OPTIONS="parallel=$NCPU nostrip noopt nocheck debug"
 
+getoutlockup() {
+    lockup
+    getout $@
+}
+
 getout() {
     gitcleanup
     echo ERROR: $@
@@ -40,7 +45,7 @@ gitcleanup() {
     cd $MAINDIR
     git reset --hard
     git clean -fd
-    cp debian/changelog.initial debian/changelog
+    cat debian/changelog.initial > debian/changelog
 }
 
 # this is stupid, i know. will fix later
@@ -79,25 +84,32 @@ lockdown
 
 cd $MAINDIR
 
-[ ! -d .git ] && getout "not a git repo"
+# initial checks
+
+[ ! -d .git ] && getoutlockup "not a git repo"
 [ ! -s debian ] && ln -s $DEBIANIZER/$(basename $PWD) ./debian
-[ ! -f debian/changelog.initial ] && getout "no initial changelog"
+[ ! -f debian/changelog.initial ] && getoutlockup "no initial changelog"
 
 gitcleanup
 
-# check if a new build is needed
+# checks
 
 GITDESC=$(git describe --long)
-[ $? != 0 ] && getout "git describe error"
-
-[ -f $DESTDIR/$DEBARCH/$(basename $PWD)/.gitdesc ] && \
-    OLDGITDESC=$(cat $DESTDIR/$DEBARCH/$(basename $PWD)/.gitdesc) || \
-    OLDGITDESC=""
-
-[ "$OLDGITDESC" == "$GITDESC" ] && [ "$CHOICE2" != "force" ] && { lockup ; sync; cleanout "already built"; }
+[ $? != 0 ] && getoutlockup "git describe error"
 
 WHERETO=$DESTDIR/$DEBARCH/$(basename $PWD)
-[ ! -d $WHERETO ] && getout "dir where to place not found"
+[ ! -d $WHERETO ] && getoutlockup "dir where to place not found"
+
+OLDGITDESC=""
+if [ -f $WHERETO/.gitdesc ]; then
+    OLDGITDESC=$(cat $WHERETO/.gitdesc)
+fi
+
+# is it already built ?
+
+[ "$OLDGITDESC" == "$GITDESC" ] && [ "$CHOICE2" != "force" ] && {
+    lockup ; sync; cleanout "already built";
+}
 
 # debian generic changelog file
 
@@ -109,16 +121,26 @@ fakeroot debian/rules clean
 fakeroot debian/rules build
 fakeroot debian/rules install
 fakeroot debian/rules binary
-fakeroot debian/rules clean
+sync
 
 # generate debian package
 
 mkdir -p $WHERETO
-PACKAGE=$(ls -1atr ../*_$DEBARCH.deb | tail -1)
-[ ! -f $PACKAGE ] && echo "package generation error" || echo $PACKAGE generated
-mv $PACKAGE $WHERETO 2> /dev/null
-[ $? == 0 ] && echo $GITDESC > $WHERETO/.gitdesc
+filename=$(find .. -maxdepth 1 -name *_arm64.deb)
+[ $filename ] && filename=$(basename $filename) || filename="nenenene"
+find .. -maxdepth 1 -name $filename -exec mv {} $WHERETO/ \;
 
+ls $WHERETO/$filename && {
+        echo "$GITDESC generated"
+        echo $GITDESC > $WHERETO/.gitdesc
+    } || {
+        echo "$GITDESC NOT generated"
+        echo > $WHERETO/.gitdesc
+    }
+
+# clean debian/ and git repo
+
+fakeroot debian/rules clean
 gitcleanup
 cd $OLDDIR
 lockup
