@@ -11,6 +11,7 @@ OLDDIR=$PWD
 MAINDIR="$HOME/work/pkgs"
 LOCKFILE=/tmp/.alienize.lock
 TEMPDIR="/tmp/$$"
+USER=inaddy # $USER is having problems w/ cron
 
 PATH=$PATH:/usr/local/bin:/usr/local/sbin
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
