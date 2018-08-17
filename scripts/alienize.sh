@@ -12,6 +12,9 @@ MAINDIR="$HOME/work/pkgs"
 LOCKFILE=/tmp/.alienize.lock
 TEMPDIR="/tmp/$$"
 
+PATH=$PATH:/usr/local/bin:/usr/local/sbin
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+
 #
 # functions
 #
@@ -96,6 +99,8 @@ for arch in $(ls -1 $MAINDIR); do
 
     for pkg in $(ls -1 $MAINDIR/$arch); do
 
+        [ "$pkg" == "kselftest" ] && continue;
+
         #
         # for each existing .deb package
         #
@@ -137,11 +142,12 @@ for arch in $(ls -1 $MAINDIR); do
 
             if [ ! -f $txz ]; then
                 echo $tar being generated...
-                dpkg -x $deb .
-                fpm -C $TEMPDIR -s dir -t tar -n $package .
+                sudo dpkg -x $deb .
+                sudo fpm -C $TEMPDIR -s dir -t tar -n $package .
                 tempfile=$(ls -1 *.tar 2>/dev/null) && {
-                    tar cvfJ $filename.txz $tempfile
-                    rm $tempfile
+                    sudo tar cvfJ $filename.txz $tempfile
+                    sudo rm $tempfile
+                    sudo chown $USER $filename.txz
                 } || echo "file $deb was not converted to txz!"
 
                 cleantmp
@@ -154,9 +160,10 @@ for arch in $(ls -1 $MAINDIR); do
             if [ ! -f $rpm ]; then
                 echo $rpm being generated...
                 dpkg -x $deb .
-                fpm -C $TEMPDIR -s dir -t rpm -n $package --rpm-compression xz -v $version -a $altarch .
+                sudo fpm -C $TEMPDIR -s dir -t rpm -n $package --rpm-compression xz -v $version -a $altarch .
                 tempfile=$(ls -1 *.rpm 2>/dev/null) && {
-                    mv $tempfile $filename.rpm;
+                    sudo mv $tempfile $filename.rpm;
+                    sudo chown $USER $filename.rpm
                 } || echo "file $deb was not converted to rpm!"
 
                 cleantmp
