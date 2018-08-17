@@ -14,7 +14,7 @@ OLDDIR=$PWD
 cd $MAINDIR
 
 [ ! -d latest ] && mkdir latest
-rm -rf latest/* && mkdir -p latest/{deb,rpm,txz}
+rm -rf latest/* # && mkdir -p latest/{deb,rpm,txz}
 
 for arch in $(ls -1 | grep -v latest); do
 
@@ -24,9 +24,9 @@ for arch in $(ls -1 | grep -v latest); do
         rpm=$(ls -t1 $arch/$pkg/*.rpm 2> /dev/null | head -1)
         txz=$(ls -t1 $arch/$pkg/*.txz 2> /dev/null | head -1)
 
-        [ $deb ] && ln -s ../../$deb ./latest/deb/$(basename $deb)
-        [ $rpm ] && ln -s ../../$rpm ./latest/rpm/$(basename $rpm)
-        [ $txz ] && ln -s ../../$txz ./latest/txz/$(basename $txz)
+        [ $deb ] && ln -s ../$deb ./latest/$(basename $deb)
+        [ $rpm ] && ln -s ../$rpm ./latest/$(basename $rpm)
+        [ $txz ] && ln -s ../$txz ./latest/$(basename $txz)
 
     done
 done
