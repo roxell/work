@@ -104,7 +104,7 @@ for arch in $(ls -1 $MAINDIR); do
 
             filename=${deb/\.deb}
             rpm=$filename.rpm
-            tar=$filename.tar
+            txz=$filename.txz
 
             #
             # query info from .deb package
@@ -133,31 +133,35 @@ for arch in $(ls -1 $MAINDIR); do
 
             echo $deb being checked...
 
+            # txz
+
+            if [ ! -f $txz ]; then
+                echo $tar being generated...
+                dpkg -x $deb .
+                fpm -C $TEMPDIR -s dir -t tar -n $package .
+                tempfile=$(ls -1 *.tar 2>/dev/null) && {
+                    tar cvfJ $filename.txz $tempfile
+                    rm $tempfile
+                } || echo "file $deb was not converted to txz!"
+
+                cleantmp
+            else
+                echo $tar already generated!
+            fi
+
             # rpm
 
             if [ ! -f $rpm ]; then
                 echo $rpm being generated...
                 dpkg -x $deb .
-                fpm -C $TEMPDIR -s dir -t rpm -n $package --rpm-compression gzip -v $version -a $altarch .
-                tempfile=$(ls -1 *.rpm 2>/dev/null) && { mv $tempfile $filename.rpm; }
+                fpm -C $TEMPDIR -s dir -t rpm -n $package --rpm-compression xz -v $version -a $altarch .
+                tempfile=$(ls -1 *.rpm 2>/dev/null) && {
+                    mv $tempfile $filename.rpm;
+                } || echo "file $deb was not converted to rpm!"
 
                 cleantmp
             else
                 echo $rpm already generated!
-            fi
-
-
-            # tar
-
-            if [ ! -f $tar ]; then
-                echo $tar being generated...
-                dpkg -x $deb .
-                fpm -C $TEMPDIR -s dir -t tar -n $package .
-                tempfile=$(ls -1 *.tar 2>/dev/null) && { mv $tempfile $filename.tar; }
-
-                cleantmp
-            else
-                echo $tar already generated!
             fi
 
         done
