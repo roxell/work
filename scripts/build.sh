@@ -72,7 +72,7 @@ getout() {
 gitclean() {
     find . -name *.orig -exec rm {} \;
     find . -name *.rej -exec rm {} \;
-    git clean -f 2>&1 > /dev/null
+    git clean -fd 2>&1 > /dev/null
     git reset --hard 2>&1 > /dev/null
 }
 
@@ -204,7 +204,6 @@ fi
 
 if [ $KCROSS != 0 ]; then
     if [ "$TOARCH" == "armhf" ]; then
-        CC="gcc-6"
         CROSS="arm-linux-gnueabihf-"
         TOARCH="arm"
     elif [ "$TOARCH" == "armel" ]; then
@@ -253,7 +252,7 @@ for dir in $DIRS; do
 
     echo ++++++++ ENTERING $dir ...
 
-    DESCRIBE=$(git describe)
+    DESCRIBE=$(git describe --long)
 
     ## kernel target ramdisk
 
