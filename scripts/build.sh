@@ -32,10 +32,12 @@ KSELFTESTSCL=1  # want to clean kselftests tree before building ? (default: 1)
 KDEBUG=1        # want your kernel to have debug symbols ? (default: 1)
 KVERBOSE=1      # want it to shut up ? (default: 1)
 
-FILEDIR=$(pwd | sed 's:work/sources/.*:work/sources/../files/:g')
-MAINDIR=$(pwd | sed 's:work/sources/.*:work/sources/../sources/linux:g')
-TARGET=$(pwd | sed 's:work/sources/.*:work/sources/../build/linux:g')
-KERNELS=$(pwd | sed 's:work/sources/.*:work/sources/../kernels:g')
+FILEDIR="$HOME/work/files"
+MAINDIR="$HOME/work/sources/linux"
+TARGET="$HOME/work/build/linux"
+KERNELS="$HOME/work/kernels"
+
+LOCKFILE="$MAINDIR/.global.lock"
 
 KRAMFS=0        # TARGET will be a KRAMFSSIZE GB tmpfs (default: 0)
 KRAMFSSIZE=12   # TARGET dir size in GB
@@ -56,17 +58,25 @@ BEAGLECONFIG="$FILEDIR/config-beagle"
 BEAGLELCONFIG="$FILEDIR/lsmod-beagle"
 OTHERCONFIG="$FILEDIR/config-other"
 
+
 # FUNCTIONS
+
+getout() {
+    echo ERROR: $@
+    exit 1
+}
+
+getoutlockup() {
+    lockup
+    getout $@
+}
 
 ctrlc() {
     if [ $KRAMFS != 0 ]; then
         sudo umount $TARGET/$dir
     fi
-}
 
-getout() {
-    echo ERROR: $@
-    exit 1
+    lockup
 }
 
 gitclean() {
@@ -75,6 +85,40 @@ gitclean() {
     git clean -fd 2>&1 > /dev/null
     git reset --hard 2>&1 > /dev/null
 }
+
+# LOCKS
+
+i=0
+lockdown() {
+    # totally racy locking function
+
+    while true; do
+        if [ ! -f $LOCKFILE ]; then
+            echo $$ > $LOCKFILE
+            sync
+            break
+        fi
+
+        echo "trying to acquire the lock"
+
+        # wait a bit for the lock
+        # WARN: cron should not be less than 120 sec
+
+        sleep 5
+        i=$((i+5))
+        if [ $i -eq 60 ]; then
+            echo "could not obtain the lock, exiting"
+            exit 1
+        fi
+    done
+}
+
+lockup() {
+    rm -f $LOCKFILE
+    sync
+}
+
+# FIXCONFIG
 
 fixconfig()
 {
@@ -230,6 +274,8 @@ fi
 
 # BEGIN
 
+lockdown
+
 cd $MAINDIR
 
 [ ! -d $FILEDIR ] && getout "FILEDIR: something went wrong"
@@ -368,3 +414,5 @@ for dir in $DIRS; do
     cd $OLDDIR
 
 done
+
+lockup

@@ -9,8 +9,7 @@ CHOICE=$(echo $1 | sed 's:/$::')
 OLDDIR=$PWD
 FILEDIR="$HOME/work/files"
 MAINDIR="$HOME/work/sources/linux"
-
-LOCKFILE="$HOME/work/sources/linux/.global.lock"
+LOCKFILE="$MAINDIR/.global.lock"
 TEMPDIR="/tmp/$$"
 
 # VARIABLES (TODO: turn all this into args)
@@ -42,12 +41,12 @@ getoutlockup() {
 
 destroytmp() {
     [ -d $TEMPDIR ] && sudo umount $TEMPDIR && sudo rmdir $TEMPDIR || \
-        { rm $LOCKFILE ; getout "could not umount temp dir"; }
+        { rm -f $LOCKFILE ; getout "could not umount temp dir"; }
 }
 
 createtmp() {
-    sudo mkdir $TEMPDIR || { rm $LOCKFILE ; getout "could not create temp dir"; }
-    sudo mount -t tmpfs -o size=1G tmpfs $TEMPDIR || { rm $LOCKFILE ; getout "could not mount temp dir"; }
+    sudo mkdir $TEMPDIR || { rm -f $LOCKFILE ; getout "could not create temp dir"; }
+    sudo mount -t tmpfs -o size=1G tmpfs $TEMPDIR || { rm -f $LOCKFILE ; getout "could not mount temp dir"; }
     sudo chown -R $USER $TEMPDIR
 }
 
@@ -197,13 +196,17 @@ for dir in $DIRS; do
 
         echo "kselftest-$DESCRIBE.txz being generated"
 
-        $COMPILE -C tools clean && $COMPILE -C tools/testing/selftests all && {
+        $COMPILE -C tools clean
+        $COMPILE -C tools/testing/selftests all
+        RET=$?
 
+        if [ $RET -eq 0 ]; then
             tar cfJ $TARGET/kselftest-$DESCRIBE.txz ./tools
             ls $TARGET/kselftest-$DESCRIBE.txz
-            [ ! -f $TARGET/kselftest-$DESCRIBE.txz ] && getoutlockup "tools not created"
-
-        }
+            [ ! -f $TARGET/kselftest-$DESCRIBE.txz ] && getoutlockup "kselftest $DESCRIBE.txz not created"
+        else
+            echo "could not compile kselftest $DESCRIBE"
+        fi
 
         gitclean
     else
