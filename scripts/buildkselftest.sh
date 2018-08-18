@@ -9,7 +9,6 @@ CHOICE=$(echo $1 | sed 's:/$::')
 OLDDIR=$PWD
 FILEDIR="$HOME/work/files"
 MAINDIR="$HOME/work/sources/linux"
-LOCKFILE="$MAINDIR/.global.lock"
 TEMPDIR="/tmp/$$"
 
 # VARIABLES (TODO: turn all this into args)
@@ -17,8 +16,8 @@ TEMPDIR="/tmp/$$"
 NUMCPU=`cat /proc/cpuinfo | grep proce | wc -l`
 NCPU=$(($NUMCPU - 1))
                                              # pick your poison:
-TOARCH="amd64"                               # (amd64|arm64|armhf|armel)
 MYARCH=$(dpkg-architecture -qDEB_BUILD_ARCH) # (amd64|arm64|armhf|armel)
+TOARCH=$MYARCH                               # (amd64|arm64|armhf|armel)
 
 KCROSS=0
 if [ "$TOARCH" != "$MYARCH" ]; then
@@ -137,7 +136,6 @@ TARGET="$HOME/work/pkgs/$TOARCH/kselftest"
 # BEGIN
 
 trap "ctrlc" 2
-lockdown
 createtmp
 
 cd $MAINDIR
@@ -158,16 +156,18 @@ for dir in $DIRS; do
 
     basedir=$(basename $dir)
 
-    [ ! -d $dir ] && getoutlockup "DIR: $dir is not a dir ?"
+    [ ! -d $dir ] && getout "ERROR: $dir is not a dir ?"
 
-    [ ! -e $dir/.git ] && getoutlockup "GIT: $dir/.git does not exist ?"
+    [ ! -e $dir/.git ] && getout "ERROR: $dir/.git does not exist ?"
 
     [ $CHOICE ] && [ ! "$dir" == "$CHOICE" ] && continue;
 
     OLDDIR=$(pwd)
 
-    cd $dir
+    LOCKFILE="$dir/.local.lock"
 
+    lockdown
+    cd $dir
     echo ++++++++ ENTERING $dir ...
 
     gitclean
@@ -177,7 +177,7 @@ for dir in $DIRS; do
     ## kernel selftests
 
     if [ $KCROSS != 0 ]; then
-        echo "kselftests can't cross-compile. do it in a lxc container!"
+        echo "ERROR: kselftest can't cross-compile. use lxc!"
         exit 1
     fi
 
@@ -194,28 +194,35 @@ for dir in $DIRS; do
 
     if [ ! -f $TARGET/kselftest-$DESCRIBE.txz ]; then
 
-        echo "kselftest-$DESCRIBE.txz being generated"
+        # generating a new .txz file
+
+        echo "INFO: kselftest $DESCRIBE being generated."
 
         $COMPILE -C tools clean
-        $COMPILE -C tools/testing/selftests all
+        CFLAGS="-fPIC" $COMPILE -C tools/testing/selftests all
         RET=$?
+
+        # TODO: check for compilation errors
 
         if [ $RET -eq 0 ]; then
             tar cfJ $TARGET/kselftest-$DESCRIBE.txz ./tools
             ls $TARGET/kselftest-$DESCRIBE.txz
-            [ ! -f $TARGET/kselftest-$DESCRIBE.txz ] && getoutlockup "kselftest $DESCRIBE.txz not created"
+            [ ! -f $TARGET/kselftest-$DESCRIBE.txz ] && echo "ERROR: kselftest $DESCRIBE not created."
         else
-            echo "could not compile kselftest $DESCRIBE"
+            echo "ERROR: kselftest $DESCRIBE could not be compiled."
         fi
 
         gitclean
     else
-        echo "kselftest-$DESCRIBE.txz already exists"
+        # no need to re-generate
+
+        echo "INFO: kselftest-$DESCRIBE already exists"
     fi
 
     echo -------- CLOSING $dir
-
     cd $OLDDIR
+    lockup
+
     cleantmp
 done
 

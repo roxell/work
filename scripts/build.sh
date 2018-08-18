@@ -4,7 +4,7 @@
 # this script builds the kernel using this repo's dir structure
 #
 
-CHOICE=$(echo $1 | sed 's:/$::')
+CHOICE=$@
 
 OLDDIR=$PWD
 MAINDIR=$(dirname $0)
@@ -17,9 +17,9 @@ NCPU=$(($NUMCPU - 1))
 #NCPU=1
 
 MYARCH="amd64"  # (amd64|arm64|armhf|armel)
-TOARCH="amd64"  # (amd64|arm64|armhf|armel)
+TOARCH="arm64"  # (amd64|arm64|armhf|armel)
 
-KCROSS=0        # are you cross compiling ? (default: 0)
+KCROSS=1        # are you cross compiling ? (default: 0)
 GCLEAN=1        # want to run git reset ? (default: 1)
 KCLEAN=1        # want to run make clean ? (default: 1)
 KCONFIG=1       # want to copy and process conf file ? (default: 1)
@@ -27,7 +27,7 @@ KMCONFIG=0      # want a menu to add/remove stuff from .config ? (default: 0)
 KLCONFIG=0      # want to merge a lsmod file into .config ? (default: 0)
 KPREPARE=1      # want to prepare ? (default: 1)
 KBUILD=1        # want to build ? :o) (default: 1)
-KDEBUG=1        # want your kernel to have debug symbols ? (default: 1)
+KDEBUG=0        # want your kernel to have debug symbols ? (default: 1)
 KVERBOSE=1      # want it to shut up ? (default: 1)
 
 FILEDIR="$HOME/work/files"
@@ -35,11 +35,9 @@ MAINDIR="$HOME/work/sources/linux"
 TARGET="$HOME/work/build/linux"
 KERNELS="$HOME/work/kernels"
 
-LOCKFILE="$MAINDIR/.global.lock"
-
 KRAMFS=1        # TARGET will be a KRAMFSSIZE GB tmpfs (default: 0)
-KRAMFSSIZE=20   # TARGET dir size in GB
-KRAMFSUMNT=0    # TARGET will be unmounted (default: 0)
+KRAMFSSIZE=12   # TARGET dir size in GB
+KRAMFSUMNT=1    # TARGET will be unmounted (default: 0)
 
 ARMHFCONFIG="$FILEDIR/config-armhf"
 ARM64CONFIG="$FILEDIR/config-arm64"
@@ -58,15 +56,7 @@ OTHERCONFIG="$FILEDIR/config-other"
 
 # FUNCTIONS
 
-getout() {
-    echo ERROR: $@
-    exit 1
-}
-
-getoutlockup() {
-    lockup
-    getout $@
-}
+getout() { echo ERROR: $@; exit 1; }
 
 ctrlc() {
     if [ $KRAMFS != 0 ]; then
@@ -110,10 +100,7 @@ lockdown() {
     done
 }
 
-lockup() {
-    rm -f $LOCKFILE
-    sync
-}
+lockup() { rm -f $LOCKFILE; sync; }
 
 # FIXCONFIG
 
@@ -266,8 +253,6 @@ fi
 
 # BEGIN
 
-lockdown
-
 cd $MAINDIR
 
 [ ! -d $FILEDIR ] && getout "FILEDIR: something went wrong"
@@ -282,21 +267,39 @@ for dir in $DIRS; do
 
     [ ! -e $dir/.git ] && getout "GIT: $dir/.git does not exist ?"
 
-    [ $CHOICE ] && [ ! "$dir" == "$CHOICE" ] && continue;
+    # only act on given dirs
+
+    found=0
+    if [ $# != 0 ];
+    then
+        for each in $CHOICE; do each=${each/\.\/}; [ "$each" == "$dir" ] && found=1; done
+        [ $found -eq 0 ] && continue;
+    fi
 
     OLDDIR=$(pwd)
+
+    LOCKFILE="$dir/.local.lock"
+
+    lockdown
 
     cd $dir
 
     echo ++++++++ ENTERING $dir ...
 
+    mkdir -p $KERNELS/$TOARCH/$dir
+
+    ## git describe
+
     DESCRIBE=$(git describe --long)
 
-    if [ -d $KERNELS/$dir/$DESCRIBE ]; then
+    ls $KERNELS/$TOARCH/$dir/*image*_$TOARCH.deb 2>&1 > /dev/null ; RET=$?
+
+    if [ $RET == 0 ]; then
 
         echo "kernel $DESCRIBE already packaged"
         echo -------- CLOSING $dir
         cd $OLDDIR
+        lockup
         continue;
 
     fi
@@ -304,7 +307,6 @@ for dir in $DIRS; do
     ## kernel target ramdisk
 
     if [ $KRAMFS != 0 ]; then
-        # target dir in a ramdisk for faster compilation
 
         trap "ctrlc" 2
 
@@ -358,29 +360,16 @@ for dir in $DIRS; do
     ## kernel build
 
     if [ $KBUILD != 0 ]; then
+
         # $COMPILE O=$TARGET/$dir zImage
         # $COMPILE O=$TARGET/$dir modules
         # $COMPILE O=$TARGET/$dir modules_install INSTALL_MOD_PATH=$TARGET/$dir/modinstall
 
-        if [ ! -d $KERNELS/$dir/$DESCRIBE ]; then
 
-            # compile if there is no .deb for this kernel
-
-            $COMPILE O=$TARGET/$dir bindeb-pkg ; sync
-            DEBS=$(ls -1 $TARGET/$dir/../*.deb | xargs 2>&1 > /dev/null)
-
-            # move .deb packages into proper place
-
-            if [ "$DEBS" != "" ]; then
-                mkdir -p "$KERNELS/$dir/$DESCRIBE"
-                [ ! -d "$KERNELS/$dir/$DESCRIBE" ] && getout "kernels directory could not be created"
-                mv "$TARGET/$dir/../*.deb" "$KERNELS/$dir/$DESCRIBE"
-                rm "$TARGET/$dir/../*.{changes,build}"
-            fi
-
-        else
-            echo "kernel $DESCRIBE already packaged"
-        fi
+        $COMPILE O=$TARGET/$dir bindeb-pkg
+        find $TARGET/$dir/../ -maxdepth 1 -name *.deb -exec mv {} $KERNELS/$TOARCH/$dir \;
+        find $TARGET/$dir/../ -maxdepth 1 -name *.changes -exec rm {} \;
+        find $TARGET/$dir/../ -maxdepth 1 -name *.build -exec rm {} \;
     fi
 
     ## kernel target ramdisk cleanup
@@ -395,6 +384,5 @@ for dir in $DIRS; do
 
     cd $OLDDIR
 
+    lockup
 done
-
-lockup
