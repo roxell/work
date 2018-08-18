@@ -18,7 +18,7 @@ rm -rf latest/* # && mkdir -p latest/{deb,rpm,txz}
 
 for arch in $(ls -1 | grep -v latest); do
 
-    for pkg in $(ls $arch); do
+    for pkg in $(ls $arch | grep -v kselftest); do
 
         deb=$(ls -t1 $arch/$pkg/*.deb 2> /dev/null | head -1)
         rpm=$(ls -t1 $arch/$pkg/*.rpm 2> /dev/null | head -1)
