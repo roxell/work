@@ -71,12 +71,11 @@ lockdown() {
 
         echo "trying to acquire the lock"
 
-        # wait a bit for the lock
-        # WARN: cron should not be less than 120 sec
+        # TIMEOUT: 10 mins
 
         sleep 5
         i=$((i+5))
-        if [ $i -eq 60 ]; then
+        if [ $i -eq 600 ]; then
             echo "could not obtain the lock, exiting"
             exit 1
         fi
