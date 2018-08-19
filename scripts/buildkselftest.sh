@@ -11,20 +11,8 @@ FILEDIR="$HOME/work/files"
 MAINDIR="$HOME/work/sources/linux"
 TEMPDIR="/tmp/$$"
 
-# VARIABLES (TODO: turn all this into args)
-
-NUMCPU=`cat /proc/cpuinfo | grep proce | wc -l`
-NCPU=$(($NUMCPU - 1))
-                                             # pick your poison:
-MYARCH=$(dpkg-architecture -qDEB_BUILD_ARCH) # (amd64|arm64|armhf|armel)
-TOARCH=$MYARCH                               # (amd64|arm64|armhf|armel)
-
-KCROSS=0
-if [ "$TOARCH" != "$MYARCH" ]; then
-    KCROSS=1
-fi
-
-KVERBOSE=1      # want it to shut up ? (default: 1)
+NCPU=$(nproc)
+MYARCH=$(dpkg-architecture -qDEB_BUILD_ARCH)
 
 # FUNCTIONS
 
@@ -100,37 +88,13 @@ lockup() {
     sync
 }
 
-# CROSS
-
-if [ $KCROSS != 0 ]; then
-    if [ "$TOARCH" == "armhf" ]; then
-        CROSS="arm-linux-gnueabihf-"
-        TOARCH="arm"
-    elif [ "$TOARCH" == "armel" ]; then
-        CROSS="arm-linux-gnueabi-"
-        TOARCH="arm"
-    elif [ "$TOARCH" == "arm64" ]; then
-        CROSS="aarch64-linux-gnu-"
-    else
-        getout "TOARCH: wrong arch"
-    fi
-fi
-
 # COMPILE FLAGS
 
-COMPILE="make ARCH=$TOARCH V=$KVERBOSE -j$NCPU"
-
-if [ $KCROSS == 0 ]; then
-    COMPILE="make V=$KVERBOSE -j$NCPU"
-fi
-
-if [ $CROSS ]; then
-    COMPILE="$COMPILE CROSS_COMPILE=$CROSS"
-fi
+COMPILE="make V=1 -j$NCPU"
 
 # PACKAGE WILL BE PLACED
 
-TARGET="$HOME/work/pkgs/$TOARCH/kselftest"
+TARGET="$HOME/work/pkgs/$MYARCH/kselftest"
 [ ! -d $TARGET ] && mkdir -p $TARGET
 
 # BEGIN
@@ -174,13 +138,6 @@ for dir in $DIRS; do
 
     DESCRIBE=$(git describe --long)
 
-    ## kernel selftests
-
-    if [ $KCROSS != 0 ]; then
-        echo "ERROR: kselftest can't cross-compile. use lxc!"
-        exit 1
-    fi
-
     # kselftests generation
 
     # examples:
@@ -192,11 +149,11 @@ for dir in $DIRS; do
     # $COMPILE -C tools/testing/selftests TARGETS=zram all
     # $COMPILE -C tools/testing/selftests clean
 
-    if [ ! -f $TARGET/kselftest-$DESCRIBE.txz ]; then
+    if [ ! -f $TARGET/kselftest-$DESCRIBE-$MYARCH.txz ]; then
 
         # generating a new .txz file
 
-        echo "INFO: kselftest $DESCRIBE being generated."
+        echo "INFO: kselftest $DESCRIBE-$MYARCH being generated."
 
         $COMPILE -C tools clean
         CFLAGS="-fPIC" $COMPILE -C tools/testing/selftests all
@@ -205,18 +162,18 @@ for dir in $DIRS; do
         # TODO: check for compilation errors
 
         if [ $RET -eq 0 ]; then
-            tar cfJ $TARGET/kselftest-$DESCRIBE.txz ./tools
-            ls $TARGET/kselftest-$DESCRIBE.txz
-            [ ! -f $TARGET/kselftest-$DESCRIBE.txz ] && echo "ERROR: kselftest $DESCRIBE not created."
+            tar cfJ $TARGET/kselftest-$DESCRIBE-$MYARCH.txz ./tools
+            ls $TARGET/kselftest-$DESCRIBE-$MYARCH.txz
+            [ ! -f $TARGET/kselftest-$DESCRIBE-$MYARCH.txz ] && echo "ERROR: kselftest $DESCRIBE-$MYARCH not created."
         else
-            echo "ERROR: kselftest $DESCRIBE could not be compiled."
+            echo "ERROR: kselftest $DESCRIBE-$MYARCH could not be compiled."
         fi
 
         gitclean
     else
         # no need to re-generate
 
-        echo "INFO: kselftest-$DESCRIBE already exists"
+        echo "INFO: kselftest-$DESCRIBE-$MYARCH already exists"
     fi
 
     echo -------- CLOSING $dir
