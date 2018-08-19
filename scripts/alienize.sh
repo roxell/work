@@ -100,7 +100,38 @@ for arch in $(ls -1 $MAINDIR); do
 
     for pkg in $(ls -1 $MAINDIR/$arch); do
 
-        [ "$pkg" == "kselftest" ] && continue;
+        if [ "$pkg" == "kselftest" ]; then
+
+            for txz in $(ls -1 $MAINDIR/$arch/kselftest/*.txz 2> /dev/null); do
+
+                filename=${txz/\.txz}
+                rpm=$filename.rpm
+                deb=$filename.deb
+
+                #
+                # get info from package using filename
+                #
+
+                package="kselftest"
+                version=$(echo $filename | cut -d'-' -f2,3,4)
+                architecture=$(echo $filename | cut -d'-' -f5)
+
+                if [ "$architecture" == "amd64" ]; then
+                    altarch="x86_64"
+                elif [ "$architecture" == "arm64" ]; then
+                    altarch="aarch64"
+                elif [ "$architecture" == "armhf" ]; then
+                    altarch="armhfp"
+                elif [ "$architecture" == "i386" ]; then
+                    altarch="i386"
+                fi
+
+                done
+
+                echo $filename
+
+            continue;
+        fi
 
         #
         # for each existing .deb package
@@ -142,7 +173,7 @@ for arch in $(ls -1 $MAINDIR); do
             # txz
 
             if [ ! -f $txz ]; then
-                echo $tar being generated...
+                echo $txz being generated...
                 sudo dpkg -x $deb .
                 sudo fpm -C $TEMPDIR -s dir -t tar -n $package .
                 tempfile=$(ls -1 *.tar 2>/dev/null) && {
@@ -153,7 +184,7 @@ for arch in $(ls -1 $MAINDIR); do
 
                 cleantmp
             else
-                echo $tar already generated!
+                echo $txz already generated!
             fi
 
             # rpm
