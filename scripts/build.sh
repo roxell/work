@@ -17,7 +17,7 @@ NCPU=$(($NUMCPU - 1))
 #NCPU=1
 
 MYARCH="amd64"  # (amd64|arm64|armhf|armel)
-TOARCH="arm64"  # (amd64|arm64|armhf|armel)
+TOARCH="armhf"  # (amd64|arm64|armhf|armel)
 
 KCROSS=1        # are you cross compiling ? (default: 0)
 GCLEAN=1        # want to run git reset ? (default: 1)
@@ -286,13 +286,18 @@ for dir in $DIRS; do
 
     echo ++++++++ ENTERING $dir ...
 
-    mkdir -p $KERNELS/$TOARCH/$dir
+    DESTARCH=$TOARCH
+    [ "$DESTARCH" == "arm" ]; then
+        DESTARCH="armhf"
+    fi
+
+    mkdir -p $KERNELS/$DESTARCH/$dir
 
     ## git describe
 
     DESCRIBE=$(git describe --long)
 
-    ls $KERNELS/$TOARCH/$dir/*image*_$TOARCH.deb 2>&1 > /dev/null ; RET=$?
+    ls $KERNELS/$DESTARCH/$dir/*image*_$DESTARCH.deb 2>&1 > /dev/null ; RET=$?
 
     if [ $RET == 0 ]; then
 
@@ -367,7 +372,7 @@ for dir in $DIRS; do
 
 
         $COMPILE O=$TARGET/$dir bindeb-pkg
-        find $TARGET/$dir/../ -maxdepth 1 -name *.deb -exec mv {} $KERNELS/$TOARCH/$dir \;
+        find $TARGET/$dir/../ -maxdepth 1 -name *.deb -exec mv {} $KERNELS/$DESTARCH/$dir \;
         find $TARGET/$dir/../ -maxdepth 1 -name *.changes -exec rm {} \;
         find $TARGET/$dir/../ -maxdepth 1 -name *.build -exec rm {} \;
     fi
