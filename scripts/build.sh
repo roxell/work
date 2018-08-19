@@ -16,10 +16,16 @@ NUMCPU=`cat /proc/cpuinfo | grep proce | wc -l`
 NCPU=$(($NUMCPU - 1))
 #NCPU=1
 
-MYARCH="amd64"  # (amd64|arm64|armhf|armel)
-TOARCH="armhf"  # (amd64|arm64|armhf|armel)
+MYARCH="amd64"  # (amd64|x86|arm64|armhf|armel)
+TOARCH="x86"    # (amd64|x86|arm64|armhf|armel)
 
-KCROSS=1        # are you cross compiling ? (default: 0)
+KCROSS=0        # are you cross compiling ? (automatic)
+if [ "$MYARCH" != "$TOARCH" ]; then
+    KCROSS=1
+fi
+
+# CHANGE HERE
+
 GCLEAN=1        # want to run git reset ? (default: 1)
 KCLEAN=1        # want to run make clean ? (default: 1)
 KCONFIG=1       # want to copy and process conf file ? (default: 1)
@@ -30,18 +36,23 @@ KBUILD=1        # want to build ? :o) (default: 1)
 KDEBUG=0        # want your kernel to have debug symbols ? (default: 1)
 KVERBOSE=1      # want it to shut up ? (default: 1)
 
+KRAMFS=1        # TARGET will be a KRAMFSSIZE GB tmpfs (default: 0)
+KRAMFSSIZE=12   # TARGET dir size in GB
+KRAMFSUMNT=1    # TARGET will be unmounted (default: 0)
+
+# STOP CHANGING
+
 FILEDIR="$HOME/work/files"
 MAINDIR="$HOME/work/sources/linux"
 TARGET="$HOME/work/build/linux"
 KERNELS="$HOME/work/kernels"
 
-KRAMFS=1        # TARGET will be a KRAMFSSIZE GB tmpfs (default: 0)
-KRAMFSSIZE=12   # TARGET dir size in GB
-KRAMFSUMNT=1    # TARGET will be unmounted (default: 0)
-
 ARMHFCONFIG="$FILEDIR/config-armhf"
 ARM64CONFIG="$FILEDIR/config-arm64"
-AMD64CONFIG="$FILEDIR/config"
+AMD64CONFIG="$FILEDIR/config-amd64"
+  X86CONFIG="$FILEDIR/config-x86"
+
+# BOARDS (ENABLE HERE)
 
 DRAGON=0        # dragon board config file (default: 0)
 HIKEY=0         # hikey board config file (default: 0)
@@ -198,6 +209,8 @@ elif [ "$TOARCH" == "arm64" ]; then
     CONFIG=$ARM64CONFIG
 elif [ "$TOARCH" == "amd64" ]; then
     CONFIG=$AMD64CONFIG
+elif [ "$TOARCH" == "x86" ]; then
+    CONFIG=$X86CONFIG
 else
     getout "TOARCH: error"
 fi
@@ -234,6 +247,8 @@ if [ $KCROSS != 0 ]; then
         TOARCH="arm"
     elif [ "$TOARCH" == "arm64" ]; then
         CROSS="aarch64-linux-gnu-"
+    elif [ "$TOARCH" == "x86" ]; then
+        CROSS="i686-linux-gnu-"
     else
         getout "TOARCH: wrong arch"
     fi
@@ -287,8 +302,11 @@ for dir in $DIRS; do
     echo ++++++++ ENTERING $dir ...
 
     DESTARCH=$TOARCH
-    [ "$DESTARCH" == "arm" ]; then
+
+    if [ "$DESTARCH" == "arm" ]; then
         DESTARCH="armhf"
+    elif [ "$DESTARCH" == "x86" ]; then
+        DESTARCH="i386"
     fi
 
     mkdir -p $KERNELS/$DESTARCH/$dir
@@ -370,8 +388,8 @@ for dir in $DIRS; do
         # $COMPILE O=$TARGET/$dir modules
         # $COMPILE O=$TARGET/$dir modules_install INSTALL_MOD_PATH=$TARGET/$dir/modinstall
 
-
         $COMPILE O=$TARGET/$dir bindeb-pkg
+
         find $TARGET/$dir/../ -maxdepth 1 -name *.deb -exec mv {} $KERNELS/$DESTARCH/$dir \;
         find $TARGET/$dir/../ -maxdepth 1 -name *.changes -exec rm {} \;
         find $TARGET/$dir/../ -maxdepth 1 -name *.build -exec rm {} \;
