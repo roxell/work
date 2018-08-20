@@ -48,7 +48,12 @@ mkdir -p latest/all/kselftest
 
 for arch in $(ls -1 | grep -v latest | grep -v all); do
 
-    PKGS=$(ls -lah -1t $arch/kselftest/*.txz | grep "$(date +%b\ %d)" | cut -d' ' -f9)
+    PKGS=""
+    PKGS+=" $(ls -1t $arch/kselftest/*v4.17*.txz | tail -1)"
+    PKGS+=" $(ls -1t $arch/kselftest/*v4.18.*.txz | tail -1)"
+    PKGS+=" $(ls -1t $arch/kselftest/*v4.18-*.txz | tail -1)"
+    PKGS+=" $(ls -1t $arch/kselftest/*v4.14.*.txz | tail -1)"
+    PKGS+=" $(ls -1t $arch/kselftest/*next-*.txz | tail -1)"
 
     mkdir latest/$arch/kselftest
 
