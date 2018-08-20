@@ -113,8 +113,11 @@ for arch in $(ls -1 $MAINDIR); do
                 #
 
                 package="kselftest"
-                version=$(echo $filename | cut -d'-' -f2,3,4)
-                architecture=$(echo $filename | cut -d'-' -f5)
+                #version=$(echo $filename | cut -d'-' -f2,3,4 | sed 's:^v::g')
+                #architecture=$(echo $filename | cut -d'-' -f5)
+                version=$(echo $(basename $filename) | sed -E 's:kselftest-(.*)-(amd64|armhf|arm64|i686):\1:g')
+                version=$(echo $version | sed -E 's:^[a-z]+-::g' | sed -E 's:^[a-z]::g')
+                architecture=$(echo $(basename $filename) | sed -E 's:^.*-(amd64|armhf|arm64|i686):\1:')
 
                 if [ "$architecture" == "amd64" ]; then
                     altarch="x86_64"
@@ -126,9 +129,43 @@ for arch in $(ls -1 $MAINDIR); do
                     altarch="i386"
                 fi
 
-                done
+                echo $deb being checked...
 
-                echo $filename
+                # deb
+
+                if [ ! -f $deb ]; then
+                    echo $deb being generated...
+                    sudo tar xfJ $txz .
+                    sudo fpm -t deb -s dir -n $package -v "$version" -a $architecture --prefix=/opt .
+                    tempfile=$(ls -1 *.deb 2>/dev/null) && {
+                        mv $tempfile $deb
+                        sudo rm -rf tools
+                        sudo chown $USER $deb
+                    } || echo "file $txz was not converted to deb!"
+
+                    cleantmp
+                else
+                    echo $deb already generated!
+                fi
+
+                # deb
+
+                if [ ! -f $rpm ]; then
+                    echo $rpm being generated...
+                    sudo tar xfJ $txz .
+                    sudo fpm -t rpm -s dir -n $package --rpm-compression xz -v "$version" -a $altarch --prefix=/opt .
+                    tempfile=$(ls -1 *.rpm 2>/dev/null) && {
+                        mv $tempfile $rpm
+                        sudo rm -rf tools
+                        sudo chown $USER $rpm
+                    } || echo "file $txz was not converted to rpm!"
+
+                    cleantmp
+                else
+                    echo $rpm already generated!
+                fi
+
+            done
 
             continue;
         fi

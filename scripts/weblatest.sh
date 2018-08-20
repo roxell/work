@@ -23,7 +23,7 @@ for arch in $(ls -1 | grep -v latest | grep -v all); do
 
     mkdir latest/$arch
 
-    for pkg in $(ls $arch); do
+    for pkg in $(ls $arch | grep -v kselftest); do
 
         mkdir latest/$arch/$pkg
 
@@ -40,6 +40,31 @@ for arch in $(ls -1 | grep -v latest | grep -v all); do
         [ $deb ] && ln -s ../../../$deb ./latest/all/$pkg/$(basename $deb)
         [ $rpm ] && ln -s ../../../$rpm ./latest/all/$pkg/$(basename $rpm)
         [ $txz ] && ln -s ../../../$txz ./latest/all/$pkg/$(basename $txz)
+
+    done
+done
+
+mkdir -p latest/all/kselftest
+
+for arch in $(ls -1 | grep -v latest | grep -v all); do
+
+    PKGS=$(ls -lah -1t $arch/kselftest/*.txz | grep "$(date +%b\ %d)" | cut -d' ' -f9)
+
+    mkdir latest/$arch/kselftest
+
+    for pkg in $PKGS; do
+
+        txz=$(ls $pkg 2> /dev/null | head -1)
+        deb=$(ls ${pkg/\.txz}.deb 2> /dev/null | head -1)
+        rpm=$(ls ${pkg/\.txz}.rpm 2> /dev/null | head -1)
+
+        [ $deb ] && ln -s ../../../$deb ./latest/$arch/kselftest/$(basename $deb)
+        [ $rpm ] && ln -s ../../../$rpm ./latest/$arch/kselftest/$(basename $rpm)
+        [ $txz ] && ln -s ../../../$txz ./latest/$arch/kselftest/$(basename $txz)
+
+        [ $deb ] && ln -s ../../../$deb ./latest/all/kselftest/$(basename $deb)
+        [ $rpm ] && ln -s ../../../$rpm ./latest/all/kselftest/$(basename $rpm)
+        [ $txz ] && ln -s ../../../$txz ./latest/all/kselftest/$(basename $txz)
 
     done
 done
