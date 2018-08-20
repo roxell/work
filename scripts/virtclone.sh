@@ -39,7 +39,7 @@ VIRSH=$(which virsh)
 [ ! $MACHINE ] && getout "machine not informed"
 
 if [ x$MACHINE == x"list" ]; then
-    ls -1 $LIBVIRTDIR
+    sudo ls -1 $LIBVIRTDIR
     exit 0
 fi
 
