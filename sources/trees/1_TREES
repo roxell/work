@@ -37,3 +37,4 @@ ltp-android https://android.googlesource.com/platform/external/ltp
 meta-96boards-mine git@github.com:rafaeldtinoco/meta-96boards.git
 random-mine git@github.com:rafaeldtinoco/random.git
 scripts-mine git@github.com:rafaeldtinoco/scripts.git
+lkft-tools-mine git@github.com:rafaeldtinoco/lkft-tools.git
