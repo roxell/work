@@ -126,7 +126,7 @@ sync
 # generate debian package
 
 mkdir -p $WHERETO
-filename=$(find .. -maxdepth 1 -name *_arm64.deb)
+filename=$(find .. -maxdepth 1 -name *_$DEBARCH.deb)
 [ $filename ] && filename=$(basename $filename) || filename="nenenene"
 find .. -maxdepth 1 -name $filename -exec mv {} $WHERETO/ \;
 
