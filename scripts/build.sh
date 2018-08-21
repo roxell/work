@@ -17,7 +17,7 @@ NCPU=$(($NUMCPU - 1))
 #NCPU=1
 
 MYARCH="amd64"  # (amd64|x86|arm64|armhf|armel)
-TOARCH="x86"    # (amd64|x86|arm64|armhf|armel)
+TOARCH="amd64"  # (amd64|x86|arm64|armhf|armel)
 
 KCROSS=0        # are you cross compiling ? (automatic)
 if [ "$MYARCH" != "$TOARCH" ]; then
@@ -317,7 +317,7 @@ for dir in $DIRS; do
 
     ls $KERNELS/$DESTARCH/$dir/*image*_$DESTARCH.deb 2>&1 > /dev/null ; RET=$?
 
-    if [ $RET == 0 ]; then
+    if [ $RET == 0 ] && [ $KBUILD == 1 ]; then
 
         echo "kernel $DESCRIBE already packaged"
         echo -------- CLOSING $dir
