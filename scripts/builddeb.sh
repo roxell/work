@@ -114,6 +114,9 @@ fi
 # debian generic changelog file
 
 dch -p -v "$(git describe --long)" -D unstable "Upstream commit $(git describe --long)"
+sleep 3 ; sync
+CHECKVER=$(head -1 debian/changelog | sed -E 's:.*\((.*)\).*:\1:g')
+if [ $CHECKVER == "0.0" ]; then getoutlockup "Version hasn't changed!"; fi
 
 # build debian package
 
