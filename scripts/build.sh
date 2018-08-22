@@ -26,7 +26,7 @@ fi
 
 # CHANGE HERE
 
-GCLEAN=1        # want to run git reset ? (default: 1)
+GCLEAN=0        # want to run git reset ? (default: 1)
 KCLEAN=1        # want to run make clean ? (default: 1)
 KCONFIG=1       # want to copy and process conf file ? (default: 1)
 KMCONFIG=0      # want a menu to add/remove stuff from .config ? (default: 0)
@@ -315,7 +315,7 @@ for dir in $DIRS; do
 
     DESCRIBE=$(git describe --long)
 
-    ls $KERNELS/$DESTARCH/$dir/*image*_$DESTARCH.deb 2>&1 > /dev/null ; RET=$?
+    ls $KERNELS/$DESTARCH/$dir/*image*$DESCRIBE*$DESTARCH.deb 2>&1 > /dev/null ; RET=$?
 
     if [ $RET == 0 ] && [ $KBUILD == 1 ]; then
 

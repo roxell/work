@@ -43,7 +43,7 @@ $SUDO mkdir -p $TARGET
 
 cd $MAINDIR
 
-[ "$MACHINE" == "list" ] && ls -1 $LIBVIRTDIR && exit 0
+[ "$MACHINE" == "list" ] && sudo ls -1 $LIBVIRTDIR && exit 0
 
 [ ! $MACHINE ] && getout "tell me the machine!"
 [ ! -d $MACHINEDIR ] && getout "tell me the machine!"
@@ -59,6 +59,8 @@ lxc.include = /usr/share/lxc/config/debian.common.conf
 lxc.arch = linux32
 
 lxc.mount.entry = / mnt none bind 0 0
+lxc.mount.entry = $HOME ${HOME:1} none bind 0 0
+lxc.mount.entry = $HOME mnt/${HOME:1} none bind 0 0
 lxc.rootfs.backend = dir
 lxc.rootfs = $TARGET
 lxc.utsname = lxc$$
@@ -139,8 +141,15 @@ elif [ x$ARG0 == x"qcowhostname.sh" ]; then
 elif [ x$ARG0 == x"qcowvmlinuz.sh" ]; then
     # bring kernel image + ramdisk to host
 
-    VMLINUZ=$(ls -tr $TARGET/boot/vmlinuz* | tail -1)
-    INITRD=$(ls -tr $TARGET/boot/initrd* | tail -1)
+    if [ $ARGUMENT ]; then
+        VMLINUZ=$(ls -1tr $TARGET/boot/vmlinuz* | grep -i $ARGUMENT | tail -1)
+        INITRD=$(ls -1tr $TARGET/boot/initrd* | grep -i $ARGUMENT | tail -1)
+    fi
+
+    if [ ! $VMLINUZ ] || [ ! $INITRD ]; then
+        VMLINUZ=$(ls -1tr $TARGET/boot/vmlinuz* | tail -1)
+        INITRD=$(ls -1tr $TARGET/boot/initrd* | tail -1)
+    fi
 
     if [ -d $MACHINEDIR ]; then
         echo "bringing lxc$$ ($MACHINE) kernel/ramdisk to host"
