@@ -8,8 +8,13 @@
 CHOICE=$(echo $1 | sed 's:/$::')
 
 OLDDIR=$PWD
-MAINDIR=$(dirname $0)
-[ "$MAINDIR" == "." ] && MAINDIR=$(pwd)
+MAINDIR=$PWD
+
+LOCKFILE=$MAINDIR/.lockfile
+
+#
+# FUNCTIONS
+#
 
 getout() {
     echo ERROR: $@
@@ -22,6 +27,40 @@ gitclean() {
     git clean -f 2>&1 > /dev/null
     git reset --hard 2>&1 > /dev/null
 }
+
+lockdown() {
+    while true; do
+
+        if [ ! -f $LOCKFILE ]; then
+            echo $$ > $LOCKFILE
+            sync
+            break
+        fi
+
+        echo "trying to acquire $LOCKFILE"
+
+        # WARN: wait for the lock
+        # WARN: 900 second is the min cron interval
+
+        sleep 15
+        i=$((i+15))
+        if [ $i -eq 900 ]; then
+            echo "could not obtain the lock, exiting"
+            exit 1
+        fi
+
+    done
+}
+
+lockup() {
+
+    rm -f $LOCKFILE
+    sync
+}
+
+# BEGIN
+
+lockdown
 
 cd $MAINDIR
 
@@ -64,3 +103,5 @@ for dir in $DIRS; do
 done
 
 #cd $OLDDIR
+
+lockup

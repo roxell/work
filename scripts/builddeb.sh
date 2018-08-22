@@ -52,7 +52,6 @@ gitcleanup() {
 # for this a total racy impl just for testing
 
 lockdown() {
-
     while true; do
         if [ ! -f $LOCKFILE ]; then
             echo $$ > $LOCKFILE
@@ -76,6 +75,7 @@ lockdown() {
 }
 
 lockup() {
+
     rm -f $LOCKFILE
     sync
 }
@@ -84,13 +84,13 @@ lockdown
 
 cd $MAINDIR
 
+gitcleanup
+
 # initial checks
 
 [ ! -d .git ] && getoutlockup "not a git repo"
 [ ! -s debian ] && ln -s $DEBIANIZER/$(basename $PWD) ./debian
 [ ! -f debian/changelog.initial ] && getoutlockup "no initial changelog"
-
-gitcleanup
 
 # checks
 
@@ -100,37 +100,40 @@ GITDESC=$(git describe --long)
 WHERETO=$DESTDIR/$DEBARCH/$(basename $PWD)
 [ ! -d $WHERETO ] && getoutlockup "dir where to place not found"
 
-OLDGITDESC=""
-if [ -f $WHERETO/.gitdesc ]; then
-    OLDGITDESC=$(cat $WHERETO/.gitdesc)
-fi
-
 # is it already built ?
 
-[ "$OLDGITDESC" == "$GITDESC" ] && [ "$CHOICE2" != "force" ] && {
-    lockup ; sync; cleanout "already built";
-}
+FOUND=$(find $WHERETO -maxdepth 1 -name *$GITDESC*.deb | wc -l)
+[ $FOUND -eq 1 ] && getoutlockup "already built";
+
+# pkg cleaning
+
+fakeroot debian/rules clean
 
 # debian generic changelog file
 
 dch -p -v "$(git describe --long)" -D unstable "Upstream commit $(git describe --long)"
 sleep 3 ; sync
 CHECKVER=$(head -1 debian/changelog | sed -E 's:.*\((.*)\).*:\1:g')
-if [ $CHECKVER == "0.0" ]; then getoutlockup "Version hasn't changed!"; fi
+if [ $CHECKVER == "0.0" ]; then getoutlockup "changelog hasn't changed!"; fi
+sync
 
 # build debian package
 
-fakeroot debian/rules clean
-fakeroot debian/rules build
-fakeroot debian/rules install
+#fakeroot debian/rules build
+#fakeroot debian/rules install
 fakeroot debian/rules binary
-sync
 
-# generate debian package
+# BUG ? changelog not changed ? (race ?)
+fileerror=$(find .. -maxdepth 1 -name *0.0*_$DEBARCH.deb)
+[ $fileerror ] && { rm $fileerror ; getoutlockup "GOT A 0.0 package. changelog broken ?"; }
+
+# debian package
 
 mkdir -p $WHERETO
-filename=$(find .. -maxdepth 1 -name *_$DEBARCH.deb)
+filename=$(find .. -maxdepth 1 -name *$GITDESC*_$DEBARCH.deb)
+echo $filename
 [ $filename ] && filename=$(basename $filename) || filename="nenenene"
+echo $filename
 find .. -maxdepth 1 -name $filename -exec mv {} $WHERETO/ \;
 
 ls $WHERETO/$filename && {
