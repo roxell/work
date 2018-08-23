@@ -1,0 +1,138 @@
+#
+## DID NOT WORK
+#
+
+libhugetlbfs [bug3950sid:1576]: INFO: setup_morecore(): heapaddr = 0x55eb40000000
+
+libhugetlbfs [bug3950sid:1576]: INFO: hugetlbfs_morecore(536875008) = ...
+
+heapbase	0x55eb40000000		94468879417344 bytes
+heaptop		0x55eb40000000		94468879417344 bytes
+                                        --------------------
+					0 bytes
+
+mapsize		0			0
+delta		536875008		+512 MB
+
+libhugetlbfs [bug3950sid:1576]: INFO: Attempting to map 1073741824 bytes
+libhugetlbfs [bug3950sid:1576]: INFO: ... = 0x55eb40000000
+libhugetlbfs [bug3950sid:1576]: INFO: hugetlbfs_morecore(0) = ...
+
+heapbase	0x55eb40000000		94468879417344 bytes
+heaptop		0x55eb60001000		94469416292352 bytes -
+                                        --------------------
+					536875008 bytes  => HEAP is 512 MB
+
+mapsize		40000000		1073741824 bytes => MAP is 1GB
+delta		-536866816		-512 MB
+
+libhugetlbfs [bug3950sid:1576]: INFO: ... = 0x55eb60001000
+
+Starting testcase "/opt/libhugetlbfs/tests/obj64/heapshrink", pid 1576
+
+libhugetlbfs [bug3950sid:1576]: INFO: hugetlbfs_morecore(1073745920) = ...
+
+heapbase	0x55eb40000000		94468879417344 bytes
+heaptop		0x55eb60001000		94469416292352 bytes -
+                                        --------------------
+					536875008 bytes  => HEAP is 512 MB
+
+mapsize		40000000		1073741824 bytes => MAP is 1GB
+delta		536879104		+512 MB
+
+libhugetlbfs [bug3950sid:1576]: INFO: Attempting to map 1073741824 bytes
+libhugetlbfs [bug3950sid:1576]: INFO: ... = 0x55eb60001000
+FAIL	Heap did not shrink
+
+#
+## WORKED
+#
+
+libhugetlbfs [bug3950stretch:702]: INFO: setup_morecore(): heapaddr = 0x557480000000
+
+libhugetlbfs [bug3950stretch:702]: INFO: hugetlbfs_morecore(536879104) = ...
+
+heapbase	0x557480000000		93958852050944 bytes
+heaptop		0x557480000000		93958852050944 bytes -
+					--------------------
+					0 bytes		 => HEAP is 0 MB
+
+mapsize		0					 => MAP is 0 MB
+delta		536879104		+512 MB
+
+libhugetlbfs [bug3950stretch:702]: INFO: Attempting to map 1073741824 bytes
+libhugetlbfs [bug3950stretch:702]: INFO: ... = 0x557480000000
+libhugetlbfs [bug3950stretch:702]: INFO: hugetlbfs_morecore(0) = ...
+
+heapbase	0x557480000000		93958852050944 bytes
+heaptop		0x5574a0002000		93959388930048 bytes -
+					--------------------
+					536879104 bytes  => HEAP is 512 MB
+
+mapsize		40000000		1073741824 bytes => MAP is 1GB
+delta		-536862720		-512 MB
+
+libhugetlbfs [bug3950stretch:702]: INFO: ... = 0x5574a0002000
+
+Starting testcase "/opt/libhugetlbfs/tests/obj64/heapshrink", pid 702
+
+libhugetlbfs [bug3950stretch:702]: INFO: hugetlbfs_morecore(1073741824) = ...
+
+heapbase	0x557480000000		93958852050944 bytes
+heaptop		0x5574a0002000		93959388930048 bytes -
+					--------------------
+					536879104 bytes  => HEAP is 512 MB
+
+mapsize		40000000		1073741824 bytes => MAP is 1GB
+delta		536879104		+512 MB
+
+libhugetlbfs [bug3950stretch:702]: INFO: Attempting to map 1073741824 bytes
+libhugetlbfs [bug3950stretch:702]: INFO: ... = 0x5574a0002000
+
+- OTHER DIES HERE
+
+libhugetlbfs [bug3950stretch:702]: INFO: hugetlbfs_morecore(0) = ...
+
+heapbase	0x557480000000		93958852050944 bytes
+heaptop		0x5574e0002000		93960462671872 bytes -
+					--------------------
+					1610620928 bytes => HEAP is 1.5 GB
+
+mapsize		80000000		2147483648 bytes => MAP is 2 GB
+delta		-536862720		-512 MB
+
+libhugetlbfs [bug3950stretch:702]: INFO: ... = 0x5574e0002000
+libhugetlbfs [bug3950stretch:702]: INFO: hugetlbfs_morecore(-1073741824) = ...
+
+heapbase	0x557480000000		93958852050944 bytes
+heaptop		0x5574e0002000		93960462671872 bytes -
+					--------------------
+					1610620928 bytes => HEAP is 1.5 GB
+
+mapsize		80000000		2147483648 bytes => MAP is 2 GB
+delta		-1610604544		-1.5 GB
+
+libhugetlbfs [bug3950stretch:702]: INFO: Attempting to unmap 1073741824 bytes @ 0x5574c0000000
+libhugetlbfs [bug3950stretch:702]: INFO: ... = 0x5574e0002000
+libhugetlbfs [bug3950stretch:702]: INFO: hugetlbfs_morecore(0) = ...
+
+heapbase	0x557480000000		93958852050944 bytes
+heaptop		0x5574c0000000		93959925792768 bytes -
+					--------------------
+					1073741824 bytes => HEAP is 1 GB
+
+mapsize		40000000		1073741824 bytes => MAP is 1 GB
+delta		0
+
+libhugetlbfs [bug3950stretch:702]: INFO: ... = 0x5574c0000000
+
+
+
+
+
+
+
+
+
+
+

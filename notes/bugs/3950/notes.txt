@@ -1,0 +1,94 @@
+This issue happens right before another error
+(https://bugs.linaro.org/show_bug.cgi?id=3655). This test, when used w/ HUGETLB_MORECORE_SHRINK=yes env variable, checks to see if the heap has shrinked
+after some memory, allocated with wrapper malloc() and touched by memset(), has
+been freed.
+
+TODO: check:
+
+	mapping_size = get_mapping_page_size(p+SIZE-1);
+	if (shrink_ok && mapping_size > MIN_PAGE_SIZE)
+		FAIL("Heap did not shrink");
+
+mapping_page_size is # of bytes of the allocated VMA (hugepage) that contains
+the pointer address (allocated, touched and freed). This part is checking if,
+after freeing a pointer, the VMA has shrunk, and it has not (not sure it should
+shrink right away, need to check).
+
+---
+
+v4.9 started failing after July 18 2018 (v4.9.113 was last good)
+v4.14 started failing after July 17 2018 (v4.14.56 was last good)
+v4.17 started failing after July 20 2018 (v4.17.8 was last good)
+mainline started failing after July 19 2018 (v4.18-rc5-275-gfb7d1bcf1602 was last good)
+next started failing after July 5 2018 (next-20180705 was last good)
+
+---
+
+# SIX DID NOT WORK
+
+libhugetlbfs [bug3950sid:1576]: INFO: Found pagesize 1048576 kB
+libhugetlbfs [bug3950sid:1576]: INFO: Parsed kernel version: [4] . [17] . [0]
+libhugetlbfs [bug3950sid:1576]: INFO: Feature private_reservations is present in this kernel
+libhugetlbfs [bug3950sid:1576]: INFO: Feature noreserve_safe is present in this kernel
+libhugetlbfs [bug3950sid:1576]: INFO: Feature map_hugetlb is present in this kernel
+libhugetlbfs [bug3950sid:1576]: INFO: Kernel has MAP_PRIVATE reservations.  Disabling heap prefaulting.
+libhugetlbfs [bug3950sid:1576]: INFO: Kernel supports MAP_HUGETLB
+libhugetlbfs [bug3950sid:1576]: INFO: HUGETLB_SHARE=0, sharing disabled
+libhugetlbfs [bug3950sid:1576]: INFO: HUGETLB_NO_RESERVE=no, reservations enabled
+libhugetlbfs [bug3950sid:1576]: INFO: No segments were appropriate for remapping
+libhugetlbfs [bug3950sid:1576]: INFO: setup_morecore(): heapaddr = 0x55eb40000000
+libhugetlbfs [bug3950sid:1576]: INFO: hugetlbfs_morecore(536875008) = ...
+libhugetlbfs [bug3950sid:1576]: INFO: heapbase = 0x55eb40000000, heaptop = 0x55eb40000000, mapsize = 0, delta=536875008
+libhugetlbfs [bug3950sid:1576]: INFO: Attempting to map 1073741824 bytes
+libhugetlbfs [bug3950sid:1576]: INFO: ... = 0x55eb40000000
+libhugetlbfs [bug3950sid:1576]: INFO: hugetlbfs_morecore(0) = ...
+libhugetlbfs [bug3950sid:1576]: INFO: heapbase = 0x55eb40000000, heaptop = 0x55eb60001000, mapsize = 40000000, delta=-536866816
+libhugetlbfs [bug3950sid:1576]: INFO: ... = 0x55eb60001000
+
+Starting testcase "/opt/libhugetlbfs/tests/obj64/heapshrink", pid 1576
+libhugetlbfs [bug3950sid:1576]: INFO: hugetlbfs_morecore(1073745920) = ...
+libhugetlbfs [bug3950sid:1576]: INFO: heapbase = 0x55eb40000000, heaptop = 0x55eb60001000, mapsize = 40000000, delta=536879104
+libhugetlbfs [bug3950sid:1576]: INFO: Attempting to map 1073741824 bytes
+libhugetlbfs [bug3950sid:1576]: INFO: ... = 0x55eb60001000
+FAIL	Heap did not shrink
+
+with this:
+
+# SIX DID WORK
+
+libhugetlbfs [bug3950stretch:702]: INFO: Found pagesize 1048576 kB
+libhugetlbfs [bug3950stretch:702]: INFO: Parsed kernel version: [4] . [9] . [0]
+libhugetlbfs [bug3950stretch:702]: INFO: Feature private_reservations is present in this kernel
+libhugetlbfs [bug3950stretch:702]: INFO: Feature noreserve_safe is present in this kernel
+libhugetlbfs [bug3950stretch:702]: INFO: Feature map_hugetlb is present in this kernel
+libhugetlbfs [bug3950stretch:702]: INFO: Kernel has MAP_PRIVATE reservations.  Disabling heap prefaulting.
+libhugetlbfs [bug3950stretch:702]: INFO: Kernel supports MAP_HUGETLB
+libhugetlbfs [bug3950stretch:702]: INFO: HUGETLB_SHARE=0, sharing disabled
+libhugetlbfs [bug3950stretch:702]: INFO: HUGETLB_NO_RESERVE=no, reservations enabled
+libhugetlbfs [bug3950stretch:702]: INFO: No segments were appropriate for remapping
+libhugetlbfs [bug3950stretch:702]: INFO: setup_morecore(): heapaddr = 0x557480000000
+libhugetlbfs [bug3950stretch:702]: INFO: hugetlbfs_morecore(536879104) = ...
+libhugetlbfs [bug3950stretch:702]: INFO: heapbase = 0x557480000000, heaptop = 0x557480000000, mapsize = 0, delta=536879104
+libhugetlbfs [bug3950stretch:702]: INFO: Attempting to map 1073741824 bytes
+libhugetlbfs [bug3950stretch:702]: INFO: ... = 0x557480000000
+libhugetlbfs [bug3950stretch:702]: INFO: hugetlbfs_morecore(0) = ...
+libhugetlbfs [bug3950stretch:702]: INFO: heapbase = 0x557480000000, heaptop = 0x5574a0002000, mapsize = 40000000, delta=-536862720
+libhugetlbfs [bug3950stretch:702]: INFO: ... = 0x5574a0002000
+
+Starting testcase "/opt/libhugetlbfs/tests/obj64/heapshrink", pid 702
+libhugetlbfs [bug3950stretch:702]: INFO: hugetlbfs_morecore(1073741824) = ...
+libhugetlbfs [bug3950stretch:702]: INFO: heapbase = 0x557480000000, heaptop = 0x5574a0002000, mapsize = 40000000, delta=536879104
+libhugetlbfs [bug3950stretch:702]: INFO: Attempting to map 1073741824 bytes
+libhugetlbfs [bug3950stretch:702]: INFO: ... = 0x5574a0002000
+libhugetlbfs [bug3950stretch:702]: INFO: hugetlbfs_morecore(0) = ...
+libhugetlbfs [bug3950stretch:702]: INFO: heapbase = 0x557480000000, heaptop = 0x5574e0002000, mapsize = 80000000, delta=-536862720
+libhugetlbfs [bug3950stretch:702]: INFO: ... = 0x5574e0002000
+libhugetlbfs [bug3950stretch:702]: INFO: hugetlbfs_morecore(-1073741824) = ...
+libhugetlbfs [bug3950stretch:702]: INFO: heapbase = 0x557480000000, heaptop = 0x5574e0002000, mapsize = 80000000, delta=-1610604544
+libhugetlbfs [bug3950stretch:702]: INFO: Attempting to unmap 1073741824 bytes @ 0x5574c0000000
+libhugetlbfs [bug3950stretch:702]: INFO: ... = 0x5574e0002000
+libhugetlbfs [bug3950stretch:702]: INFO: hugetlbfs_morecore(0) = ...
+libhugetlbfs [bug3950stretch:702]: INFO: heapbase = 0x557480000000, heaptop = 0x5574c0000000, mapsize = 40000000, delta=0
+libhugetlbfs [bug3950stretch:702]: INFO: ... = 0x5574c0000000
+PASS
+
