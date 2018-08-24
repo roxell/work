@@ -41,6 +41,12 @@ cleanout() {
     exit 0
 }
 
+cleanoutlockup() {
+    lockup
+    echo EXIT: $@
+    exit 0
+}
+
 gitcleanup() {
     cd $MAINDIR
     git reset --hard
@@ -103,7 +109,7 @@ WHERETO=$DESTDIR/$DEBARCH/$(basename $PWD)
 # is it already built ?
 
 FOUND=$(find $WHERETO -maxdepth 1 -name *$GITDESC*.deb | wc -l)
-[ $FOUND -eq 1 ] && getoutlockup "already built";
+[ $FOUND -eq 1 ] && cleanoutlockup "already built";
 
 # pkg cleaning
 
