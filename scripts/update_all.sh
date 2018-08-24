@@ -8,8 +8,7 @@
 #
 
 OLDDIR=$PWD
-MAINDIR=$(dirname $0)
-[ "$MAINDIR" == "." ] && MAINDIR=$(pwd)
+MAINDIR=$HOME/work
 
 getout() {
     echo ERROR: $@
@@ -26,7 +25,11 @@ for file in $FILES; do
 
     [ ! -x $file ] && "getout $file is not executable"
 
-    $file
+    cd $(dirname $file)
+
+    ./$(basename $file)
+
+    cd $MAINDIR
 
 done
 
