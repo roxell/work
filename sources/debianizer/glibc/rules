@@ -1,0 +1,60 @@
+#!/usr/bin/make -f
+
+include /usr/share/dpkg/pkg-info.mk
+
+export V=1
+export DH_VERBOSE=1
+
+CFLAGS=
+CXXFLAGS=
+CFLAGS_NO_WERROR=yes
+
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+DEB_HOST_ARCH_BITS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)
+VERSION_UPSTREAM = $(shell echo '$(DEB_VERSION_UPSTREAM)')
+
+%:
+	dh $@ --parallel --builddirectory=build/${DEB_HOST_MULTIARCH}
+
+override_dh_autoreconf:
+override_dh_update_autotools_config:
+
+override_dh_auto_configure:
+	dh_auto_configure --builddirectory=build/${DEB_HOST_MULTIARCH} -- \
+		--prefix=/opt/libc6-preload \
+		AUTOCONF=false \
+		MAKEINFO=: \
+		/home/inaddy/work/sources/trees/glibc/configure \
+        --host=x86_64-linux-gnu \
+        --build=x86_64-linux-gnu \
+        --target=x86_64-linux-gnu \
+        --enable-checking=release \
+		--enable-languyages=c,c++ \
+		--disable-multilib \
+		--prefix=/opt/libc6-preload \
+		--enable-add-ons=libidn,"" \
+		--enable-stackguard-randomization \
+		--enable-stack-protector=strong \
+		--enable-obsolete-rpc \
+		--enable-obsolete-nsl \
+		--with-pkgversion="PreLoad GLIBC 2.xx" \
+		--enable-kernel=3.2
+		--without-selinux \
+		--enable-multi-arch \
+		--enable-static-pie \
+		--disable-werror
+
+override_dh_auto_make:
+	dh_auto_make --builddirectory=build/${DEB_HOST_MULTIARCH} -- -prefix=/opt/libc6-preload
+
+override_dh_auto_clean:
+	dh_auto_clean --builddirectory=build/${DEB_HOST_MULTIARCH}
+
+override_dh_build:
+	dh_build --builddirectory=build/${DEB_HOST_MULTIARCH}
+
+override_dh_install:
+	dh_install
+	rm -rf $(CURDIR)/debian/libc6-preload/usr
+	rm -rf $(CURDIR)/debian/libc6-preload/var
+	rm -rf $(CURDIR)/debian/libc6-preload/etc
