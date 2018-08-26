@@ -22,25 +22,22 @@ override_dh_update_autotools_config:
 override_dh_auto_configure:
 	dh_auto_configure --builddirectory=build/${DEB_HOST_MULTIARCH} -- \
 		--prefix=/opt/libc6-preload \
-		AUTOCONF=false \
-		MAKEINFO=: \
-		/home/inaddy/work/sources/trees/glibc/configure \
         --host=x86_64-linux-gnu \
         --build=x86_64-linux-gnu \
         --target=x86_64-linux-gnu \
         --enable-checking=release \
-		--enable-languyages=c,c++ \
+		--enable-languages=c,c++ \
 		--disable-multilib \
 		--prefix=/opt/libc6-preload \
 		--enable-add-ons=libidn,"" \
 		--enable-stackguard-randomization \
 		--enable-stack-protector=strong \
-		--enable-obsolete-rpc \
-		--enable-obsolete-nsl \
-		--with-pkgversion="PreLoad GLIBC 2.xx" \
+		--disable-obsolete-rpc \
+		--disable-obsolete-nsl \
+		--with-pkgversion="GLIBC 2.xx" \
 		--enable-kernel=3.2
 		--without-selinux \
-		--enable-multi-arch \
+		--disable-multi-arch \
 		--enable-static-pie \
 		--disable-werror
 

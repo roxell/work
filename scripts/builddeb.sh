@@ -100,7 +100,7 @@ gitcleanup
 
 # checks
 
-GITDESC=$(git describe --long)
+GITDESC=$(git describe --long | sed 's:^[a-zA-Z]*-::g')
 [ $? != 0 ] && getoutlockup "git describe error"
 
 WHERETO=$DESTDIR/$DEBARCH/$(basename $PWD)
@@ -117,7 +117,7 @@ fakeroot debian/rules clean
 
 # debian generic changelog file
 
-dch -p -v "$(git describe --long)" -D unstable "Upstream commit $(git describe --long)"
+dch -p -v "$GITDESC" -D unstable "Upstream commit $GITDESC"
 sleep 3 ; sync
 CHECKVER=$(head -1 debian/changelog | sed -E 's:.*\((.*)\).*:\1:g')
 if [ $CHECKVER == "0.0" ]; then getoutlockup "changelog hasn't changed!"; fi
