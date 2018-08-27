@@ -104,7 +104,7 @@ GITDESC=$(git describe --long | sed 's:^[a-zA-Z]*-::g')
 [ $? != 0 ] && getoutlockup "git describe error"
 
 WHERETO=$DESTDIR/$DEBARCH/$(basename $PWD)
-[ ! -d $WHERETO ] && getoutlockup "dir where to place not found"
+[ ! -d $WHERETO ] && getoutlockup "dir $WHERETO not found"
 
 # is it already built ?
 
