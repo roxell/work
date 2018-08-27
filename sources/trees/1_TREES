@@ -27,6 +27,7 @@ apr https://github.com/apache/apr.git
 open-isns git@github.com:open-iscsi/open-isns.git
 bionic https://android.googlesource.com/platform/bionic/
 libhugetlbfs git@github.com:libhugetlbfs/libhugetlbfs.git
+libhugetlbfs-mine git@github.com:rafaeldtinoco/libhugetlbfs.git
 spectre-checker git@github.com:speed47/spectre-meltdown-checker.git
 lkft-tools https://github.com/Linaro/lkft-tools.git
 lkft-website git@github.com:rafaeldtinoco/lkft-website.git
