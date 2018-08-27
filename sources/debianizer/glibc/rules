@@ -21,6 +21,7 @@ override_dh_update_autotools_config:
 
 override_dh_auto_configure:
 	dh_auto_configure --builddirectory=build/${DEB_HOST_MULTIARCH} -- \
+		CC="/usr/bin/gcc-7 -Wno-error=date-time -Wno-error=maybe-uninitialized" \
 		--prefix=/opt/libc6-preload \
         --host=x86_64-linux-gnu \
         --build=x86_64-linux-gnu \
